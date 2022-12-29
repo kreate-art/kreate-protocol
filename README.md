@@ -1,6 +1,6 @@
 # :warning: [WIP] Teiki Protocol :construction:
 
-![Teiki protocol identity dependencies](dependencies.png)
+![Teiki protocol identity dependencies](docs/dependencies.png)
 
 We currently maintain the [Teiki protocol specifications on Notion](https://shinka-network.notion.site/Teiki-Protocol-ae97c4c66db447278ea8da9cd7b860a2).
 
