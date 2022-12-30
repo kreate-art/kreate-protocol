@@ -98,14 +98,9 @@ export function createProjectTx(
     lastCommunityUpdateCid: null,
   };
 
-  const ownerAddressDetail = lucid.utils.getAddressDetails(ownerAddress);
-  if (!ownerAddressDetail.paymentCredential) {
-    throw new Error("Cannot parse owner address's payment credential");
-  }
-
   const projectDatum: ProjectDatum = {
     projectId: { id: fromHex(projectId) },
-    ownerAddress: constructAddress(ownerAddressDetail.paymentCredential?.hash),
+    ownerAddress: constructAddress(ownerAddress),
     milestoneReached: 0n,
     isStakingDelegationManagedByProtocol: true,
     status: { status: "Active" },

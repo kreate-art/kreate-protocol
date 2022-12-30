@@ -1,15 +1,16 @@
-import { Address, C, fromHex, Lucid, OutRef, toHex } from "lucid-cardano";
+import {
+  Address,
+  C,
+  fromHex,
+  OutRef,
+  toHex,
+  getAddressDetails,
+} from "lucid-cardano";
 
 import * as S from "@/schema";
 import { MigratableScript } from "@/schema/teiki/protocol";
 import { Hex } from "@/types";
-
-export function getPaymentHashFromAddress(lucid: Lucid, address: Address): Hex {
-  const addressDetails = lucid.utils.getAddressDetails(address);
-  if (!addressDetails.paymentCredential)
-    throw new Error("Cannot extract payment hash from the address");
-  return addressDetails.paymentCredential.hash;
-}
+import { assert } from "@/utils";
 
 // TODO: Extract to a constructors module
 
@@ -60,24 +61,37 @@ export function constructMigratableScript(
   };
 }
 
-// TODO: not compatible types
-export function constructAddress(
-  pubKeyHash: string,
-  stakingKeyHash?: string
-): S.Address {
-  return {
-    paymentCredential: {
-      paymentType: "PubKey",
-      $: { pubKeyHash: { $hash: fromHex(pubKeyHash) } },
-    },
-    stakingCredential: stakingKeyHash
+export function constructAddress(address: Address): S.Address {
+  const { paymentCredential, stakeCredential } = getAddressDetails(address);
+  assert(paymentCredential, "Cannot extract payment credential from address");
+
+  const conPaymentCredential: S.PaymentCredential =
+    paymentCredential.type === "Key"
       ? {
-          stakingType: "Hash",
-          $: {
-            stakingHash: "Validator",
-            $: { scriptHash: { $hash: fromHex(stakingKeyHash) } },
-          },
+          paymentType: "PubKey",
+          $: { pubKeyHash: { $hash: fromHex(paymentCredential.hash) } },
         }
-      : null,
+      : {
+          paymentType: "Validator",
+          $: { scriptHash: { $hash: fromHex(paymentCredential.hash) } },
+        };
+
+  const conStakingCredential: S.StakingCredential | null = stakeCredential
+    ? {
+        stakingType: "Hash",
+        $: {
+          stakingHash: "Validator",
+          $: {
+            scriptHash: {
+              $hash: fromHex(stakeCredential.hash),
+            },
+          },
+        },
+      }
+    : null;
+
+  return {
+    paymentCredential: conPaymentCredential,
+    stakingCredential: conStakingCredential,
   };
 }
