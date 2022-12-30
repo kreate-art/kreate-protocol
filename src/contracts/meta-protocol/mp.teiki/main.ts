@@ -42,11 +42,13 @@ export default function main({ nftTeikiPlantMph }: Params): HeliosSource {
           own_minted: Map[ByteArray]Int = tx.minted.get_policy(own_mph);
 
           teiki_plant_txout: TxOutput =
-            tx.ref_inputs.find(
-              (input: TxInput) -> Bool {
-                input.output.value.get_safe(TEIKI_PLANT_NFT_ASSET_CLASS) == 1
-              }
-            );
+            tx.ref_inputs
+              .find(
+                (input: TxInput) -> Bool {
+                  input.output.value.get_safe(TEIKI_PLANT_NFT_ASSET_CLASS) == 1
+                }
+              )
+              .output;
 
           teiki_plant_datum: TeikiPlantDatum =
             teiki_plant_txout.datum.switch {
@@ -55,7 +57,7 @@ export default function main({ nftTeikiPlantMph }: Params): HeliosSource {
             };
 
           own_minted.all(
-            (token_name: ByteArray) -> Bool {
+            (token_name: ByteArray, _) -> Bool {
               token_name == TEIKI_TOKEN_NAME
             }
           )
