@@ -1,38 +1,77 @@
-import { Data, Lucid, Redeemer, UTxO } from "lucid-cardano";
+import { fromHex, Lucid, toHex, UTxO } from "lucid-cardano";
 
-import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
+import * as S from "@/schema";
+import {
+  ProtocolParamsDatum,
+  ProtocolProposalDatum,
+  ProtocolProposalRedeemer,
+} from "@/schema/teiki/protocol";
+import { TimeDifference } from "@/types";
+import { assert } from "@/utils";
 
-export type ProposeTxParams = {
+export type ProposeProtocolTxParams = {
   protocolParamsDatum: ProtocolParamsDatum;
   protocolParamsUtxo: UTxO;
   proposedProtocolParamsDatum: ProtocolParamsDatum;
   protocolProposalUtxo: UTxO;
-  protocolScriptUtxo: UTxO;
+  protocolProposalScriptUtxo: UTxO;
+  txTimePadding?: TimeDifference;
 };
 
-// TODO: @sk-umiuma: Add the commented params
-export function proposeProposalTx(
+export function proposeProtocolProposalTx(
   lucid: Lucid,
   {
-    // protocolParamsDatum,
+    protocolParamsDatum,
     protocolParamsUtxo,
-    // proposedProtocolParamsDatum,
+    proposedProtocolParamsDatum,
     protocolProposalUtxo,
-    protocolScriptUtxo,
-  }: ProposeTxParams
+    protocolProposalScriptUtxo,
+    txTimePadding = 200000,
+  }: ProposeProtocolTxParams
 ) {
-  const protocolGovernorPkh = ""; // FIXME:
-  // TODO: @sk-umiuma: Implement this
-  const redeemer: Redeemer = Data.empty();
+  assert(
+    protocolParamsDatum.governorAddress.paymentCredential.paymentType ===
+      "PubKey",
+    "Governor address must have a public-key hash credential"
+  );
+  const protocolGovernorPkh = toHex(
+    protocolParamsDatum.governorAddress.paymentCredential.$.pubKeyHash.$hash
+  );
+
+  const txTimeEnd = Date.now() + txTimePadding;
+
+  const protocolProposalDatum: ProtocolProposalDatum = {
+    inner: {
+      inEffectAt: {
+        timestamp:
+          BigInt(txTimeEnd) +
+          protocolParamsDatum.proposalWaitingPeriod.milliseconds +
+          1n,
+      },
+      base: {
+        txId: { $txId: fromHex(protocolParamsUtxo.txHash) },
+        index: BigInt(protocolParamsUtxo.outputIndex),
+      },
+      params: proposedProtocolParamsDatum,
+    },
+  };
 
   return lucid
     .newTx()
     .addSignerKey(protocolGovernorPkh)
-    .readFrom([protocolParamsUtxo, protocolScriptUtxo])
-    .collectFrom([protocolProposalUtxo], redeemer)
+    .readFrom([protocolParamsUtxo, protocolProposalScriptUtxo])
+    .collectFrom(
+      [protocolProposalUtxo],
+      S.toCbor(S.toData({ case: "Propose" }, ProtocolProposalRedeemer))
+    )
     .payToContract(
       protocolProposalUtxo.address,
-      { inline: Data.empty() }, // FIXME:
+      {
+        inline: S.toCbor(
+          S.toData(protocolProposalDatum, ProtocolProposalDatum)
+        ),
+      },
       protocolProposalUtxo.assets
-    );
+    )
+    .validTo(txTimeEnd);
 }
