@@ -25,6 +25,7 @@ import {
   constructAddress,
   constructProjectIdUsingBlake2b,
 } from "../helpers/constructors";
+import { DEFAULT_TIME_PROVIDER, TimeProvider } from "../helpers/time";
 
 export type CreateProjectParams = {
   protocolParamsDatum: ProtocolParamsDatum;
@@ -40,6 +41,7 @@ export type CreateProjectParams = {
   projectDetailAddress: Address;
   dedicatedTreasuryAddress: Address;
   projectStakeValidator: Script;
+  timeProvider?: TimeProvider;
 };
 
 export function createProjectTx(
@@ -58,6 +60,7 @@ export function createProjectTx(
     projectDetailAddress,
     dedicatedTreasuryAddress,
     projectStakeValidator,
+    timeProvider = DEFAULT_TIME_PROVIDER,
   }: CreateProjectParams
 ) {
   // TODO: Move this somewhere else?
@@ -76,7 +79,7 @@ export function createProjectTx(
     protocolParamsDatum.projectCreationFee +
     (isSponsored ? protocolParamsDatum.projectSponsorshipFee : 0n);
 
-  const txTime = Date.now();
+  const txTime = timeProvider();
   const sponsoredUntil = isSponsored
     ? protocolParamsDatum.projectSponsorshipDuration.milliseconds +
       BigInt(txTime)
@@ -184,7 +187,7 @@ export function createProjectTx(
     .attachCertificateValidator(projectStakeValidator);
 
   if (sponsoredUntil) {
-    tx = tx.validFrom(txTime);
+    tx = tx.validFrom(txTime); // TODO: @sk-umiuma: add txTimePadding...
   }
 
   return tx;

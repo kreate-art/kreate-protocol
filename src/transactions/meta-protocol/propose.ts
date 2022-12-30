@@ -8,11 +8,14 @@ import {
 } from "@/schema/teiki/meta-protocol";
 import { TimeDifference } from "@/types";
 
+import { DEFAULT_TIME_PROVIDER, TimeProvider } from "../helpers/time";
+
 export type ProposeMetaProtocolTxParams = {
   teikiPlantDatum: TeikiPlantDatum;
   teikiPlantUtxo: UTxO;
   teikiPlantScriptUtxo: UTxO;
   proposedRules: RulesProposal;
+  timeProvider?: TimeProvider;
   txTimePadding?: TimeDifference;
 };
 
@@ -23,6 +26,7 @@ export function proposeMetaProtocolProposalTx(
     teikiPlantUtxo,
     teikiPlantScriptUtxo,
     proposedRules,
+    timeProvider = DEFAULT_TIME_PROVIDER,
     txTimePadding = 20000,
   }: ProposeMetaProtocolTxParams
 ) {
@@ -45,5 +49,5 @@ export function proposeMetaProtocolProposalTx(
       { inline: S.toCbor(S.toData(newTeikiPlantDatum, TeikiPlantDatum)) },
       teikiPlantUtxo.assets
     )
-    .validTo(Date.now() + txTimePadding);
+    .validTo(timeProvider() + txTimePadding);
 }
