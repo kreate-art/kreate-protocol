@@ -8,6 +8,7 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "noEmitOnError": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
@@ -15,8 +16,9 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2020",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["src/*"]
     }
   },
   "ts-node": {
@@ -24,6 +26,6 @@
     "experimentalSpecifierResolution": "node",
     "require": ["tsconfig-paths/register"]
   },
-  "include": ["src"],
+  "include": ["src", "tests"],
   "exclude": ["node_modules"]
 }

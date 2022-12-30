@@ -5,8 +5,8 @@ import {
   Int,
   Map,
   Option,
-  Static,
   Struct,
+  type Static,
 } from "./uplc";
 
 // Helios builtins
