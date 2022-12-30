@@ -3,7 +3,6 @@ import {
   Kind,
   NumericOptions,
   PropertiesReduce,
-  Static,
   TArray,
   TBoolean,
   TLiteral,
@@ -13,12 +12,13 @@ import {
   TString,
   TUint8Array,
   Type,
+  type Static,
 } from "@sinclair/typebox";
 import { Custom } from "@sinclair/typebox/custom";
 import { Data } from "lucid-cardano";
 
 // Re-exports
-export { Static };
+export { type Static };
 
 // Custom typebox
 Custom.Set("BigInt", (_, value) => typeof value === "bigint");
