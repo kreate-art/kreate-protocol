@@ -11,7 +11,7 @@ export default function main({ proofOfBackingMph, protocolNftMph }: Params) {
 
     import { Redeemer } from v__backing__types
     import { Redeemer as PoBRedeemer } from proof_of_backing_types
-    import { Datum as PParamsDatum } from protocol_params_types
+    import { Datum as PParamsDatum } from v__protocol_params__types
 
     import { find_pparams_datum_from_inputs } from helpers
 
