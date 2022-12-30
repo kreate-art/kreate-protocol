@@ -1,7 +1,7 @@
 import { helios } from "../../program";
 
-export const hlBackingValidatorTypesSource = helios`
-  module backing_validator_types
+export default helios`
+  module v__backing__types
 
   struct Datum {
     project_id: ByteArray

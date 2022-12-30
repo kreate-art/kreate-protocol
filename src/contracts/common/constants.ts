@@ -2,7 +2,7 @@ import { utf8ToHex } from "lucid-cardano";
 
 import { Hex } from "@/types";
 
-import { helios } from "./program";
+import { helios } from "../program";
 
 // FIXME: Redo this module...
 
@@ -32,7 +32,7 @@ export const TEIKI_TOKEN_NAME: Hex = utf8ToHex("teiki");
 
 export const TEIKI_PLANT_NFT_TOKEN_NAME: Hex = utf8ToHex("teiki-plant");
 
-export const modConstants = helios`
+export default helios`
   module constants
 
   const ADA_MINTING_POLICY_HASH: MintingPolicyHash = MintingPolicyHash::new(#)

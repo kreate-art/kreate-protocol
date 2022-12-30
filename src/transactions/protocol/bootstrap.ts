@@ -9,7 +9,7 @@ import {
   UTxO,
 } from "lucid-cardano";
 
-import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/constants";
+import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
 import * as S from "@/schema";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 

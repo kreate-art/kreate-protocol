@@ -1,6 +1,6 @@
 import { Address, Lucid, PolicyId, Script, Unit, UTxO } from "lucid-cardano";
 
-import { TEIKI_PLANT_NFT_TOKEN_NAME } from "@/contracts/constants";
+import { TEIKI_PLANT_NFT_TOKEN_NAME } from "@/contracts/common/constants";
 import * as S from "@/schema";
 import {
   TeikiPlantDatum,
