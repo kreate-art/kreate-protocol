@@ -24,7 +24,7 @@
     "typecheck:watch": "tsc --noEmit --strict --watch"
   },
   "dependencies": {
-    "@hyperionbt/helios": "^0.10.4",
+    "@hyperionbt/helios": "^0.10.5",
     "@sinclair/typebox": "^0.25.16",
     "lucid-cardano": "^0.8.3"
   },
