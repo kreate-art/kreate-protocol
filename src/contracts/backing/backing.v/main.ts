@@ -9,7 +9,7 @@ export default function main({ proofOfBackingMph, protocolNftMph }: Params) {
   return helios`
     spending v__backing
 
-    import { Redeemer } from backing_validator_types
+    import { Redeemer } from v__backing__types
     import { Redeemer as PoBRedeemer } from proof_of_backing_types
     import { Datum as PParamsDatum } from protocol_params_types
 
