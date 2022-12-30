@@ -126,6 +126,12 @@ export default helios`
     )
   }
 
+  func find_tx_output_with_value(outputs: []TxOutput, value: Value) -> TxOutput {
+    outputs.find(
+      (output: TxOutput) -> Bool { output.value.contains(value) }
+    )
+  }
+
   func get_pparams_datum(txout: TxOutput) -> PParamsDatum {
     txout.datum.switch {
       i: Inline => PParamsDatum::from_data(i.data),
@@ -149,6 +155,18 @@ export default helios`
     pparams_txinput: TxInput = find_tx_input_with_value(inputs, protocol_params_nft);
 
     get_pparams_datum(pparams_txinput.output)
+  }
+
+  // TODO: functions like this should be optimized
+  func find_pparams_datum_from_outputs (
+    outputs: []TxOutput,
+    protocol_nft_mph: MintingPolicyHash
+  ) -> PParamsDatum {
+    protocol_params_nft: Value = get_protocol_params_nft(protocol_nft_mph);
+
+    pparams_txout: TxOutput = find_tx_output_with_value(outputs, protocol_params_nft);
+
+    get_pparams_datum(pparams_txout)
   }
 
   func does_consume_input_with_output_id(tx: Tx, seed_output_id: TxOutputId) -> Bool {

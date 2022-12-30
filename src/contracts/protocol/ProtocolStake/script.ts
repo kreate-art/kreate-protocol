@@ -10,6 +10,7 @@ export function getProtocolStakeSource(protocolNftMPH: string): HeliosSource {
 
     import {
       find_pparams_datum_from_inputs,
+      find_pparams_datum_from_outputs,
       stakingCredentialToSVH,
       is_tx_authorized_by
     } from helpers
@@ -62,13 +63,21 @@ export function getProtocolStakeSource(protocolNftMPH: string): HeliosSource {
             }
         },
         certifying: Certifying => {
+          //TODO: optimize this
           pparams_datum: PParamsDatum =
-            find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
+            find_pparams_datum_from_outputs(
+              tx.ref_inputs.map(
+                (input: TxInput) -> TxOutput {input.output}
+              ) + tx.outputs,
+              PROTOCOL_NFT_MPH
+            );
+
+          is_authorized: Bool = is_tx_authorized_by(tx, pparams_datum.governor_address.credential);
 
           certifying.dcert.switch {
-            Register => is_tx_authorized_by(tx, pparams_datum.governor_address.credential),
-            Deregister => is_tx_authorized_by(tx, pparams_datum.governor_address.credential),
-            Delegate => is_tx_authorized_by(tx, pparams_datum.governor_address.credential),
+            Register => error("unreachable"),
+            Deregister => is_authorized,
+            Delegate => is_authorized,
             else => false
           }
         },

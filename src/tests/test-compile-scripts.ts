@@ -17,7 +17,7 @@ import { getDedicatedTreasuryValidatorSource } from "@/contracts/treasury/Dedica
 import { getOpenTreasuryValidatorSource } from "@/contracts/treasury/OpenTreasury/script";
 import { getSharedTreasuryValidatorSource } from "@/contracts/treasury/SharedTreasury/script";
 
-import { exportScript } from "./lucid";
+import { exportScript } from "../lucid";
 
 function printScript(source: HeliosSource, scriptName: string) {
   console.log("test compile script :>>", scriptName);
