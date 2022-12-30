@@ -12,7 +12,7 @@ export const hlPProposalTypesSource = helios`
   }
 
   struct Datum {
-    inner: Option[Proposal]
+    proposal: Option[Proposal]
   }
 
   enum Redeemer {

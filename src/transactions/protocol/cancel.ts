@@ -47,7 +47,7 @@ export function cancelProtocolProposalTx(
     )
     .payToContract(
       protocolProposalUtxo.address,
-      { inline: S.toCbor(S.toData({ inner: null }, ProtocolProposalDatum)) },
+      { inline: S.toCbor(S.toData({ proposal: null }, ProtocolProposalDatum)) },
       protocolProposalUtxo.assets
     );
 }
