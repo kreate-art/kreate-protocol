@@ -10,7 +10,6 @@ import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
 export type ProposeProtocolTxParams = {
-  protocolParamsDatum: ProtocolParamsDatum;
   protocolParamsUtxo: UTxO;
   proposedProtocolParamsDatum: ProtocolParamsDatum;
   protocolProposalUtxo: UTxO;
@@ -21,7 +20,6 @@ export type ProposeProtocolTxParams = {
 export function proposeProtocolProposalTx(
   lucid: Lucid,
   {
-    protocolParamsDatum,
     protocolParamsUtxo,
     proposedProtocolParamsDatum,
     protocolProposalUtxo,
@@ -29,6 +27,12 @@ export function proposeProtocolProposalTx(
     txTimePadding = 200000,
   }: ProposeProtocolTxParams
 ) {
+  assert(protocolParamsUtxo.datum, "Protocol params utxo must have datum");
+  const protocolParamsDatum: ProtocolParamsDatum = S.fromData(
+    S.fromCbor(protocolParamsUtxo.datum),
+    ProtocolParamsDatum
+  );
+
   assert(
     protocolParamsDatum.governorAddress.paymentCredential.paymentType ===
       "PubKey",
