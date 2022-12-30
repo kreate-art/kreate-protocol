@@ -38,3 +38,6 @@ export const ProofOfBackingMintingRedeemer = Enum("case", {
   ClaimRewards: { flowers: List(Plant) },
   Migrate: {},
 });
+export type ProofOfBackingMintingRedeemer = Static<
+  typeof ProofOfBackingMintingRedeemer
+>;
