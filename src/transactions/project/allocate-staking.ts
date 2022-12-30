@@ -1,6 +1,6 @@
 import { Data, Lucid, PolicyId, Script, Unit, UTxO } from "lucid-cardano";
 
-import { PROJECT_AT_TOKEN_NAMES } from "@/contracts/constants";
+import { PROJECT_AT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { ProjectDatum } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 

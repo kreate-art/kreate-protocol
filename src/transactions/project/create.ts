@@ -8,7 +8,7 @@ import {
   UTxO,
 } from "lucid-cardano";
 
-import { PROJECT_AT_TOKEN_NAMES } from "@/contracts/constants";
+import { PROJECT_AT_TOKEN_NAMES } from "@/contracts/common/constants";
 import * as S from "@/schema";
 import { IpfsCid } from "@/schema/teiki/common";
 import {

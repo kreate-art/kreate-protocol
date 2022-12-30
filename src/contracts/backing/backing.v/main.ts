@@ -1,16 +1,13 @@
 import { helios } from "../../program";
 
-export type BackingValidatorParams = {
-  proofOfBackingMPH: string;
-  protocolNftMPH: string;
+export type Params = {
+  proofOfBackingMph: string;
+  protocolNftMph: string;
 };
 
-export function getBackingValidatorSource({
-  proofOfBackingMPH,
-  protocolNftMPH,
-}: BackingValidatorParams) {
+export default function main({ proofOfBackingMph, protocolNftMph }: Params) {
   return helios`
-    spending backing_validator
+    spending v__backing
 
     import { Redeemer } from backing_validator_types
     import { Redeemer as PoBRedeemer } from proof_of_backing_types
@@ -19,10 +16,10 @@ export function getBackingValidatorSource({
     import { find_pparams_datum_from_inputs } from helpers
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${protocolNftMPH})
+      MintingPolicyHash::new(#${protocolNftMph})
 
     const PROOF_OF_BACKING_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${proofOfBackingMPH})
+      MintingPolicyHash::new(#${proofOfBackingMph})
 
     func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;

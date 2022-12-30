@@ -3,15 +3,15 @@ import { Data } from "lucid-cardano";
 
 import { toJson } from "@/schema";
 
-import { hlBackingValidatorTypesSource } from "./backing/BackingValidator/types";
-import { hlProofOfBackingTypesSource } from "./backing/ProofOfBacking/types";
+import modBackingVTypes from "./backing/backing.v/types";
+import modProofOfBackingMpTypes from "./backing/proof-of-backing.mp/types";
+import modConstants from "./common/constants";
 import modFraction from "./common/fraction";
 import modHelpers from "./common/helpers";
 import modCommonTypes from "./common/types";
-import { modConstants } from "./constants";
-import modMpTeikiTypes from "./meta-protocol/mp.teiki/types";
-import modNftTeikiPlantTypes from "./meta-protocol/nft.teiki-plant/types";
-import modVTeikiPlantTypes from "./meta-protocol/v.teiki-plant/types";
+import modTeikiPlantNftTypes from "./meta-protocol/teiki-plant.nft/types";
+import modTeikiPlantVTypes from "./meta-protocol/teiki-plant.v/types";
+import modTeikiMpTypes from "./meta-protocol/teiki.mp/types";
 import { HeliosSource, newProgram } from "./program";
 import { hlProjectATTypesSource } from "./project/ProjectAT/types";
 import { hlProjectDetailTypesSource } from "./project/ProjectDetail/types";
@@ -31,9 +31,9 @@ const COMMON_HELIOS_MODULES = [
   modCommonTypes,
   modFraction,
   modHelpers,
-  modMpTeikiTypes,
-  modNftTeikiPlantTypes,
-  modVTeikiPlantTypes,
+  modTeikiMpTypes,
+  modTeikiPlantNftTypes,
+  modTeikiPlantVTypes,
   hlPParamsTypesSource,
   hlPProposalTypesSource,
   hlPNftTypesSource,
@@ -41,8 +41,8 @@ const COMMON_HELIOS_MODULES = [
   hlProjectValidatorTypesSource,
   hlProjectDetailTypesSource,
   hlProjectScriptTypesSource,
-  hlBackingValidatorTypesSource,
-  hlProofOfBackingTypesSource,
+  modBackingVTypes,
+  modProofOfBackingMpTypes,
   hlDedicatedTreasuryTypesSource,
   hlOpenTreasuryTypesSource,
   hlSharedTreasuryTypesSource,

@@ -1,8 +1,8 @@
-import { getBackingValidatorSource } from "@/contracts/backing/BackingValidator/script";
-import { getProofOfBackingPolicySource } from "@/contracts/backing/ProofOfBacking/script";
-import getTeikiPolicySource from "@/contracts/meta-protocol/mp.teiki/main";
-import getTeikiPlantNftSource from "@/contracts/meta-protocol/nft.teiki-plant/main";
-import getTeikiPlantValidatorSource from "@/contracts/meta-protocol/v.teiki-plant/main";
+import getBackingV from "@/contracts/backing/backing.v/main";
+import getProofOfBackingMp from "@/contracts/backing/proof-of-backing.mp/main";
+import getTeikiPlantNft from "@/contracts/meta-protocol/teiki-plant.nft/main";
+import getTeikiPlantV from "@/contracts/meta-protocol/teiki-plant.v/main";
+import getTeikiMp from "@/contracts/meta-protocol/teiki.mp/main";
 import { HeliosSource } from "@/contracts/program";
 import { getProjectATPolicySource } from "@/contracts/project/ProjectAT/script";
 import { getProjectDetailValidatorSource } from "@/contracts/project/ProjectDetail/script";
@@ -20,26 +20,26 @@ import { getSharedTreasuryValidatorSource } from "@/contracts/treasury/SharedTre
 import { exportScript } from "./lucid";
 
 function printScript(source: HeliosSource, scriptName: string) {
-  console.log("test compile script :>> ", scriptName);
+  console.log("test compile script :>>", scriptName);
   const script = exportScript(source);
 
-  console.log("script :>> ", script);
+  console.log("script :>>", script);
 }
 
 printScript(
-  getBackingValidatorSource({
-    proofOfBackingMPH: "",
-    protocolNftMPH: "",
+  getBackingV({
+    proofOfBackingMph: "",
+    protocolNftMph: "",
   }),
   "backing validator"
 );
 
 printScript(
-  getProofOfBackingPolicySource({
-    projectsAuthTokenMPH: "",
-    protocolNftMPH: "",
-    teikiMPH: "",
-    treasuryAuthTokenMPH: "",
+  getProofOfBackingMp({
+    projectsAuthTokenMph: "",
+    protocolNftMph: "",
+    teikiMph: "",
+    treasuryAuthTokenMph: "",
   }),
   "proof of backing policy"
 );
@@ -110,13 +110,10 @@ printScript(
 
 printScript(getOpenTreasuryValidatorSource(""), "open treasury validator");
 
-printScript(
-  getTeikiPolicySource({ nftTeikiPlantMph: "" }),
-  "teiki minting policy"
-);
+printScript(getTeikiMp({ nftTeikiPlantMph: "" }), "teiki minting policy");
 
 printScript(
-  getTeikiPlantNftSource({
+  getTeikiPlantNft({
     teikiPlantSeed: {
       txHash: "",
       outputIndex: 1,
@@ -125,4 +122,4 @@ printScript(
   "teiki-plant nft minting policy"
 );
 
-printScript(getTeikiPlantValidatorSource(""), "teiki-plant validator");
+printScript(getTeikiPlantV(""), "teiki-plant validator");

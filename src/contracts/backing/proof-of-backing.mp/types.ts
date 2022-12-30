@@ -1,6 +1,6 @@
 import { helios } from "../../program";
 
-export const hlProofOfBackingTypesSource = helios`
+export default helios`
   module proof_of_backing_types
 
   struct Plant {

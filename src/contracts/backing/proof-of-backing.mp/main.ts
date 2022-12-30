@@ -1,20 +1,20 @@
 import { helios } from "../../program";
 
-export type ProofOfBackingParams = {
-  projectsAuthTokenMPH: string;
-  protocolNftMPH: string;
-  teikiMPH: string;
-  treasuryAuthTokenMPH: string;
+export type Params = {
+  projectsAuthTokenMph: string;
+  protocolNftMph: string;
+  teikiMph: string;
+  treasuryAuthTokenMph: string;
 };
 
-export function getProofOfBackingPolicySource({
-  projectsAuthTokenMPH,
-  protocolNftMPH,
-  teikiMPH,
-  treasuryAuthTokenMPH,
-}: ProofOfBackingParams) {
+export default function main({
+  projectsAuthTokenMph,
+  protocolNftMph,
+  teikiMph,
+  treasuryAuthTokenMph,
+}: Params) {
   return helios`
-    minting proof_of_backing_policy
+    minting mp__proof_of_backing
 
     import {
       Redeemer,
@@ -48,10 +48,10 @@ export function getProofOfBackingPolicySource({
     } from constants
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${protocolNftMPH})
+      MintingPolicyHash::new(#${protocolNftMph})
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${projectsAuthTokenMPH})
+      MintingPolicyHash::new(#${projectsAuthTokenMph})
 
     const PROJECT_AT_ASSET_CLASS: AssetClass =
       AssetClass::new(PROJECTS_AT_MPH, PROJECT_AT_TOKEN_NAME)
@@ -60,13 +60,13 @@ export function getProofOfBackingPolicySource({
       AssetClass::new(PROJECTS_AT_MPH, PROJECT_SCRIPT_AT_TOKEN_NAME)
 
     const TEIKI_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${teikiMPH})
+      MintingPolicyHash::new(#${teikiMph})
 
     const TEIKI_ASSET_CLASS: AssetClass =
       AssetClass::new(TEIKI_MPH, TEIKI_TOKEN_NAME)
 
     const TREASURY_AT_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${treasuryAuthTokenMPH})
+      MintingPolicyHash::new(#${treasuryAuthTokenMph})
 
     const SHARED_TREASURY_ASSET_CLASS: AssetClass =
       AssetClass::new(TREASURY_AT_MPH, SHARED_TREASURY_AT_TOKEN_NAME)
