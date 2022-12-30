@@ -171,10 +171,10 @@ export function bootstrapProtocolTx(
     )
     .payToContract(
       protocolProposalAddress,
-      { inline: Data.empty() },
+      { inline: Data.void() },
       { [proposalNftUnit]: BigInt(1) }
     )
     .registerStake(protocolStakeAddress)
-    .delegateTo(protocolStakeAddress, poolId, Data.empty())
+    .delegateTo(protocolStakeAddress, poolId, Data.void())
     .attachCertificateValidator(protocolStakeValidator);
 }

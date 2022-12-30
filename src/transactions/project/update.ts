@@ -44,9 +44,9 @@ export function updateProjectTx(
   const projectOwnerPkh = ""; // FIXME:
 
   // TODO: @sk-umiuma: Implement this
-  const projectDetailRedeemer: Redeemer = Data.empty();
+  const projectDetailRedeemer: Redeemer = Data.void();
   // TODO: @sk-umiuma: Implement this
-  const dedicatedTreasuryRedeemer: Redeemer = Data.empty();
+  const dedicatedTreasuryRedeemer: Redeemer = Data.void();
 
   let minTotalFees = 0n;
 
@@ -70,12 +70,12 @@ export function updateProjectTx(
     .collectFrom([dedicatedTreasuryUtxo], dedicatedTreasuryRedeemer)
     .payToContract(
       projectDetailUtxo.address,
-      { inline: Data.empty() }, // FIXME:
+      { inline: Data.void() }, // FIXME:
       projectDetailUtxo.assets
     )
     .payToContract(
       dedicatedTreasuryUtxo.address,
-      { inline: Data.empty() }, // FIXME:
+      { inline: Data.void() }, // FIXME:
       { lovelace: dedicatedTreasuryUtxo.assets.lovelace + minTotalFees }
     );
 

@@ -1,4 +1,4 @@
-import { utf8ToHex } from "lucid-cardano";
+import { fromText } from "lucid-cardano";
 
 import { Hex } from "@/types";
 
@@ -10,14 +10,14 @@ export const PROTOCOL_NFT_TOKEN_NAMES: Record<string, Hex> = Object.fromEntries(
   Object.entries({
     PARAMS: "params",
     PROPOSAL: "proposal",
-  }).map(([k, v]) => [k, utf8ToHex(v)])
+  }).map(([k, v]) => [k, fromText(v)])
 );
 
 export const TREASURY_AT_TOKEN_NAMES: Record<string, Hex> = Object.fromEntries(
   Object.entries({
     SHARED: "shared",
     DEDICATED: "dedicated",
-  }).map(([k, v]) => [k, utf8ToHex(v)])
+  }).map(([k, v]) => [k, fromText(v)])
 );
 
 export const PROJECT_AT_TOKEN_NAMES: Record<string, Hex> = Object.fromEntries(
@@ -25,12 +25,12 @@ export const PROJECT_AT_TOKEN_NAMES: Record<string, Hex> = Object.fromEntries(
     PROJECT: "project",
     PROJECT_DETAIL: "project-detail",
     PROJECT_SCRIPT: "project-script",
-  }).map(([k, v]) => [k, utf8ToHex(v)])
+  }).map(([k, v]) => [k, fromText(v)])
 );
 
-export const TEIKI_TOKEN_NAME: Hex = utf8ToHex("teiki");
+export const TEIKI_TOKEN_NAME: Hex = fromText("teiki");
 
-export const TEIKI_PLANT_NFT_TOKEN_NAME: Hex = utf8ToHex("teiki-plant");
+export const TEIKI_PLANT_NFT_TOKEN_NAME: Hex = fromText("teiki-plant");
 
 export default helios`
   module constants
