@@ -4,18 +4,18 @@ import getTeikiPlantNft from "@/contracts/meta-protocol/teiki-plant.nft/main";
 import getTeikiPlantV from "@/contracts/meta-protocol/teiki-plant.v/main";
 import getTeikiMp from "@/contracts/meta-protocol/teiki.mp/main";
 import { HeliosSource } from "@/contracts/program";
-import { getProjectATPolicySource } from "@/contracts/project/ProjectAT/script";
-import { getProjectDetailValidatorSource } from "@/contracts/project/ProjectDetail/script";
-import { getProjectScriptSource } from "@/contracts/project/ProjectScript/script";
-import { getProjectStakeSource } from "@/contracts/project/ProjectStake/script";
-import { getProjectValidatorSource } from "@/contracts/project/ProjectValidator/script";
-import { getProtocolParamsValidatorSource } from "@/contracts/protocol/ParamsValidator/script";
-import { getProtocolProposalValidatorSource } from "@/contracts/protocol/ProposalValidator/script";
-import { getProtocolScriptSource } from "@/contracts/protocol/ProtocolScript/script";
-import { getProtocolStakeSource } from "@/contracts/protocol/ProtocolStake/script";
-import { getDedicatedTreasuryValidatorSource } from "@/contracts/treasury/DedicatedTreasury/script";
-import { getOpenTreasuryValidatorSource } from "@/contracts/treasury/OpenTreasury/script";
-import { getSharedTreasuryValidatorSource } from "@/contracts/treasury/SharedTreasury/script";
+import getProjectDetailV from "@/contracts/project/project-detail.v/main";
+import getProjectScriptV from "@/contracts/project/project-script.v/main";
+import getProjectAt from "@/contracts/project/project.at/main";
+import getProjectSv from "@/contracts/project/project.sv/main";
+import getProjectV from "@/contracts/project/project.v/main";
+import getProtocolParamsV from "@/contracts/protocol/protocol-params.v/main";
+import getProtocolProposalV from "@/contracts/protocol/protocol-proposal.v/main";
+import getProtocolScriptV from "@/contracts/protocol/protocol-script.v/main";
+import getProtocolSv from "@/contracts/protocol/protocol.sv/main";
+import getDedicatedTreasuryV from "@/contracts/treasury/dedicated-treasury.v/main";
+import getOpenTreasuryV from "@/contracts/treasury/open-treasury.v/main";
+import getSharedTreasuryV from "@/contracts/treasury/shared-treasury.v/main";
 
 import { exportScript } from "../lucid";
 
@@ -27,10 +27,7 @@ function printScript(source: HeliosSource, scriptName: string) {
 }
 
 printScript(
-  getBackingV({
-    proofOfBackingMph: "",
-    protocolNftMph: "",
-  }),
+  getBackingV({ proofOfBackingMph: "", protocolNftMph: "" }),
   "backing validator"
 );
 
@@ -43,81 +40,61 @@ printScript(
   "proof of backing policy"
 );
 
-printScript(getProjectATPolicySource(""), "proejct auth token policy");
+printScript(getProjectAt(""), "proejct auth token policy");
 
 printScript(
-  getProjectDetailValidatorSource({
-    projectsAuthTokenMPH: "",
-    protocolNftMPH: "",
-  }),
+  getProjectDetailV({ projectsAuthTokenMph: "", protocolNftMph: "" }),
   "project detail validator"
 );
 
 printScript(
-  getProjectScriptSource({
-    projectsAuthTokenMPH: "",
-    protocolNftMPH: "",
-  }),
+  getProjectScriptV({ projectsAuthTokenMph: "", protocolNftMph: "" }),
   "project script validator"
 );
 
 printScript(
-  getProjectStakeSource({
+  getProjectSv({
     projectId: "",
     _stakingSeed: "",
-    projectsAuthTokenMPH: "",
-    protocolNftMPH: "",
+    projectsAuthTokenMph: "",
+    protocolNftMph: "",
   }),
   "project stake validator"
 );
 
 printScript(
-  getProjectValidatorSource({
-    projectsAuthTokenMPH: "",
-    protocolNftMPH: "",
-  }),
+  getProjectV({ projectsAuthTokenMph: "", protocolNftMph: "" }),
   "project validator"
 );
 
-printScript(getProtocolScriptSource(""), "protocol script validator");
+printScript(getProtocolScriptV(""), "protocol script validator");
 
-printScript(getProtocolStakeSource(""), "protocol stake validator");
+printScript(getProtocolSv(""), "protocol stake validator");
 
-printScript(getProtocolParamsValidatorSource(""), "protocol params validator");
+printScript(getProtocolParamsV(""), "protocol params validator");
 
-printScript(
-  getProtocolProposalValidatorSource(""),
-  "protocol proposal validator"
-);
+printScript(getProtocolProposalV(""), "protocol proposal validator");
 
 printScript(
-  getDedicatedTreasuryValidatorSource({
-    projectsAuthTokenMPH: "",
-    protocolNftMPH: "",
-  }),
+  getDedicatedTreasuryV({ projectsAuthTokenMph: "", protocolNftMph: "" }),
   "dedicated treasury validator"
 );
 
 printScript(
-  getSharedTreasuryValidatorSource({
-    projectsAuthTokenMPH: "",
-    protocolNftMPH: "",
-    teikiMPH: "",
+  getSharedTreasuryV({
+    projectsAuthTokenMph: "",
+    protocolNftMph: "",
+    teikiMph: "",
   }),
   "shared treasury validator"
 );
 
-printScript(getOpenTreasuryValidatorSource(""), "open treasury validator");
+printScript(getOpenTreasuryV(""), "open treasury validator");
 
 printScript(getTeikiMp({ nftTeikiPlantMph: "" }), "teiki minting policy");
 
 printScript(
-  getTeikiPlantNft({
-    teikiPlantSeed: {
-      txHash: "",
-      outputIndex: 1,
-    },
-  }),
+  getTeikiPlantNft({ teikiPlantSeed: { txHash: "", outputIndex: 1 } }),
   "teiki-plant nft minting policy"
 );
 

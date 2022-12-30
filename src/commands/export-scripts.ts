@@ -1,72 +1,67 @@
 import { UTxO } from "lucid-cardano";
 
-import getBackingValidatorSource from "@/contracts/backing/backing.v/main";
-import getProofOfBackingPolicy from "@/contracts/backing/proof-of-backing.mp/main";
-import getTeikiPolicySource from "@/contracts/meta-protocol/teiki.mp/main";
-import { getProjectATPolicySource } from "@/contracts/project/ProjectAT/script";
-import { getProjectDetailValidatorSource } from "@/contracts/project/ProjectDetail/script";
-import { getProjectScriptSource } from "@/contracts/project/ProjectScript/script";
-import { getProjectValidatorSource } from "@/contracts/project/ProjectValidator/script";
-import { getProtocolNftPolicySource } from "@/contracts/protocol/Nfts/script";
-import { getProtocolParamsValidatorSource } from "@/contracts/protocol/ParamsValidator/script";
-import { getProtocolProposalValidatorSource } from "@/contracts/protocol/ProposalValidator/script";
-import { getProtocolStakeSource } from "@/contracts/protocol/ProtocolStake/script";
-import { getDedicatedTreasuryValidatorSource } from "@/contracts/treasury/DedicatedTreasury/script";
-import { getOpenTreasuryValidatorSource } from "@/contracts/treasury/OpenTreasury/script";
-import { getSharedTreasuryValidatorSource } from "@/contracts/treasury/SharedTreasury/script";
+import getBackingV from "@/contracts/backing/backing.v/main";
+import getProofOfBackingMp from "@/contracts/backing/proof-of-backing.mp/main";
+import getTeikiMp from "@/contracts/meta-protocol/teiki.mp/main";
+import getProjectDetailV from "@/contracts/project/project-detail.v/main";
+import getProjectAt from "@/contracts/project/project.at/main";
+import getProjectV from "@/contracts/project/project.v/main";
+import getProtocolParamsV from "@/contracts/protocol/protocol-params.v/main";
+import getProtocolProposalV from "@/contracts/protocol/protocol-proposal.v/main";
+import getProtocolNft from "@/contracts/protocol/protocol.nft/main";
+import getProtocolSv from "@/contracts/protocol/protocol.sv/main";
+import getDedicatedTreasuryV from "@/contracts/treasury/dedicated-treasury.v/main";
+import getOpenTreasuryV from "@/contracts/treasury/open-treasury.v/main";
+import getSharedTreasuryV from "@/contracts/treasury/shared-treasury.v/main";
 import { exportScript } from "@/lucid";
 
 export function getProtocolNftPolicy(seedUtxo: UTxO) {
   return exportScript(
-    getProtocolNftPolicySource(seedUtxo.txHash, seedUtxo.outputIndex.toString())
+    getProtocolNft(seedUtxo.txHash, seedUtxo.outputIndex.toString())
   );
 }
 
-export function getProtocolParamsValidator(protocolNftMPH: string) {
-  return exportScript(getProtocolParamsValidatorSource(protocolNftMPH));
+export function getProtocolParamsValidator(protocolNftMph: string) {
+  return exportScript(getProtocolParamsV(protocolNftMph));
 }
 
-export function getProtocolProposalValidator(protocolNftMPH: string) {
-  return exportScript(getProtocolProposalValidatorSource(protocolNftMPH));
+export function getProtocolProposalValidator(protocolNftMph: string) {
+  return exportScript(getProtocolProposalV(protocolNftMph));
 }
 
-export function getProjectsATMintingPolicy(protocolNftMPH: string) {
-  return exportScript(getProjectATPolicySource(protocolNftMPH));
+export function getProjectsATMintingPolicy(protocolNftMph: string) {
+  return exportScript(getProjectAt(protocolNftMph));
 }
 
-export function getProtocolStakeValidator(protocolNftMPH: string) {
-  return exportScript(getProtocolStakeSource(protocolNftMPH));
+export function getProtocolStakeValidator(protocolNftMph: string) {
+  return exportScript(getProtocolSv(protocolNftMph));
 }
 
 export function getProjectValidator(
-  projectsAuthTokenMPH: string,
-  protocolNftMPH: string
+  projectsAuthTokenMph: string,
+  protocolNftMph: string
 ) {
-  return exportScript(
-    getProjectValidatorSource({ projectsAuthTokenMPH, protocolNftMPH })
-  );
+  return exportScript(getProjectV({ projectsAuthTokenMph, protocolNftMph }));
 }
 
 export function getProjectDetailValidator(
-  projectsAuthTokenMPH: string,
-  protocolNftMPH: string
+  projectsAuthTokenMph: string,
+  protocolNftMph: string
 ) {
   return exportScript(
-    getProjectDetailValidatorSource({ projectsAuthTokenMPH, protocolNftMPH })
+    getProjectDetailV({ projectsAuthTokenMph, protocolNftMph })
   );
 }
 
 export function getProjectScriptValidator(
-  projectsAuthTokenMPH: string,
-  protocolNftMPH: string
+  projectsAuthTokenMph: string,
+  protocolNftMph: string
 ) {
-  return exportScript(
-    getProjectScriptSource({ projectsAuthTokenMPH, protocolNftMPH })
-  );
+  return exportScript(getProjectV({ projectsAuthTokenMph, protocolNftMph }));
 }
 
 export function getTeikiMintingPolicy(nftTeikiPlantMph: string) {
-  return exportScript(getTeikiPolicySource({ nftTeikiPlantMph }));
+  return exportScript(getTeikiMp({ nftTeikiPlantMph }));
 }
 
 export function getProofOfBackingMintingPolicy(
@@ -75,11 +70,7 @@ export function getProofOfBackingMintingPolicy(
   teikiMph: string
 ) {
   return exportScript(
-    getProofOfBackingPolicy({
-      projectsAuthTokenMph,
-      protocolNftMph,
-      teikiMph,
-    })
+    getProofOfBackingMp({ projectsAuthTokenMph, protocolNftMph, teikiMph })
   );
 }
 
@@ -87,40 +78,28 @@ export function getBackingValidator(
   proofOfBackingMph: string,
   protocolNftMph: string
 ) {
-  return exportScript(
-    getBackingValidatorSource({
-      proofOfBackingMph,
-      protocolNftMph,
-    })
-  );
+  return exportScript(getBackingV({ proofOfBackingMph, protocolNftMph }));
 }
 
 export function getDedicatedTreasuryValidator(
-  projectsAuthTokenMPH: string,
-  protocolNftMPH: string
+  projectsAuthTokenMph: string,
+  protocolNftMph: string
 ) {
   return exportScript(
-    getDedicatedTreasuryValidatorSource({
-      projectsAuthTokenMPH,
-      protocolNftMPH,
-    })
+    getDedicatedTreasuryV({ projectsAuthTokenMph, protocolNftMph })
   );
 }
 
-export function getSharedTreasuryValidator(protocolNftMPH: string) {
-  return exportScript(getOpenTreasuryValidatorSource(protocolNftMPH));
+export function getSharedTreasuryValidator(protocolNftMph: string) {
+  return exportScript(getOpenTreasuryV(protocolNftMph));
 }
 
 export function getOpenTreasuryValidator(
-  projectsAuthTokenMPH: string,
-  protocolNftMPH: string,
-  teikiMPH: string
+  projectsAuthTokenMph: string,
+  protocolNftMph: string,
+  teikiMph: string
 ) {
   return exportScript(
-    getSharedTreasuryValidatorSource({
-      projectsAuthTokenMPH,
-      protocolNftMPH,
-      teikiMPH,
-    })
+    getSharedTreasuryV({ projectsAuthTokenMph, protocolNftMph, teikiMph })
   );
 }

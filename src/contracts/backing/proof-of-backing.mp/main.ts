@@ -21,13 +21,13 @@ export default function main({
       to_fruit
     } from proof_of_backing_types
     import { Datum as BackingDatum } from v__backing__types
-    import { Datum as ProjectDatum } from project_validator_types
-    import { Datum as ProjectScriptDatum } from project_script_types
-    import { Datum as PParamsDatum } from protocol_params_types
+    import { Datum as ProjectDatum } from v__project__types
+    import { Datum as ProjectScriptDatum } from v__project_script__types
+    import { Datum as PParamsDatum } from v__protocol_params__types
     import {
       Datum as SharedTreasuryDatum,
       Redeemer as SharedTreasuryRedeemer
-    } from shared_treasury_types
+    } from v__shared_treasury__types
     import { UserTag } from common__types
 
     import {

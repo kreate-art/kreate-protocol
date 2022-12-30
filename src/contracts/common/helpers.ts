@@ -3,7 +3,7 @@ import { helios } from "../program";
 export default helios`
   module helpers
 
-  import { Datum as PParamsDatum } from protocol_params_types
+  import { Datum as PParamsDatum } from v__protocol_params__types
   import {
     TokenPredicate,
     MintingPredicate,

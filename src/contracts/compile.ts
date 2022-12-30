@@ -13,16 +13,16 @@ import modTeikiPlantNftTypes from "./meta-protocol/teiki-plant.nft/types";
 import modTeikiPlantVTypes from "./meta-protocol/teiki-plant.v/types";
 import modTeikiMpTypes from "./meta-protocol/teiki.mp/types";
 import { HeliosSource, newProgram } from "./program";
-import { hlProjectATTypesSource } from "./project/ProjectAT/types";
-import { hlProjectDetailTypesSource } from "./project/ProjectDetail/types";
-import { hlProjectScriptTypesSource } from "./project/ProjectScript/types";
-import { hlProjectValidatorTypesSource } from "./project/ProjectValidator/types";
-import { hlPNftTypesSource } from "./protocol/Nfts/types";
-import { hlPParamsTypesSource } from "./protocol/ParamsValidator/types";
-import { hlPProposalTypesSource } from "./protocol/ProposalValidator/types";
-import { hlDedicatedTreasuryTypesSource } from "./treasury/DedicatedTreasury/types";
-import { hlOpenTreasuryTypesSource } from "./treasury/OpenTreasury/types";
-import { hlSharedTreasuryTypesSource } from "./treasury/SharedTreasury/types";
+import { hlProjectDetailTypesSource } from "./project/project-detail.v/types";
+import { hlProjectScriptTypesSource } from "./project/project-script.v/types";
+import { hlProjectATTypesSource } from "./project/project.at/types";
+import { hlProjectValidatorTypesSource } from "./project/project.v/types";
+import { hlPParamsTypesSource } from "./protocol/protocol-params.v/types";
+import { hlPProposalTypesSource } from "./protocol/protocol-proposal.v/types";
+import { hlPNftTypesSource } from "./protocol/protocol.nft/types";
+import { hlDedicatedTreasuryTypesSource } from "./treasury/dedicated-treasury.v/types";
+import { hlOpenTreasuryTypesSource } from "./treasury/open-treasury.v/types";
+import { hlSharedTreasuryTypesSource } from "./treasury/shared-treasury.v/types";
 
 const SIMPLIFY = false; // Development
 
@@ -52,10 +52,17 @@ export default function compile(
   main: HeliosSource,
   parameters?: Record<string, Data>
 ) {
+  return bytesToHex(toUplcProgram(main, parameters).toCbor());
+}
+
+export function toUplcProgram(
+  main: HeliosSource,
+  parameters?: Record<string, Data>
+) {
   const program = newProgram(main, COMMON_HELIOS_MODULES);
   if (parameters)
     Object.entries(parameters).forEach(([name, value]) =>
       program.changeParam(name, toJson(value))
     );
-  return bytesToHex(program.compile(SIMPLIFY).toCbor());
+  return program.compile(SIMPLIFY);
 }
