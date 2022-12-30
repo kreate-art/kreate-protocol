@@ -1,4 +1,12 @@
-import { Blockfrost, Lucid, Network, Script, TxComplete } from "lucid-cardano";
+import {
+  Address,
+  Blockfrost,
+  Lucid,
+  Network,
+  Script,
+  TxComplete,
+  getAddressDetails,
+} from "lucid-cardano";
 
 import compileScript from "@/contracts/compile";
 import { HeliosSource } from "@/contracts/program";
@@ -38,4 +46,11 @@ export function exportScript(main: HeliosSource): Script {
     type: "PlutusV2" as const,
     script: compileScript(main),
   };
+}
+
+export function getPaymentKeyHash(address: Address): Hex {
+  const addressDetails = getAddressDetails(address);
+  if (!addressDetails.paymentCredential)
+    throw new Error("Cannot extract payment key hash from address");
+  return addressDetails.paymentCredential.hash;
 }
