@@ -1,34 +1,53 @@
-import { Data, Lucid, PaymentKeyHash, Redeemer, UTxO } from "lucid-cardano";
+import { Lucid, toHex, UTxO } from "lucid-cardano";
 
-export type CancelTxParams = {
+import * as S from "@/schema";
+import {
+  ProtocolParamsDatum,
+  ProtocolProposalDatum,
+  ProtocolProposalRedeemer,
+} from "@/schema/teiki/protocol";
+import { assert } from "@/utils";
+
+export type CancelProtocolTxParams = {
   protocolParamsUtxo: UTxO;
   protocolProposalUtxo: UTxO;
-  protocolScriptUtxo: UTxO;
-  protocolGovernorPkh: PaymentKeyHash;
+  protocolProposalScriptUtxo: UTxO;
 };
 
-export function cancelProposalTx(
+export function cancelProtocolProposalTx(
   lucid: Lucid,
   {
     protocolParamsUtxo,
     protocolProposalUtxo,
-    protocolScriptUtxo,
-    protocolGovernorPkh,
-  }: CancelTxParams
+    protocolProposalScriptUtxo,
+  }: CancelProtocolTxParams
 ) {
-  // TODO: @sk-umiuma: Implement this
-  const redeemer: Redeemer = Data.empty();
+  assert(protocolParamsUtxo.datum, "Protocol params utxo must have datum");
+  const protocolParamsDatum: ProtocolParamsDatum = S.fromData(
+    S.fromCbor(protocolParamsUtxo.datum),
+    ProtocolParamsDatum
+  );
 
-  const tx = lucid
+  assert(
+    protocolParamsDatum.governorAddress.paymentCredential.paymentType ===
+      "PubKey",
+    "Governor address must have a public-key hash credential"
+  );
+  const protocolGovernorPkh = toHex(
+    protocolParamsDatum.governorAddress.paymentCredential.$.pubKeyHash.$hash
+  );
+
+  return lucid
     .newTx()
-    .addSigner(protocolGovernorPkh)
-    .readFrom([protocolParamsUtxo, protocolScriptUtxo])
-    .collectFrom([protocolProposalUtxo], redeemer)
+    .addSignerKey(protocolGovernorPkh)
+    .readFrom([protocolParamsUtxo, protocolProposalScriptUtxo])
+    .collectFrom(
+      [protocolProposalUtxo],
+      S.toCbor(S.toData({ case: "Cancel" }, ProtocolProposalRedeemer))
+    )
     .payToContract(
       protocolProposalUtxo.address,
-      { inline: Data.empty() },
+      { inline: S.toCbor(S.toData({ inner: null }, ProtocolProposalDatum)) },
       protocolProposalUtxo.assets
     );
-
-  return tx;
 }
