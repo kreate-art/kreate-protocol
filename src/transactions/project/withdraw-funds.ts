@@ -67,11 +67,11 @@ export function withdrawFundsTx(
   const isNewMilestoneReached = milestone > projectDatum.milestoneReached;
 
   // TODO: @sk-umiuma: Implement this
-  const dedicatedTreasuryRedeemer: Redeemer = Data.empty();
+  const dedicatedTreasuryRedeemer: Redeemer = Data.void();
   // TODO: @sk-umiuma: Implement this
-  const projectDetailRedeemer: Redeemer = Data.empty();
+  const projectDetailRedeemer: Redeemer = Data.void();
   // TODO: @sk-umiuma: Implement this
-  const stakingScriptRedeemer: Redeemer = Data.empty();
+  const stakingScriptRedeemer: Redeemer = Data.void();
 
   let tx = lucid
     .newTx()
@@ -85,37 +85,37 @@ export function withdrawFundsTx(
     .collectFrom([projectDetailUtxo], projectDetailRedeemer)
     .payToContract(
       projectDetailUtxo.address,
-      { inline: Data.empty() }, // FIXME:
+      { inline: Data.void() }, // FIXME:
       projectDetailUtxo.assets
     );
 
   if (isNewMilestoneReached) {
     // TODO: @sk-umiuma: Implement this
-    const projectRedeemer: Redeemer = Data.empty();
+    const projectRedeemer: Redeemer = Data.void();
     tx = tx
       .collectFrom([projectUtxo], projectRedeemer)
       .payToContract(
         projectUtxo.address,
-        { inline: Data.empty() }, // FIXME:
+        { inline: Data.void() }, // FIXME:
         projectUtxo.assets
       )
       .payToContract(
         dedicatedTreasuryUtxo.address,
-        { inline: Data.empty() }, // FIXME:
+        { inline: Data.void() }, // FIXME:
         { lovelace: dedicatedTreasuryUtxo.assets.lovelace + fees }
       );
 
     for (let i = 0; i < protocolParamsDatum.minTreasuryPerMilestoneEvent; ++i) {
       tx = tx.payToContract(
         sharedTreasuryAddress,
-        { inline: Data.empty() }, // FIXME:
+        { inline: Data.void() }, // FIXME:
         { lovelace: TREASURY_UTXO_MIN_ADA }
       );
     }
   } else {
     tx = tx.readFrom([projectUtxo]).payToContract(
       dedicatedTreasuryUtxo.address,
-      { inline: Data.empty() }, // FIXME:
+      { inline: Data.void() }, // FIXME:
       { lovelace: dedicatedTreasuryUtxo.assets.lovelace + fees }
     );
   }
@@ -130,7 +130,7 @@ export function withdrawFundsTx(
 
     tx = tx.payToContract(
       "", // FIXME:
-      { inline: Data.empty() }, // FIXME:
+      { inline: Data.void() }, // FIXME:
       { lovelace: totalWithdrawal - fees - discount }
     );
   }

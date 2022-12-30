@@ -20,5 +20,5 @@ export function reclaimProtocolScriptTx(
   return lucid
     .newTx()
     .addSignerKey(protocolGovernorPkh)
-    .collectFrom(reclaimUtxos, Data.empty());
+    .collectFrom(reclaimUtxos, Data.void());
 }

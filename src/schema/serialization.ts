@@ -1,13 +1,6 @@
 // Heavily influenced by https://github.com/spacebudz/lucid/blob/main/src/plutus/data.ts
 import { Kind, TProperties } from "@sinclair/typebox";
-import {
-  Constr,
-  Data,
-  fromHex,
-  hexToUtf8,
-  toHex,
-  utf8ToHex,
-} from "lucid-cardano";
+import { Constr, Data, fromHex, toText, toHex, fromText } from "lucid-cardano";
 
 import { CborHex } from "@/types";
 import { assert } from "@/utils";
@@ -35,7 +28,7 @@ export function toData<T>(self: T, schema: TUplc): Data {
       return new Constr(self ? 1 : 0, []);
     case "String":
       assert(typeof self === "string", "self must be string");
-      return utf8ToHex(self); // TODO: Weird as hell...
+      return fromText(self); // TODO: Weird as hell...
     case "Uint8Array":
       assert(self instanceof Uint8Array, "self must be Uint8Array");
       return toHex(self); // TODO: Unneeded conversion...
@@ -104,7 +97,7 @@ export function fromData<T>(data: Data, schema: TUplc): T {
       else throw new Error(`invalid Constr index for boolean: ${data.index}`);
     case "String":
       assert(typeof data === "string", "data must be string (for string)");
-      return hexToUtf8(data) as T; // TODO: Weird as hell...
+      return toText(data) as T; // TODO: Weird as hell...
     case "Uint8Array":
       assert(typeof data === "string", "data must be string (for UInt8Array)");
       return fromHex(data) as T; // TODO: Unneeded conversion...

@@ -37,7 +37,7 @@ export function deployScriptsTx(
       (tx, script) =>
         tx.payToContract(
           deployAddress,
-          { inline: Data.empty(), scriptRef: script },
+          { inline: Data.void(), scriptRef: script },
           {}
         ),
       lucid.newTx()

@@ -48,9 +48,9 @@ export function allocateStakingTx(
   const actorPkh = ""; // FIXME:
 
   // TODO: sk-umiuma: Implement this
-  const projectRedeemer = Data.empty();
+  const projectRedeemer = Data.void();
   // TODO: sk-umiuma: Implement this
-  const projectScriptATRedeemer = Data.empty();
+  const projectScriptATRedeemer = Data.void();
 
   return lucid
     .newTx()
@@ -61,7 +61,7 @@ export function allocateStakingTx(
       projectUtxo.address,
       {
         scriptRef: projectStakeValidator,
-        inline: Data.empty(), // FIXME:
+        inline: Data.void(), // FIXME:
       },
       {
         [projectScriptATUnit]: 1n,
