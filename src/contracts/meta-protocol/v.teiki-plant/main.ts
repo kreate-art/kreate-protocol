@@ -60,7 +60,7 @@ export default function main(teikiPlantNftMph: string): HeliosSource {
 
     func is_teiki_plant_value_preserved(value: Value) -> Bool {
       value.to_map().all(
-        (mph: MintingPolicyHash, tokens: Map[ByteArray]Int): Bool -> {
+        (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
           if (mph == ADA_MINTING_POLICY_HASH) { true }
           else if (mph == TEIKI_PLANT_NFT_MPH) { tokens == Map[ByteArray]Int {TEIKI_PLANT_NFT_TOKEN_NAME: 1} }
           else { false }

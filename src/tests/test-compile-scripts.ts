@@ -1,5 +1,8 @@
 import { getBackingValidatorSource } from "@/contracts/backing/BackingValidator/script";
 import { getProofOfBackingPolicySource } from "@/contracts/backing/ProofOfBacking/script";
+import getTeikiPolicySource from "@/contracts/meta-protocol/mp.teiki/main";
+import getTeikiPlantNftSource from "@/contracts/meta-protocol/nft.teiki-plant/main";
+import getTeikiPlantValidatorSource from "@/contracts/meta-protocol/v.teiki-plant/main";
 import { HeliosSource } from "@/contracts/program";
 import { getProjectATPolicySource } from "@/contracts/project/ProjectAT/script";
 import { getProjectDetailValidatorSource } from "@/contracts/project/ProjectDetail/script";
@@ -106,3 +109,20 @@ printScript(
 );
 
 printScript(getOpenTreasuryValidatorSource(""), "open treasury validator");
+
+printScript(
+  getTeikiPolicySource({ nftTeikiPlantMph: "" }),
+  "teiki minting policy"
+);
+
+printScript(
+  getTeikiPlantNftSource({
+    teikiPlantSeed: {
+      txHash: "",
+      outputIndex: 1,
+    },
+  }),
+  "teiki-plant nft minting policy"
+);
+
+printScript(getTeikiPlantValidatorSource(""), "teiki-plant validator");
