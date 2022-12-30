@@ -4,14 +4,12 @@ export type Params = {
   projectsAuthTokenMph: string;
   protocolNftMph: string;
   teikiMph: string;
-  treasuryAuthTokenMph: string;
 };
 
 export default function main({
   projectsAuthTokenMph,
   protocolNftMph,
   teikiMph,
-  treasuryAuthTokenMph,
 }: Params) {
   return helios`
     minting mp__proof_of_backing
@@ -22,7 +20,7 @@ export default function main({
       PlantAccumulator,
       to_fruit
     } from proof_of_backing_types
-    import { Datum as BackingDatum } from backing_validator_types
+    import { Datum as BackingDatum } from v__backing__types
     import { Datum as ProjectDatum } from project_validator_types
     import { Datum as ProjectScriptDatum } from project_script_types
     import { Datum as PParamsDatum } from protocol_params_types
@@ -39,11 +37,9 @@ export default function main({
     } from helpers
 
     import {
-      DEDICATED_TREASURY_AT_TOKEN_NAME,
       INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS,
       PROJECT_AT_TOKEN_NAME,
       PROJECT_SCRIPT_AT_TOKEN_NAME,
-      SHARED_TREASURY_AT_TOKEN_NAME,
       TEIKI_TOKEN_NAME
     } from constants
 
@@ -64,15 +60,6 @@ export default function main({
 
     const TEIKI_ASSET_CLASS: AssetClass =
       AssetClass::new(TEIKI_MPH, TEIKI_TOKEN_NAME)
-
-    const TREASURY_AT_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${treasuryAuthTokenMph})
-
-    const SHARED_TREASURY_ASSET_CLASS: AssetClass =
-      AssetClass::new(TREASURY_AT_MPH, SHARED_TREASURY_AT_TOKEN_NAME)
-
-    const DEDICATED_TREASURY_ASSET_CLASS: AssetClass =
-      AssetClass::new(TREASURY_AT_MPH, DEDICATED_TREASURY_AT_TOKEN_NAME)
 
     func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
@@ -325,21 +312,30 @@ export default function main({
                 if (plant_accumulator.total_teiki_rewards > 0) {
                   total_teiki_rewards: Int = plant_accumulator.total_teiki_rewards;
 
+                  shared_treasury_credential: Credential =
+                    Credential::new_validator(
+                      pparams_datum.registry
+                        .shared_treasury_validator
+                        .latest
+                    );
+
                   shared_treasury_txinput: TxInput =
                     tx.inputs.find(
                       (input: TxInput) -> Bool {
-                        input.output.value.get_safe(SHARED_TREASURY_ASSET_CLASS) == 1
+                        input_credential: Credential = input.output.address.credential;
+
+                        if (input_credential == shared_treasury_credential) {
+                            input.output.datum.switch {
+                              i: Inline =>
+                                SharedTreasuryDatum::from_data(i.data).project_id
+                                  == project_id,
+                              else => false
+                            }
+                        } else {
+                          false
+                        }
                       }
                     );
-
-                  shared_treasury_datum: SharedTreasuryDatum =
-                    shared_treasury_txinput.output.datum.switch {
-                      i: Inline => SharedTreasuryDatum::from_data(i.data),
-                      else => error("Invalid shared treasury UTxO: missing inline datum")
-                    };
-
-                  does_project_id_match: Bool =
-                    shared_treasury_datum.project_id == project_id;
 
                   treasury_script_purpose: ScriptPurpose =
                     ScriptPurpose::new_spending(shared_treasury_txinput.output_id);
@@ -372,8 +368,7 @@ export default function main({
 
                   teiki_minted: Int = tx.minted.get_safe(TEIKI_ASSET_CLASS);
 
-                  does_project_id_match
-                    && does_update_teiki_reward_correctly
+                  does_update_teiki_reward_correctly
                     && ( teiki_minted == teiki_mint
                     || teiki_minted == 0 - teiki_mint)
                 } else {

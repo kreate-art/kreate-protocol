@@ -39,7 +39,6 @@ printScript(
     projectsAuthTokenMph: "",
     protocolNftMph: "",
     teikiMph: "",
-    treasuryAuthTokenMph: "",
   }),
   "proof of backing policy"
 );

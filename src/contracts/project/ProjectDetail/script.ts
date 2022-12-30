@@ -381,16 +381,16 @@ export function getProjectDetailValidatorSource({
 
           min_total_fees: Int = update_sponsor_fee + update_info_fee + update_community_fee;
 
+          dedicated_treasury_credential: Credential =
+            Credential::new_validator(
+              pparams_datum.registry
+                .dedicated_treasury_validator
+                .latest
+            );
+
           dedicated_treasury_input: TxInput =
             tx.inputs.find(
               (input: TxInput) -> Bool {
-                dedicated_treasury_credential: Credential =
-                  Credential::new_validator(
-                    pparams_datum.registry
-                      .dedicated_treasury_validator
-                      .latest
-                  );
-
                 input_credential: Credential = input.output.address.credential;
 
                 if (input_credential == dedicated_treasury_credential) {
