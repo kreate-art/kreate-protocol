@@ -34,7 +34,7 @@ export function getProtocolProposalValidatorSource(
     }
 
     func is_datum_none(datum: Datum) -> Bool {
-      datum.inner.switch {
+      datum.proposal.switch {
         None => true,
         else => false
       }
@@ -68,14 +68,14 @@ export function getProtocolProposalValidatorSource(
         && are_proposal_output_value_and_address_valid(own_input_txout, own_output_txout)
         && redeemer.switch {
             Propose => {
-              output_proposal: Proposal = own_output_datum.inner.unwrap();
+              output_proposal: Proposal = own_output_datum.proposal.unwrap();
 
               output_proposal.in_effect_at > tx.time_range.end + pparams_datum.proposal_waiting_period
                 && output_proposal.base == pparams_txinput.output_id
 
             },
             Apply => {
-              proposal: Proposal = datum.inner.unwrap();
+              proposal: Proposal = datum.proposal.unwrap();
 
               output_pparams_txout: TxOutput =
                 tx.outputs.find(

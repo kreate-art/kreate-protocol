@@ -45,7 +45,7 @@ export function proposeProtocolProposalTx(
   const txTimeEnd = Date.now() + txTimePadding;
 
   const protocolProposalDatum: ProtocolProposalDatum = {
-    inner: {
+    proposal: {
       inEffectAt: {
         timestamp:
           BigInt(txTimeEnd) +

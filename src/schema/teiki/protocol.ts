@@ -67,7 +67,7 @@ export const ProtocolProposal = Struct({
 export type ProtocolProposal = Static<typeof ProtocolProposal>;
 
 export const ProtocolProposalDatum = Struct({
-  inner: Option(ProtocolProposal),
+  proposal: Option(ProtocolProposal),
 });
 export type ProtocolProposalDatum = Static<typeof ProtocolProposalDatum>;
 
