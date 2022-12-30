@@ -34,13 +34,11 @@ export function compileProtocolProposalVScript(
   return compile(getProtocolProposalV(protocolNftMph));
 }
 
-export function compileProjectsATMpScript(protocolNftMph: string): UplcProgram {
+export function compileProjectsAtScript(protocolNftMph: string): UplcProgram {
   return compile(getProjectAt(protocolNftMph));
 }
 
-export function compileProtocolStakeVScript(
-  protocolNftMph: string
-): UplcProgram {
+export function compileProtocolSvScript(protocolNftMph: string): UplcProgram {
   return compile(getProtocolSv(protocolNftMph));
 }
 
