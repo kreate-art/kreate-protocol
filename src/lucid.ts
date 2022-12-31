@@ -3,13 +3,10 @@ import {
   Blockfrost,
   Lucid,
   Network,
-  Script,
   TxComplete,
   getAddressDetails,
 } from "lucid-cardano";
 
-import compileScript from "@/contracts/compile";
-import { HeliosSource } from "@/contracts/program";
 import { Hex } from "@/types";
 
 function requiredEnv(key: string): string {
@@ -39,13 +36,6 @@ export async function signAndSubmit(tx: TxComplete): Promise<Hex> {
   const signedTx = await tx.sign().complete();
   const txId = await signedTx.submit();
   return txId;
-}
-
-export function exportScript(main: HeliosSource): Script {
-  return {
-    type: "PlutusV2" as const,
-    script: compileScript(main),
-  };
 }
 
 export function getPaymentKeyHash(address: Address): Hex {

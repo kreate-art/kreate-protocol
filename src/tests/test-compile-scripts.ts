@@ -1,5 +1,6 @@
 import getBackingV from "@/contracts/backing/backing.v/main";
 import getProofOfBackingMp from "@/contracts/backing/proof-of-backing.mp/main";
+import { compile, exportScript } from "@/contracts/compile";
 import getTeikiPlantNft from "@/contracts/meta-protocol/teiki-plant.nft/main";
 import getTeikiPlantV from "@/contracts/meta-protocol/teiki-plant.v/main";
 import getTeikiMp from "@/contracts/meta-protocol/teiki.mp/main";
@@ -17,11 +18,9 @@ import getDedicatedTreasuryV from "@/contracts/treasury/dedicated-treasury.v/mai
 import getOpenTreasuryV from "@/contracts/treasury/open-treasury.v/main";
 import getSharedTreasuryV from "@/contracts/treasury/shared-treasury.v/main";
 
-import { exportScript } from "../lucid";
-
 function printScript(source: HeliosSource, scriptName: string) {
   console.log("test compile script :>>", scriptName);
-  const script = exportScript(source);
+  const script = exportScript(compile(source));
 
   console.log("script :>>", script);
 }

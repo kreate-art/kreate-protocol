@@ -1,7 +1,8 @@
-import { bytesToHex } from "@hyperionbt/helios";
-import { Data } from "lucid-cardano";
+import { UplcProgram, bytesToHex } from "@hyperionbt/helios";
+import { Data, Script } from "lucid-cardano";
 
 import { toJson } from "@/schema";
+import { CborHex } from "@/types";
 
 import modBackingVTypes from "./backing/backing.v/types";
 import modProofOfBackingMpTypes from "./backing/proof-of-backing.mp/types";
@@ -48,21 +49,25 @@ const COMMON_HELIOS_MODULES = [
   hlSharedTreasuryTypesSource,
 ];
 
-export default function compile(
+export function compile(
   main: HeliosSource,
   parameters?: Record<string, Data>
-) {
-  return bytesToHex(toUplcProgram(main, parameters).toCbor());
-}
-
-export function toUplcProgram(
-  main: HeliosSource,
-  parameters?: Record<string, Data>
-) {
+): UplcProgram {
   const program = newProgram(main, COMMON_HELIOS_MODULES);
   if (parameters)
     Object.entries(parameters).forEach(([name, value]) =>
       program.changeParam(name, toJson(value))
     );
   return program.compile(SIMPLIFY);
+}
+
+export function exportScript(uplcProgram: UplcProgram): Script {
+  return {
+    type: "PlutusV2" as const,
+    script: serialize(uplcProgram),
+  };
+}
+
+export function serialize(uplcProgram: UplcProgram): CborHex {
+  return bytesToHex(uplcProgram.toCbor());
 }
