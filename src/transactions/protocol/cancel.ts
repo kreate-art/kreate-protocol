@@ -25,13 +25,13 @@ export function cancelProtocolProposalTx(
   }: CancelProtocolTxParams
 ) {
   assert(protocolParamsUtxo.datum, "Protocol params utxo must have datum");
-  const protocolParamsDatum: ProtocolParamsDatum = S.fromData(
+  const protocolParams = S.fromData(
     S.fromCbor(protocolParamsUtxo.datum),
     ProtocolParamsDatum
   );
 
   const protocolGovernorPkh = extractPaymentPubKeyHash(
-    protocolParamsDatum.governorAddress
+    protocolParams.governorAddress
   );
 
   return lucid

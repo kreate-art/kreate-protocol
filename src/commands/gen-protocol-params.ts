@@ -49,7 +49,7 @@ export function getProtocolRegistryScript(
     exportScript(compileProjectsAtScript(protocolNftMph))
   );
 
-  const teikiMPH = lucid.utils.validatorToScriptHash(
+  const teikiMph = lucid.utils.validatorToScriptHash(
     exportScript(compileTeikiMpScript(teikiPlantNftMph))
   );
 
@@ -58,7 +58,7 @@ export function getProtocolRegistryScript(
       compileProofOfBackingMpScript(
         projectsAuthTokenMph,
         protocolNftMph,
-        teikiMPH
+        teikiMph
       )
     )
   );
@@ -96,7 +96,7 @@ export function getProtocolRegistryScript(
         compileOpenTreasuryVScript(
           projectsAuthTokenMph,
           protocolNftMph,
-          teikiMPH
+          teikiMph
         )
       )
     ),
