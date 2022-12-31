@@ -10,11 +10,13 @@ import getProjectAt from "@/contracts/project/project.at/main";
 import getProjectV from "@/contracts/project/project.v/main";
 import getProtocolParamsV from "@/contracts/protocol/protocol-params.v/main";
 import getProtocolProposalV from "@/contracts/protocol/protocol-proposal.v/main";
+import getProtocolScriptV from "@/contracts/protocol/protocol-script.v/main";
 import getProtocolNft from "@/contracts/protocol/protocol.nft/main";
 import getProtocolSv from "@/contracts/protocol/protocol.sv/main";
 import getDedicatedTreasuryV from "@/contracts/treasury/dedicated-treasury.v/main";
 import getOpenTreasuryV from "@/contracts/treasury/open-treasury.v/main";
 import getSharedTreasuryV from "@/contracts/treasury/shared-treasury.v/main";
+import { Hex } from "@/types";
 
 // TODO: @sk-saru, @sk-umiuma: Use Hex for all those script hash params,
 // both this file and the contracts.
@@ -23,55 +25,57 @@ export function compileProtocolNftScript(seedUtxo: UTxO): UplcProgram {
   return compile(getProtocolNft({ protocolSeed: seedUtxo }));
 }
 
-export function compileProtocolParamsVScript(
-  protocolNftMph: string
-): UplcProgram {
+export function compileProtocolParamsVScript(protocolNftMph: Hex): UplcProgram {
   return compile(getProtocolParamsV(protocolNftMph));
 }
 
+export function compileProtocolScriptVScript(protocolNftMph: Hex): UplcProgram {
+  return compile(getProtocolScriptV(protocolNftMph));
+}
+
 export function compileProtocolProposalVScript(
-  protocolNftMph: string
+  protocolNftMph: Hex
 ): UplcProgram {
   return compile(getProtocolProposalV(protocolNftMph));
 }
 
-export function compileProjectsAtScript(protocolNftMph: string): UplcProgram {
+export function compileProjectsAtScript(protocolNftMph: Hex): UplcProgram {
   return compile(getProjectAt(protocolNftMph));
 }
 
-export function compileProtocolSvScript(protocolNftMph: string): UplcProgram {
+export function compileProtocolSvScript(protocolNftMph: Hex): UplcProgram {
   return compile(getProtocolSv(protocolNftMph));
 }
 
 export function compileProjectVScript(
-  projectsAuthTokenMph: string,
-  protocolNftMph: string
+  projectsAuthTokenMph: Hex,
+  protocolNftMph: Hex
 ): UplcProgram {
   return compile(getProjectV({ projectsAuthTokenMph, protocolNftMph }));
 }
 
 export function compileProjectDetailVScript(
-  projectsAuthTokenMph: string,
-  protocolNftMph: string
+  projectsAuthTokenMph: Hex,
+  protocolNftMph: Hex
 ): UplcProgram {
   return compile(getProjectDetailV({ projectsAuthTokenMph, protocolNftMph }));
 }
 
 export function compileProjectScriptVScript(
-  projectsAuthTokenMph: string,
-  protocolNftMph: string
+  projectsAuthTokenMph: Hex,
+  protocolNftMph: Hex
 ): UplcProgram {
   return compile(getProjectV({ projectsAuthTokenMph, protocolNftMph }));
 }
 
-export function compileTeikiMpScript(nftTeikiPlantMph: string): UplcProgram {
+export function compileTeikiMpScript(nftTeikiPlantMph: Hex): UplcProgram {
   return compile(getTeikiMp({ nftTeikiPlantMph }));
 }
 
 export function compileProofOfBackingMpScript(
-  projectsAuthTokenMph: string,
-  protocolNftMph: string,
-  teikiMph: string
+  projectsAuthTokenMph: Hex,
+  protocolNftMph: Hex,
+  teikiMph: Hex
 ): UplcProgram {
   return compile(
     getProofOfBackingMp({ projectsAuthTokenMph, protocolNftMph, teikiMph })
@@ -79,31 +83,29 @@ export function compileProofOfBackingMpScript(
 }
 
 export function compileBackingVScript(
-  proofOfBackingMph: string,
-  protocolNftMph: string
+  proofOfBackingMph: Hex,
+  protocolNftMph: Hex
 ): UplcProgram {
   return compile(getBackingV({ proofOfBackingMph, protocolNftMph }));
 }
 
 export function compileDedicatedTreasuryVScript(
-  projectsAuthTokenMph: string,
-  protocolNftMph: string
+  projectsAuthTokenMph: Hex,
+  protocolNftMph: Hex
 ): UplcProgram {
   return compile(
     getDedicatedTreasuryV({ projectsAuthTokenMph, protocolNftMph })
   );
 }
 
-export function compileSharedTreasuryVScript(
-  protocolNftMph: string
-): UplcProgram {
+export function compileSharedTreasuryVScript(protocolNftMph: Hex): UplcProgram {
   return compile(getOpenTreasuryV(protocolNftMph));
 }
 
 export function compileOpenTreasuryVScript(
-  projectsAuthTokenMph: string,
-  protocolNftMph: string,
-  teikiMph: string
+  projectsAuthTokenMph: Hex,
+  protocolNftMph: Hex,
+  teikiMph: Hex
 ): UplcProgram {
   return compile(
     getSharedTreasuryV({ projectsAuthTokenMph, protocolNftMph, teikiMph })

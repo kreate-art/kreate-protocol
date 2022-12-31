@@ -4,8 +4,10 @@ import {
   DatumHash,
   Emulator,
   generateSeedPhrase,
+  KeyHash,
   Lucid,
   OutRef,
+  ScriptHash,
   toHex,
   UTxO,
 } from "lucid-cardano";
@@ -15,6 +17,14 @@ import { assert } from "@/utils";
 type Crypto = {
   getRandomValues<T extends ArrayBufferView | null>(array: T): T;
 };
+
+function loadCrypto(): Crypto {
+  // global.crypto is loaded by Lucid
+  const crypto = (global as unknown as Record<"crypto", Crypto | undefined>)
+    .crypto;
+  assert(crypto, "global.crypto is not loaded");
+  return crypto;
+}
 
 async function headlessLucid(): Promise<Lucid> {
   return Lucid.new(undefined, "Custom");
@@ -36,12 +46,8 @@ export async function generateAccount(assets?: Assets) {
 }
 
 export function generateOutRef(): OutRef {
-  // global.crypto is loaded by Lucid
-  const crypto = (global as unknown as Record<"crypto", Crypto | undefined>)
-    .crypto;
-  assert(crypto, "global.crypto is not loaded");
   // 32 bytes for txHash, 1 byte for outputIndex
-  const bytes = crypto.getRandomValues(new Uint8Array(33));
+  const bytes = loadCrypto().getRandomValues(new Uint8Array(33));
   const txHash = toHex(bytes.slice(0, 32));
   const outputIndex = bytes[32];
   return { txHash, outputIndex };
@@ -99,4 +105,8 @@ export function attachDatums(
 ): Emulator {
   emulator.datumTable = { ...emulator.datumTable, ...datums };
   return emulator;
+}
+
+export function generateBlake2b224Hash(): KeyHash | ScriptHash {
+  return toHex(loadCrypto().getRandomValues(new Uint8Array(28)));
 }

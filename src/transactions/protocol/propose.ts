@@ -34,13 +34,13 @@ export function proposeProtocolProposalTx(
   }: ProposeProtocolTxParams
 ) {
   assert(protocolParamsUtxo.datum, "Protocol params utxo must have datum");
-  const protocolParamsDatum: ProtocolParamsDatum = S.fromData(
+  const protocolParams = S.fromData(
     S.fromCbor(protocolParamsUtxo.datum),
     ProtocolParamsDatum
   );
 
   const protocolGovernorPkh = extractPaymentPubKeyHash(
-    protocolParamsDatum.governorAddress
+    protocolParams.governorAddress
   );
 
   const txTimeEnd = getCurrentTime(lucid) + txTimePadding;
@@ -50,7 +50,7 @@ export function proposeProtocolProposalTx(
       inEffectAt: {
         timestamp:
           BigInt(txTimeEnd) +
-          protocolParamsDatum.proposalWaitingPeriod.milliseconds +
+          protocolParams.proposalWaitingPeriod.milliseconds +
           1n,
       },
       base: constructTxOutputId(protocolParamsUtxo),
