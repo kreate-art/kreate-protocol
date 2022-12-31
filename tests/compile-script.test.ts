@@ -2,10 +2,11 @@ import { bytesToHex } from "@hyperionbt/helios";
 
 import getBackingV from "@/contracts/backing/backing.v/main";
 import getProofOfBackingMp from "@/contracts/backing/proof-of-backing.mp/main";
-import { toUplcProgram } from "@/contracts/compile";
+import { compile } from "@/contracts/compile";
 import getTeikiPlantNft from "@/contracts/meta-protocol/teiki-plant.nft/main";
 import getTeikiPlantV from "@/contracts/meta-protocol/teiki-plant.v/main";
 import getTeikiMp from "@/contracts/meta-protocol/teiki.mp/main";
+import { HeliosSource } from "@/contracts/program";
 import getProjectDetailV from "@/contracts/project/project-detail.v/main";
 import getProjectScriptV from "@/contracts/project/project-script.v/main";
 import getProjectAt from "@/contracts/project/project.at/main";
@@ -20,141 +21,84 @@ import getDedicatedTreasuryV from "@/contracts/treasury/dedicated-treasury.v/mai
 import getOpenTreasuryV from "@/contracts/treasury/open-treasury.v/main";
 import getSharedTreasuryV from "@/contracts/treasury/shared-treasury.v/main";
 
+function testCompileScript(scriptName: string, main: HeliosSource) {
+  const uplcProgram = compile(main);
+  expect(uplcProgram.serialize().length > 0).toBe(true);
+  console.log(
+    `${scriptName} -  ${uplcProgram.calcSize()} | ${bytesToHex(
+      uplcProgram.hash()
+    )}`
+  );
+}
+
 describe("Meta-Protocol", () => {
   test("NFT | Teiki Plant", () => {
-    const uplcProgram = toUplcProgram(
+    testCompileScript(
+      "NFT | Teiki Plant",
       getTeikiPlantNft({ teikiPlantSeed: { txHash: "", outputIndex: 1 } })
-    );
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `NFT | Teiki Plant -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
     );
   });
 
   test("V | Teiki Plant", () => {
-    const uplcProgram = toUplcProgram(getTeikiPlantV(""));
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `V | Teiki Plant -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
-    );
+    testCompileScript("V | Teiki Plant", getTeikiPlantV(""));
   });
 
   test("MP | Teiki", () => {
-    const uplcProgram = toUplcProgram(getTeikiMp({ nftTeikiPlantMph: "" }));
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `MP | Teiki -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
-    );
+    testCompileScript("MP | Teiki", getTeikiMp({ nftTeikiPlantMph: "" }));
   });
 });
 
 describe("Protocol", () => {
   test("NFT | Protocol", () => {
-    const uplcProgram = toUplcProgram(getProtocolNft("", "0"));
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `NFT | Protocol -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
-    );
+    testCompileScript("NFT | Protocol", getProtocolNft("", "0"));
   });
 
   test("V | Protocol Params", () => {
-    const uplcProgram = toUplcProgram(getProtocolParamsV(""));
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `V | Protocol Params -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
-    );
+    testCompileScript("V | Protocol Params", getProtocolParamsV(""));
   });
 
   test("V | Protocol Proposal", () => {
-    const uplcProgram = toUplcProgram(getProtocolProposalV(""));
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `V | Protocol Proposal -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
-    );
+    testCompileScript("V | Protocol Proposal", getProtocolProposalV(""));
   });
 
   test("V | Protocol Script", () => {
-    const uplcProgram = toUplcProgram(getProtocolScriptV(""));
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `V | Protocol Script -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
-    );
+    testCompileScript("V | Protocol Script", getProtocolScriptV(""));
   });
 
   test("SV | Protocol", () => {
-    const uplcProgram = toUplcProgram(getProtocolSv(""));
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `SV | Protocol -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
-    );
+    testCompileScript("SV | Protocol", getProtocolSv(""));
   });
 });
 
 describe("Project", () => {
   test("V | Project", () => {
-    const uplcProgram = toUplcProgram(
+    testCompileScript(
+      "V | Project",
       getProjectV({ projectsAuthTokenMph: "", protocolNftMph: "" })
-    );
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `V | Project -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
     );
   });
 
   test("V | Project Detail", () => {
-    const uplcProgram = toUplcProgram(
+    testCompileScript(
+      "V | Project Detail",
       getProjectDetailV({ projectsAuthTokenMph: "", protocolNftMph: "" })
-    );
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `V | Project Detail -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
     );
   });
 
   test("V | ProjectScript", () => {
-    const uplcProgram = toUplcProgram(
+    testCompileScript(
+      "V | ProjectScript",
       getProjectScriptV({ projectsAuthTokenMph: "", protocolNftMph: "" })
-    );
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `V | ProjectScript -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
     );
   });
 
   test("AT | Project", () => {
-    const uplcProgram = toUplcProgram(getProjectAt(""));
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `AT | Project -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
-    );
+    testCompileScript("AT | Project", getProjectAt(""));
   });
 
   test("SV | Project", () => {
-    const uplcProgram = toUplcProgram(
+    testCompileScript(
+      "SV | Project",
       getProjectSv({
         projectId: "",
         _stakingSeed: "",
@@ -162,84 +106,49 @@ describe("Project", () => {
         protocolNftMph: "",
       })
     );
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `SV | Project -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
-    );
   });
 });
 
 describe("Backing", () => {
   test("V | Backing", () => {
-    const uplcProgram = toUplcProgram(
-      getBackingV({
-        proofOfBackingMph: "",
-        protocolNftMph: "",
-      })
-    );
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `V | Backing -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
+    testCompileScript(
+      "V | Backing",
+      getBackingV({ proofOfBackingMph: "", protocolNftMph: "" })
     );
   });
 
   test("MP | Proof of Backing", () => {
-    const uplcProgram = toUplcProgram(
+    testCompileScript(
+      "MP | Proof of Backing",
       getProofOfBackingMp({
         projectsAuthTokenMph: "",
         protocolNftMph: "",
         teikiMph: "",
       })
     );
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `MP | Proof of Backing -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
-    );
   });
 });
 
 describe("Treasuries", () => {
   test("V | Dedicated Treasury", () => {
-    const uplcProgram = toUplcProgram(
+    testCompileScript(
+      "V | Dedicated Treasury",
       getDedicatedTreasuryV({ projectsAuthTokenMph: "", protocolNftMph: "" })
-    );
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `V | Dedicated Treasury -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
     );
   });
 
   test("V | Shared Treasury", () => {
-    const uplcProgram = toUplcProgram(
+    testCompileScript(
+      "V | Shared Treasury",
       getSharedTreasuryV({
         projectsAuthTokenMph: "",
         protocolNftMph: "",
         teikiMph: "",
       })
     );
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `V | Shared Treasury -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
-    );
   });
 
   test("V | Open Treasury", () => {
-    const uplcProgram = toUplcProgram(getOpenTreasuryV(""));
-    expect(uplcProgram.serialize().length > 0).toBe(true);
-    console.log(
-      `V | Open Treasury -  ${uplcProgram.calcSize()} | ${bytesToHex(
-        uplcProgram.hash()
-      )}`
-    );
+    testCompileScript("V | Open Treasury", getOpenTreasuryV(""));
   });
 });
