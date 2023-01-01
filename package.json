@@ -17,8 +17,8 @@
   "author": "Shinka Network",
   "type": "module",
   "scripts": {
-    "lint": "eslint src",
-    "lint:fix": "eslint --fix src",
+    "lint": "eslint src tests",
+    "lint:fix": "eslint --fix src tests",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "typecheck": "tsc --noEmit --strict",
     "typecheck:watch": "tsc --noEmit --strict --watch"
