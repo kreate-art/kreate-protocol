@@ -9,7 +9,7 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { getCurrentTime } from "../helpers/time";
+import { getCurrentTime } from "../helpers/lucid";
 
 export type ProposeProtocolTxParams = {
   protocolParamsUtxo: UTxO;

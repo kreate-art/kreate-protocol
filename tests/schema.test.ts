@@ -101,6 +101,7 @@ describe("complex schema", () => {
   });
 
   test("compatible with helios", async () => {
+    expect.assertions(2);
     const cbor = S.toCbor(S.toData(datum, Datum));
     const heliosScript = buildHeliosScript(sampleParams);
     const uplcProgram = helios.Program.new(heliosScript).compile(true);

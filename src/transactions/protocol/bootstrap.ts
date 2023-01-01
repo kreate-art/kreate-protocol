@@ -12,9 +12,9 @@ import {
 
 import { getProtocolContants } from "@/commands/gen-protocol-params";
 import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
-import { getPaymentKeyHash } from "@/lucid";
 import * as S from "@/schema";
 import { ProtocolParamsDatum, Registry } from "@/schema/teiki/protocol";
+import { getPaymentKeyHash } from "@/transactions/helpers/lucid";
 
 import { constructAddress } from "../helpers/constructors";
 
@@ -23,7 +23,7 @@ export type BootstrapProtocolParams = {
   governorAddress: Address;
   poolId: PoolId;
   registry: Registry;
-  protocolNftPolicy: Script;
+  protocolNftScript: Script;
   protocolParamsAddress: Address;
   protocolProposalAddress: Address;
   protocolStakeAddress: Address;
@@ -37,7 +37,7 @@ export function bootstrapProtocolTx(
     governorAddress,
     poolId,
     registry,
-    protocolNftPolicy,
+    protocolNftScript,
     protocolParamsAddress,
     protocolProposalAddress,
     protocolStakeValidator,
@@ -53,7 +53,7 @@ export function bootstrapProtocolTx(
   };
 
   const protocolNftPolicyId: PolicyId =
-    lucid.utils.mintingPolicyToId(protocolNftPolicy);
+    lucid.utils.mintingPolicyToId(protocolNftScript);
 
   const paramsNftUnit: Unit =
     protocolNftPolicyId + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
@@ -71,7 +71,7 @@ export function bootstrapProtocolTx(
       },
       Data.to(new Constr(0, []))
     )
-    .attachMintingPolicy(protocolNftPolicy)
+    .attachMintingPolicy(protocolNftScript)
     .payToContract(
       protocolParamsAddress,
       { inline: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)) },

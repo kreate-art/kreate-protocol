@@ -16,7 +16,7 @@ import getDedicatedTreasuryV from "@/contracts/treasury/dedicated-treasury.v/mai
 import getOpenTreasuryV from "@/contracts/treasury/open-treasury.v/main";
 import getSharedTreasuryV from "@/contracts/treasury/shared-treasury.v/main";
 
-export function compileProtocolNftMpScript(seedUtxo: UTxO): UplcProgram {
+export function compileProtocolNftScript(seedUtxo: UTxO): UplcProgram {
   return compile(
     getProtocolNft(seedUtxo.txHash, seedUtxo.outputIndex.toString())
   );

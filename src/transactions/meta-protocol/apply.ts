@@ -7,7 +7,7 @@ import {
 } from "@/schema/teiki/meta-protocol";
 import { TimeDifference } from "@/types";
 
-import { getCurrentTime } from "../helpers/time";
+import { getCurrentTime } from "../helpers/lucid";
 
 export type ApplyMetaProtocolTxParams = {
   teikiPlantDatum: TeikiPlantDatum;
