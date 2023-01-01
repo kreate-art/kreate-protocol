@@ -31,7 +31,7 @@ export default function main(protocolNftMph: string): HeliosSource {
           // TODO: @sk-saru check why this fails
           // withdraw_amount: Int = tx.withdrawals.get(own_staking_credential);
           // Note: only withdraw from one stake address when calculating total withdrawals
-          withdraw_amount: Int = 
+          withdraw_amount: Int =
             tx.withdrawals
               .fold(
                 (acc: Int, _, amount: Int) -> Int {

@@ -1,5 +1,6 @@
 import { fromText } from "lucid-cardano";
 
+import { PROJECT_SCRIPT_UTXO_ADA } from "@/transactions/constant";
 import { Hex } from "@/types";
 
 import { helios } from "../program";
@@ -60,7 +61,8 @@ export default helios`
 
   const TREASURY_UTXO_MIN_ADA: Int = 2000000
 
-  const PROJECT_SCRIPT_UTXO_ADA: Int = 20000000
+  // TODO: @sk-saru delete this constant when updating contracts done
+  const PROJECT_SCRIPT_UTXO_ADA: Int = ${PROJECT_SCRIPT_UTXO_ADA.toString()}
 
   const MULTIPLIER: Int = 1000000
 

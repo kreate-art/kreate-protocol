@@ -32,6 +32,13 @@ async function headlessLucid(): Promise<Lucid> {
 
 const DEFAULT_LOVELACE_PER_ACCOUNT = 1_000_000_000_000n;
 
+export async function generateWalletAddress() {
+  const lucid = await headlessLucid();
+  const seedPhrase = generateSeedPhrase();
+
+  return await lucid.selectWalletFromSeed(seedPhrase).wallet.address();
+}
+
 // https://github.com/spacebudz/nebula/blob/main/contract/tests/mod.test.ts#L17
 export async function generateAccount(assets?: Assets) {
   const lucid = await headlessLucid();

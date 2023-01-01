@@ -21,6 +21,7 @@ export default function main(protocolNftMph: string) {
     } from helpers
 
     import {
+      ADA_MINTING_POLICY_HASH,
       PROJECT_AT_TOKEN_NAME,
       PROJECT_DETAIL_AT_TOKEN_NAME,
       PROJECT_SCRIPT_AT_TOKEN_NAME,
@@ -31,6 +32,20 @@ export default function main(protocolNftMph: string) {
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
+
+    func does_value_contain_only_one_token(
+      value: Value,
+      token_mph: MintingPolicyHash,
+      token_name: ByteArray
+    ) -> Bool {
+      value.to_map().all(
+        (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+          if (mph == ADA_MINTING_POLICY_HASH) { true }
+          else if (mph == token_mph) { tokens == Map[ByteArray]Int {token_name: 1} }
+          else { false }
+        }
+      )
+    }
 
     func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
@@ -47,7 +62,7 @@ export default function main(protocolNftMph: string) {
       project_script_at: Value = Value::new(project_script_at_asset_class, 1);
 
       redeemer.switch {
-        new_project:NewProject => {
+        new_project: NewProject => {
           pparams_datum: PParamsDatum =
             find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
 
@@ -75,9 +90,10 @@ export default function main(protocolNftMph: string) {
                           ),
                           Option[StakingCredential]::Some{staking_validator}
                         )
-                      && output.value.to_map().length == 2
-                      && output.value.get_safe(project_script_at_asset_class) == 1
-                      && output.value.get_safe(AssetClass::ADA) == PROJECT_SCRIPT_UTXO_ADA
+                      && does_value_contain_only_one_token(
+                          output.value, own_mph,
+                          PROJECT_SCRIPT_AT_TOKEN_NAME
+                      )
                       && output.datum.switch {
                         i: Inline =>
                           project_script_datum: ProjectScriptDatum =
@@ -116,8 +132,11 @@ export default function main(protocolNftMph: string) {
             };
 
           does_produce_project_detail_correctly: Bool =
-            project_detail_txout.value.to_map().length == 2
-              && project_detail_txout.value.get_safe(project_detail_at_asset_class) == 1
+            does_value_contain_only_one_token(
+              project_detail_txout.value,
+              own_mph,
+              PROJECT_DETAIL_AT_TOKEN_NAME
+            )
               && project_detail_txout.value.get_safe(AssetClass::ADA) == PROJECT_DETAIL_UTXO_ADA
               && project_detail_datum.project_id == project_id
               && project_detail_datum.withdrawn_funds == 0
@@ -137,8 +156,11 @@ export default function main(protocolNftMph: string) {
                       ),
                       Option[StakingCredential]::Some{staking_validator}
                     )
-                  && output.value.to_map().length == 2
-                  && output.value.get_safe(project_at_asset_class) == 1
+                  && does_value_contain_only_one_token(
+                    output.value,
+                    own_mph,
+                    PROJECT_AT_TOKEN_NAME
+                  )
                   && output.value.get_safe(AssetClass::ADA)
                       == pparams_datum.project_pledge
                           - pparams_datum.stake_key_deposit
