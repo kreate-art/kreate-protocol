@@ -51,6 +51,10 @@ export const ProtocolParamsDatum = Struct({
   projectDelistWaitingPeriod: Duration,
 });
 export type ProtocolParamsDatum = Static<typeof ProtocolParamsDatum>;
+export type ProtocolNonScriptParams = Omit<
+  ProtocolParamsDatum,
+  "registry" | "governorAddress"
+>;
 
 export const ProtocolParamsRedeemer = Enum("case", {
   ApplyProposal: {},

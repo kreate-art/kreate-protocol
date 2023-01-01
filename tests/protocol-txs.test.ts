@@ -6,7 +6,10 @@ import {
   compileProtocolProposalVScript,
   compileProtocolSvScript,
 } from "@/commands/compile-scripts";
-import { getProtocolRegistry } from "@/commands/gen-protocol-params";
+import {
+  getProtocolRegistry,
+  SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+} from "@/commands/gen-protocol-params";
 import { exportScript } from "@/contracts/compile";
 import { signAndSubmit } from "@/transactions/helpers/lucid";
 import {
@@ -76,6 +79,7 @@ describe("Protocol transactions", () => {
     );
 
     const params: BootstrapProtocolParams = {
+      protocolParams: SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
       seedUtxo,
       governorAddress,
       poolId,

@@ -1,7 +1,11 @@
 import { Lucid, UTxO } from "lucid-cardano";
 
 import { exportScript } from "@/contracts/compile";
-import { MigratableScript, Registry } from "@/schema/teiki/protocol";
+import {
+  MigratableScript,
+  ProtocolNonScriptParams,
+  Registry,
+} from "@/schema/teiki/protocol";
 import { Hex } from "@/types";
 
 import {
@@ -14,9 +18,9 @@ import {
   compileDedicatedTreasuryVScript,
   compileOpenTreasuryVScript,
   compileProjectDetailVScript,
+  compileProjectsAtScript,
   compileProjectScriptVScript,
   compileProjectVScript,
-  compileProjectsAtScript,
   compileProofOfBackingMpScript,
   compileProtocolNftScript,
   compileProtocolSvScript,
@@ -171,24 +175,22 @@ export function getProtocolRegistry(
 }
 
 // TODO: sk-saru should read from config file
-export function getProtocolContants() {
-  return {
-    governorShareRatio: 600_000n,
-    protocolFundsShareRatio: 600_000n,
-    discountCentPrice: 10_000n,
-    projectMilestones: [1_000_000n, 10_000_000n, 100_000_000n],
-    teikiCoefficient: 500n,
-    projectTeikiBurnRate: 600_000n,
-    epochLength: { milliseconds: 10_000n },
-    projectPledge: 50_000_000n,
-    projectCreationFee: 20_000_000n,
-    projectSponsorshipFee: 10_000_000n,
-    projectSponsorshipDuration: { milliseconds: 10_000n },
-    projectInformationUpdateFee: 10_000_000n,
-    projectCommunityUpdateFee: 10_000_000n,
-    minTreasuryPerMilestoneEvent: 20_000_000n,
-    stakeKeyDeposit: 30_000_000n,
-    proposalWaitingPeriod: { milliseconds: 10_000n },
-    projectDelistWaitingPeriod: { milliseconds: 10_000n },
-  };
-}
+export const SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS: ProtocolNonScriptParams = {
+  governorShareRatio: 600_000n,
+  protocolFundsShareRatio: 600_000n,
+  discountCentPrice: 10_000n,
+  projectMilestones: [1_000_000n, 10_000_000n, 100_000_000n],
+  teikiCoefficient: 500n,
+  projectTeikiBurnRate: 600_000n,
+  epochLength: { milliseconds: 10_000n },
+  projectPledge: 50_000_000n,
+  projectCreationFee: 20_000_000n,
+  projectSponsorshipFee: 10_000_000n,
+  projectSponsorshipDuration: { milliseconds: 10_000n },
+  projectInformationUpdateFee: 10_000_000n,
+  projectCommunityUpdateFee: 10_000_000n,
+  minTreasuryPerMilestoneEvent: 20_000_000n,
+  stakeKeyDeposit: 30_000_000n,
+  proposalWaitingPeriod: { milliseconds: 10_000n },
+  projectDelistWaitingPeriod: { milliseconds: 10_000n },
+};
