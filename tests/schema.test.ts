@@ -1,8 +1,7 @@
 import * as helios from "@hyperionbt/helios";
-import { fromHex } from "lucid-cardano";
 
 import * as S from "@/schema";
-import { OutRef, Hex, CborHex } from "@/types";
+import { OutRef, Hex } from "@/types";
 
 describe("complex schema", () => {
   const OneStruct = S.Struct({
@@ -68,10 +67,10 @@ describe("complex schema", () => {
   function buildDatum({ a, b, c, d }: Params): Datum {
     return {
       direction: "Left",
-      foo: { a: fromHex(a) },
+      foo: { a },
       bar: { b: BigInt(b), c },
       baz: {
-        txId: { $txId: fromHex(d.txHash) },
+        txId: { $txId: d.txHash },
         index: BigInt(d.outputIndex),
       },
     };
@@ -91,7 +90,7 @@ describe("complex schema", () => {
   const datum: Datum = buildDatum(sampleParams);
 
   test("round trip", () => {
-    const sampleCbor: CborHex =
+    const sampleCbor =
       "d87b9f44beef1234d8799f9f182a4b48656c6c6f20576f726c64ffffd8799fd8799f5820e1ffe6d8e94556ce6f24e53d94dc5d9559c2cbc8f00dad3737c61cd0d60a91dcff0affff";
     const cbor = S.toCbor(S.toData(datum, Datum));
     expect(cbor).toBe(sampleCbor);

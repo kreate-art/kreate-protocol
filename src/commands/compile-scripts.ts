@@ -16,6 +16,9 @@ import getDedicatedTreasuryV from "@/contracts/treasury/dedicated-treasury.v/mai
 import getOpenTreasuryV from "@/contracts/treasury/open-treasury.v/main";
 import getSharedTreasuryV from "@/contracts/treasury/shared-treasury.v/main";
 
+// TODO: @sk-saru, @sk-umiuma: Use Hex for all those script hash params,
+// both this file and the contracts.
+
 export function compileProtocolNftScript(seedUtxo: UTxO): UplcProgram {
   return compile(
     getProtocolNft(seedUtxo.txHash, seedUtxo.outputIndex.toString())

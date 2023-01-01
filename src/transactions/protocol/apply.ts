@@ -1,4 +1,4 @@
-import { Lucid, toHex, UTxO } from "lucid-cardano";
+import { Lucid, UTxO } from "lucid-cardano";
 
 import * as S from "@/schema";
 import {
@@ -46,9 +46,8 @@ export function applyProtocolProposalTx(
       "PubKey",
     "Governor address must have a public-key hash credential"
   );
-  const protocolGovernorPkh = toHex(
-    protocolParamsDatum.governorAddress.paymentCredential.$.pubKeyHash.$hash
-  );
+  const protocolGovernorPkh =
+    protocolParamsDatum.governorAddress.paymentCredential.$.pubKeyHash.$hash;
 
   return lucid
     .newTx()
