@@ -6,7 +6,7 @@ import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
 import { TimeDifference } from "@/types";
 
-import { DEFAULT_TIME_PROVIDER, TimeProvider } from "../helpers/time";
+import { getCurrentTime } from "../helpers/time";
 
 export type UpdateProjectParams = {
   protocolParamsDatum: ProtocolParamsDatum;
@@ -19,7 +19,6 @@ export type UpdateProjectParams = {
   newCommunityUpdateCid?: IpfsCid;
   dedicatedTreasuryDatum: DedicatedTreasuryDatum;
   dedicatedTreasuryUtxo: UTxO;
-  timeProvider?: TimeProvider;
   txTimePadding?: TimeDifference;
 };
 
@@ -37,7 +36,6 @@ export function updateProjectTx(
     newCommunityUpdateCid,
     // dedicatedTreasuryDatum,
     dedicatedTreasuryUtxo,
-    timeProvider = DEFAULT_TIME_PROVIDER,
     txTimePadding = 20000,
   }: UpdateProjectParams
 ) {
@@ -80,7 +78,7 @@ export function updateProjectTx(
     );
 
   if (extendsSponsorship) {
-    tx = tx.validTo(timeProvider() + txTimePadding);
+    tx = tx.validTo(getCurrentTime(lucid) + txTimePadding);
   }
 
   return tx;

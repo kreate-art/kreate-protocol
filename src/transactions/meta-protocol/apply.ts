@@ -7,13 +7,12 @@ import {
 } from "@/schema/teiki/meta-protocol";
 import { TimeDifference } from "@/types";
 
-import { DEFAULT_TIME_PROVIDER, TimeProvider } from "../helpers/time";
+import { getCurrentTime } from "../helpers/time";
 
 export type ApplyMetaProtocolTxParams = {
   teikiPlantDatum: TeikiPlantDatum;
   teikiPlantUtxo: UTxO;
   teikiPlantScriptUtxo: UTxO;
-  timeProvider?: TimeProvider;
   txTimePadding?: TimeDifference;
 };
 
@@ -23,14 +22,13 @@ export function applyMetaProtocolProposalTx(
     teikiPlantDatum,
     teikiPlantUtxo,
     teikiPlantScriptUtxo,
-    timeProvider = DEFAULT_TIME_PROVIDER,
     txTimePadding = 20000,
   }: ApplyMetaProtocolTxParams
 ) {
   if (!teikiPlantDatum.proposal) {
     throw new Error("Proposed rule cannot be null");
   }
-  const txTime = timeProvider() - txTimePadding;
+  const txTimeStart = getCurrentTime(lucid) - txTimePadding;
   const teikiPlantRedeemer: TeikiPlantRedeemer = { case: "Apply" };
 
   const appliedTeikiPlantDatum: TeikiPlantDatum = {
@@ -50,5 +48,5 @@ export function applyMetaProtocolProposalTx(
       { inline: S.toCbor(S.toData(appliedTeikiPlantDatum, TeikiPlantDatum)) },
       teikiPlantUtxo.assets
     )
-    .validFrom(txTime);
+    .validFrom(txTimeStart);
 }
