@@ -18,7 +18,7 @@ import {
   compileProjectVScript,
   compileProjectsAtScript,
   compileProofOfBackingMpScript,
-  compileProtocolNftMpScript,
+  compileProtocolNftScript,
   compileProtocolSvScript,
   compileSharedTreasuryVScript,
   compileTeikiMpScript,
@@ -40,7 +40,7 @@ export function getProtocolRegistryScript(
   seedUtxo: UTxO,
   teikiPlantNftMph: Hex
 ): RegistryScript {
-  const protocolNftPolicy = exportScript(compileProtocolNftMpScript(seedUtxo));
+  const protocolNftPolicy = exportScript(compileProtocolNftScript(seedUtxo));
 
   const protocolNftMph = lucid.utils.validatorToScriptHash(protocolNftPolicy);
 

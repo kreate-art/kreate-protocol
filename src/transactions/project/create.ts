@@ -25,7 +25,7 @@ import {
   constructAddress,
   constructProjectIdUsingBlake2b,
 } from "../helpers/constructors";
-import { getCurrentTime } from "../helpers/time";
+import { getCurrentTime } from "../helpers/lucid";
 
 export type CreateProjectParams = {
   protocolParamsDatum: ProtocolParamsDatum;

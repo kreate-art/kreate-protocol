@@ -49,6 +49,7 @@ const COMMON_HELIOS_MODULES = [
   hlSharedTreasuryTypesSource,
 ];
 
+// TODO: Optimize compilation time by loading only needed modules
 export function compile(
   main: HeliosSource,
   parameters?: Record<string, Data>

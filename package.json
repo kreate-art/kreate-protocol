@@ -19,7 +19,7 @@
   "scripts": {
     "lint": "eslint src tests",
     "lint:fix": "eslint --fix src tests",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test": "NODE_NO_WARNINGS=1 NODE_OPTIONS=--experimental-vm-modules jest",
     "typecheck": "tsc --noEmit --strict",
     "typecheck:watch": "tsc --noEmit --strict --watch"
   },
