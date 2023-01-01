@@ -2,7 +2,7 @@ import { UplcProgram, bytesToHex } from "@hyperionbt/helios";
 import { Data, Script } from "lucid-cardano";
 
 import { toJson } from "@/schema";
-import { CborHex } from "@/types";
+import { Hex } from "@/types";
 
 import modBackingVTypes from "./backing/backing.v/types";
 import modProofOfBackingMpTypes from "./backing/proof-of-backing.mp/types";
@@ -69,6 +69,6 @@ export function exportScript(uplcProgram: UplcProgram): Script {
   };
 }
 
-export function serialize(uplcProgram: UplcProgram): CborHex {
+export function serialize(uplcProgram: UplcProgram): Hex {
   return bytesToHex(uplcProgram.toCbor());
 }

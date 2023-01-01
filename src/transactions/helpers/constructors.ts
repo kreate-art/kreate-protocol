@@ -19,7 +19,7 @@ export function constructProjectIdUsingBlake2b({
   outputIndex,
 }: OutRef): Hex {
   const outputId: S.TxOutputId = {
-    txId: { $txId: fromHex(txHash) },
+    txId: { $txId: txHash },
     index: BigInt(outputIndex),
   };
   const cbor = S.toCbor(S.toData(outputId, S.TxOutputId));
@@ -27,7 +27,7 @@ export function constructProjectIdUsingBlake2b({
 }
 
 export function constructScriptHash(hash: Hex): S.ScriptHash {
-  return { scriptHash: { $hash: fromHex(hash) } };
+  return { scriptHash: { $hash: hash } };
 }
 
 export function constructAssetClass(
@@ -36,7 +36,7 @@ export function constructAssetClass(
 ): S.AssetClass {
   return {
     mintingPolicyHash: constructScriptHash(mintingPolicyHash),
-    tokenName: fromHex(tokenName),
+    tokenName: tokenName,
   };
 }
 
@@ -45,11 +45,7 @@ export function constructMigratableScript(
   migrations: Record<Hex, { mintingPolicyHash: Hex; tokenName: Hex }>
 ): MigratableScript {
   return {
-    latest: {
-      scriptHash: {
-        $hash: fromHex(latestScriptHash),
-      },
-    },
+    latest: { scriptHash: { $hash: latestScriptHash } },
     migrations: new Map(
       Object.entries(migrations).map(
         ([migratingScriptHash, { mintingPolicyHash, tokenName }]) => [
@@ -69,11 +65,11 @@ export function constructAddress(address: Address): S.Address {
     paymentCredential.type === "Key"
       ? {
           paymentType: "PubKey",
-          $: { pubKeyHash: { $hash: fromHex(paymentCredential.hash) } },
+          $: { pubKeyHash: { $hash: paymentCredential.hash } },
         }
       : {
           paymentType: "Validator",
-          $: { scriptHash: { $hash: fromHex(paymentCredential.hash) } },
+          $: { scriptHash: { $hash: paymentCredential.hash } },
         };
 
   const conStakingCredential: S.StakingCredential | null = stakeCredential
@@ -81,11 +77,7 @@ export function constructAddress(address: Address): S.Address {
         stakingType: "Hash",
         $: {
           stakingHash: "Validator",
-          $: {
-            scriptHash: {
-              $hash: fromHex(stakeCredential.hash),
-            },
-          },
+          $: { scriptHash: { $hash: stakeCredential.hash } },
         },
       }
     : null;

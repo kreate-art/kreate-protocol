@@ -1,17 +1,17 @@
 // Heavily influenced by https://github.com/spacebudz/lucid/blob/main/src/plutus/data.ts
 import { Kind, TProperties } from "@sinclair/typebox";
-import { Constr, Data, fromHex, toText, toHex, fromText } from "lucid-cardano";
+import { Constr, Data, fromText, toText } from "lucid-cardano";
 
-import { CborHex } from "@/types";
+import { Hex } from "@/types";
 import { assert } from "@/utils";
 
 import { TEnum, TUplc } from "./uplc";
 
-export function toCbor(data: Data): CborHex {
+export function toCbor(data: Data): Hex {
   return Data.to(data);
 }
 
-export function fromCbor(raw: CborHex): Data {
+export function fromCbor(raw: Hex): Data {
   return Data.from(raw);
 }
 
@@ -20,7 +20,7 @@ export const fromJson = Data.fromJson;
 
 export function toData<T>(self: T, schema: TUplc): Data {
   switch (schema[Kind]) {
-    case "BigInt":
+    case "Int":
       assert(typeof self === "bigint", "self must be bigint");
       return self;
     case "Boolean":
@@ -28,10 +28,14 @@ export function toData<T>(self: T, schema: TUplc): Data {
       return new Constr(self ? 1 : 0, []);
     case "String":
       assert(typeof self === "string", "self must be string");
-      return fromText(self); // TODO: Weird as hell...
-    case "Uint8Array":
-      assert(self instanceof Uint8Array, "self must be Uint8Array");
-      return toHex(self); // TODO: Unneeded conversion...
+      switch (schema.format) {
+        case "hex":
+          return self;
+        case "text":
+          return fromText(self);
+        default:
+          throw new Error("unexpected string format");
+      }
     case "Data":
       assert(typeof self === "object" && self != null, "self must be object");
       assert("data" in self, "self must have field data");
@@ -83,7 +87,7 @@ export function toData<T>(self: T, schema: TUplc): Data {
 
 export function fromData<T>(data: Data, schema: TUplc): T {
   switch (schema[Kind]) {
-    case "BigInt":
+    case "Int":
       assert(typeof data === "bigint", "data must be bigint");
       return data as T;
     case "Boolean":
@@ -96,11 +100,15 @@ export function fromData<T>(data: Data, schema: TUplc): T {
       else if (data.index === 1) return true as T;
       else throw new Error(`invalid Constr index for boolean: ${data.index}`);
     case "String":
-      assert(typeof data === "string", "data must be string (for string)");
-      return toText(data) as T; // TODO: Weird as hell...
-    case "Uint8Array":
-      assert(typeof data === "string", "data must be string (for UInt8Array)");
-      return fromHex(data) as T; // TODO: Unneeded conversion...
+      assert(typeof data === "string", "data must be string");
+      switch (schema.format) {
+        case "hex":
+          return data as T;
+        case "text":
+          return toText(data) as T;
+        default:
+          throw new Error("unexpected string format");
+      }
     case "Data":
       return { data } as T;
     case "Option":

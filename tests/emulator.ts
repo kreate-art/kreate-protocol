@@ -1,7 +1,7 @@
 import {
   Assets,
-  DatumHash,
   Datum,
+  DatumHash,
   Emulator,
   generateSeedPhrase,
   Lucid,
@@ -43,7 +43,7 @@ export function generateOutRef(): OutRef {
   // 32 bytes for txHash, 1 byte for outputIndex
   const bytes = crypto.getRandomValues(new Uint8Array(33));
   const txHash = toHex(bytes.slice(0, 32));
-  const outputIndex = bytes[33];
+  const outputIndex = bytes[32];
   return { txHash, outputIndex };
 }
 

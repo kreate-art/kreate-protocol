@@ -9,28 +9,29 @@ import {
   TNever,
   TProperties,
   TSchema,
-  TString,
-  TUint8Array,
   Type,
   type Static,
 } from "@sinclair/typebox";
 import { Custom } from "@sinclair/typebox/custom";
 import { Data } from "lucid-cardano";
 
+import { isData } from "@/types";
+
 // Re-exports
 export { type Static };
 
 // Custom typebox
-Custom.Set("BigInt", (_, value) => typeof value === "bigint");
+Custom.Set("Int", (_, value) => typeof value === "bigint");
+Custom.Set("Data", (_, value) => isData(value));
 Custom.Set("Map", (_, value) => value instanceof Map);
 Custom.Set("Option", () => true);
 
 // TODO: Restrict to TUplc instead of TSchema
 export type TUplc =
   | TInt
-  | TBoolean
+  | TBool
+  | TByteArray
   | TString
-  | TUint8Array
   | TRawData
   | TOption
   | TList
@@ -40,18 +41,25 @@ export type TUplc =
 
 // Primitives
 export interface TInt extends TSchema, NumericOptions {
-  [Kind]: "BigInt";
+  [Kind]: "Int";
   static: bigint;
   type: "bigint";
 }
 export const Int: TInt = {
   ...Type.Unsafe({}),
-  [Kind]: "BigInt",
+  [Kind]: "Int",
   type: "bigint",
 };
+
+export type TBool = TBoolean;
 export const Bool = Type.Boolean();
-export const String = Type.String();
-export const ByteArray = Type.Uint8Array();
+
+// Since Hex is just a type alias for string, it's not worth creating a new TSchema
+export type TByteArray = typeof ByteArray;
+export const ByteArray = Type.String({ format: "hex" });
+
+export type TString = typeof String;
+export const String = Type.String({ format: "text" });
 
 // Raw Data
 export type RawData = { data: Data };

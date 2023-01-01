@@ -1,4 +1,4 @@
-import { fromHex, Lucid, toHex, UTxO } from "lucid-cardano";
+import { Lucid, UTxO } from "lucid-cardano";
 
 import * as S from "@/schema";
 import {
@@ -40,9 +40,8 @@ export function proposeProtocolProposalTx(
       "PubKey",
     "Governor address must have a public-key hash credential"
   );
-  const protocolGovernorPkh = toHex(
-    protocolParamsDatum.governorAddress.paymentCredential.$.pubKeyHash.$hash
-  );
+  const protocolGovernorPkh =
+    protocolParamsDatum.governorAddress.paymentCredential.$.pubKeyHash.$hash;
 
   const txTimeEnd = getCurrentTime(lucid) + txTimePadding;
 
@@ -55,7 +54,7 @@ export function proposeProtocolProposalTx(
           1n,
       },
       base: {
-        txId: { $txId: fromHex(protocolParamsUtxo.txHash) },
+        txId: { $txId: protocolParamsUtxo.txHash },
         index: BigInt(protocolParamsUtxo.outputIndex),
       },
       params: proposedProtocolParamsDatum,

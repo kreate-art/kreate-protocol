@@ -1,12 +1,4 @@
-import {
-  Address,
-  fromHex,
-  Lucid,
-  PolicyId,
-  Script,
-  Unit,
-  UTxO,
-} from "lucid-cardano";
+import { Address, Lucid, PolicyId, Script, Unit, UTxO } from "lucid-cardano";
 
 import { PROJECT_AT_TOKEN_NAMES } from "@/contracts/common/constants";
 import * as S from "@/schema";
@@ -84,12 +76,12 @@ export function createProjectTx(
     : null;
 
   const projectScriptDatum: ProjectScriptDatum = {
-    projectId: { id: fromHex(projectId) },
+    projectId: { id: projectId },
     stakingKeyDeposit: protocolParamsDatum.stakeKeyDeposit,
   };
 
   const projectDetailDatum: ProjectDetailDatum = {
-    projectId: { id: fromHex(projectId) },
+    projectId: { id: projectId },
     withdrawnFunds: 0n,
     sponsoredUntil: null,
     informationCid: informationCid,
@@ -97,7 +89,7 @@ export function createProjectTx(
   };
 
   const projectDatum: ProjectDatum = {
-    projectId: { id: fromHex(projectId) },
+    projectId: { id: projectId },
     ownerAddress: constructAddress(ownerAddress),
     milestoneReached: 0n,
     isStakingDelegationManagedByProtocol: true,
@@ -105,12 +97,12 @@ export function createProjectTx(
   };
 
   const dedicatedTreasuryDatum: DedicatedTreasuryDatum = {
-    projectId: { id: fromHex(projectId) },
+    projectId: { id: projectId },
     governorAda: protocolParamsDatum.governorShareRatio * minTotalFees,
     tag: {
       kind: "TagOriginated",
       seed: {
-        txId: { $txId: fromHex(seedUtxo.txHash) },
+        txId: { $txId: seedUtxo.txHash },
         index: BigInt(seedUtxo.outputIndex),
       },
     },
@@ -119,7 +111,7 @@ export function createProjectTx(
   const projectMintingRedeemer: ProjectMintingRedeemer = {
     case: "NewProject",
     projectSeed: {
-      txId: { $txId: fromHex(seedUtxo.txHash) },
+      txId: { $txId: seedUtxo.txHash },
       index: BigInt(seedUtxo.outputIndex),
     },
   };
