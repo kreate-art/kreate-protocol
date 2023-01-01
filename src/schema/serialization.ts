@@ -5,7 +5,7 @@ import { Constr, Data, fromText, toText } from "lucid-cardano";
 import { Hex } from "@/types";
 import { assert } from "@/utils";
 
-import { TEnum, TUplc } from "./uplc";
+import { Static, TEnum, TUplc } from "./uplc";
 
 export function toCbor(data: Data): Hex {
   return Data.to(data);
@@ -18,7 +18,7 @@ export function fromCbor(raw: Hex): Data {
 export const toJson = Data.toJson;
 export const fromJson = Data.fromJson;
 
-export function toData<T>(self: T, schema: TUplc): Data {
+export function toData<T extends TUplc>(self: Static<T>, schema: T): Data {
   switch (schema[Kind]) {
     case "Int":
       assert(typeof self === "bigint", "self must be bigint");
@@ -85,32 +85,32 @@ export function toData<T>(self: T, schema: TUplc): Data {
   }
 }
 
-export function fromData<T>(data: Data, schema: TUplc): T {
+export function fromData<T extends TUplc>(data: Data, schema: T): Static<T> {
   switch (schema[Kind]) {
     case "Int":
       assert(typeof data === "bigint", "data must be bigint");
-      return data as T;
+      return data;
     case "Boolean":
       assert(data instanceof Constr, "data must be Constr (for boolean)");
       assert(
         !data.fields.length,
         "data (Constr) fields must be empty for boolean"
       );
-      if (data.index === 0) return false as T;
-      else if (data.index === 1) return true as T;
+      if (data.index === 0) return false;
+      else if (data.index === 1) return true;
       else throw new Error(`invalid Constr index for boolean: ${data.index}`);
     case "String":
       assert(typeof data === "string", "data must be string");
       switch (schema.format) {
         case "hex":
-          return data as T;
+          return data;
         case "text":
-          return toText(data) as T;
+          return toText(data);
         default:
           throw new Error("unexpected string format");
       }
     case "Data":
-      return { data } as T;
+      return { data };
     case "Option":
       assert(data instanceof Constr, "data must be Constr (for Option)");
       if (data.index === 0) {
@@ -124,11 +124,11 @@ export function fromData<T>(data: Data, schema: TUplc): T {
           !data.fields.length,
           "data (Constr) fields must be empty for Option::None"
         );
-        return null as T;
+        return null;
       } else throw new Error(`invalid Constr index for Option: ${data.index}`);
     case "Array":
       assert(data instanceof Array, "data must be Array");
-      return data.map((item) => fromData(item, schema.items as TUplc)) as T;
+      return data.map((item) => fromData(item, schema.items as TUplc));
     case "Map": {
       assert(data instanceof Map, "data must be Map");
       const entries: [unknown, unknown][] = [];
@@ -136,7 +136,7 @@ export function fromData<T>(data: Data, schema: TUplc): T {
       const valueSchema = schema.value as TUplc;
       for (const [key, value] of data.entries())
         entries.push([fromData(key, keySchema), fromData(value, valueSchema)]);
-      return new Map(entries) as T;
+      return new Map(entries);
     }
     case "Object": {
       // assert(schema.type === "struct", "expect Struct or ConStruct schema");
@@ -177,15 +177,12 @@ export function fromData<T>(data: Data, schema: TUplc): T {
 
 function selectVariant<
   D extends string,
-  T extends Record<string, TProperties>,
+  P extends TProperties,
+  T extends Record<string, P>,
   R
 >(
   schema: TEnum<D, T>,
-  callback: (
-    index: number,
-    name: string,
-    properties: TProperties
-  ) => R | undefined
+  callback: (index: number, name: string, properties: P) => R | undefined
 ): R | undefined {
   for (const [index, [name, properties]] of Object.entries(
     schema.variants
