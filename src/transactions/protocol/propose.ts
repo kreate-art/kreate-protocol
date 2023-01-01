@@ -9,14 +9,13 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { DEFAULT_TIME_PROVIDER, TimeProvider } from "../helpers/time";
+import { getCurrentTime } from "../helpers/time";
 
 export type ProposeProtocolTxParams = {
   protocolParamsUtxo: UTxO;
   proposedProtocolParamsDatum: ProtocolParamsDatum;
   protocolProposalUtxo: UTxO;
   protocolProposalScriptUtxo: UTxO;
-  timeProvider?: TimeProvider;
   txTimePadding?: TimeDifference;
 };
 
@@ -27,7 +26,6 @@ export function proposeProtocolProposalTx(
     proposedProtocolParamsDatum,
     protocolProposalUtxo,
     protocolProposalScriptUtxo,
-    timeProvider = DEFAULT_TIME_PROVIDER,
     txTimePadding = 200000,
   }: ProposeProtocolTxParams
 ) {
@@ -46,7 +44,7 @@ export function proposeProtocolProposalTx(
     protocolParamsDatum.governorAddress.paymentCredential.$.pubKeyHash.$hash
   );
 
-  const txTimeEnd = timeProvider() + txTimePadding;
+  const txTimeEnd = getCurrentTime(lucid) + txTimePadding;
 
   const protocolProposalDatum: ProtocolProposalDatum = {
     proposal: {
