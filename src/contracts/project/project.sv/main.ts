@@ -1,10 +1,12 @@
+import { Hex } from "@/types";
+
 import { helios } from "../../program";
 
 export type ProjectStakeParams = {
-  projectId: string;
+  projectId: Hex;
   _stakingSeed: string;
-  projectsAuthTokenMph: string;
-  protocolNftMph: string;
+  projectsAuthTokenMph: Hex;
+  protocolNftMph: Hex;
 };
 
 // TODO: @sk-saru unused seed data

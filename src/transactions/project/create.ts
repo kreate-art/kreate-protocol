@@ -12,8 +12,14 @@ import {
 } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
+import { TimeDifference } from "@/types";
+import { assert } from "@/utils";
 
-import { PROJECT_DETAIL_UTXO_ADA } from "../helpers/constants";
+import { PROJECT_SCRIPT_UTXO_ADA } from "../constant";
+import {
+  PROJECT_DETAIL_UTXO_ADA,
+  RATIO_MULTIPLIER,
+} from "../helpers/constants";
 import {
   constructAddress,
   constructProjectIdUsingBlake2b,
@@ -22,41 +28,75 @@ import {
 import { getCurrentTime } from "../helpers/lucid";
 
 export type CreateProjectParams = {
-  protocolParamsDatum: ProtocolParamsDatum;
   protocolParamsUtxo: UTxO;
-  projectScriptUtxo: UTxO;
-  seedUtxo: UTxO;
-  isSponsored: boolean;
   informationCid: IpfsCid;
+  isSponsored: boolean;
   ownerAddress: Address;
+  projectAtScriptRefUtxo: UTxO;
   projectATPolicyId: PolicyId;
-  projectAddress: Address;
-  projectScriptAddress: Address;
-  projectDetailAddress: Address;
-  dedicatedTreasuryAddress: Address;
   projectStakeValidator: Script;
+  seedUtxo: UTxO;
+  txTimePadding?: TimeDifference;
 };
 
 export function createProjectTx(
   lucid: Lucid,
   {
-    protocolParamsDatum,
     protocolParamsUtxo,
-    projectScriptUtxo,
-    seedUtxo,
-    isSponsored,
     informationCid,
+    isSponsored,
     ownerAddress,
+    projectAtScriptRefUtxo,
     projectATPolicyId,
-    projectAddress,
-    projectScriptAddress,
-    projectDetailAddress,
-    dedicatedTreasuryAddress,
     projectStakeValidator,
+    seedUtxo,
+    txTimePadding = 20000,
   }: CreateProjectParams
 ) {
-  // TODO: Move this somewhere else?
-  const PROJECT_SCRIPT_UTXO_ADA = 2_000_000n;
+  assert(protocolParamsUtxo.datum != null, "Invalid protocol params UTxO");
+
+  const protocolParams = S.fromData(
+    S.fromCbor(protocolParamsUtxo.datum),
+    ProtocolParamsDatum
+  );
+
+  const projectStakeCredential = lucid.utils.scriptHashToCredential(
+    lucid.utils.validatorToScriptHash(projectStakeValidator)
+  );
+
+  const projectStakeAddress = lucid.utils.credentialToRewardAddress(
+    projectStakeCredential
+  );
+
+  const projectAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(
+      protocolParams.registry.projectValidator.latest.script.hash
+    ),
+    projectStakeCredential
+  );
+
+  const projectScriptAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(
+      protocolParams.registry.projectScriptValidator.latest.script.hash
+    ),
+    projectStakeCredential
+  );
+
+  const projectDetailAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(
+      protocolParams.registry.projectDetailValidator.latest.script.hash
+    ),
+    projectStakeCredential
+  );
+
+  const dedicatedTreasuryAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(
+      protocolParams.registry.dedicatedTreasuryValidator.latest.script.hash
+    ),
+    lucid.utils.scriptHashToCredential(
+      protocolParams.registry.protocolStakingValidator.script.hash
+    )
+  );
 
   const projectATUnit: Unit =
     projectATPolicyId + PROJECT_AT_TOKEN_NAMES.PROJECT;
@@ -68,18 +108,18 @@ export function createProjectTx(
   const projectId = constructProjectIdUsingBlake2b(seedUtxo);
 
   const minTotalFees =
-    protocolParamsDatum.projectCreationFee +
-    (isSponsored ? protocolParamsDatum.projectSponsorshipFee : 0n);
+    protocolParams.projectCreationFee +
+    (isSponsored ? protocolParams.projectSponsorshipFee : 0n);
 
   const txTimeStart = getCurrentTime(lucid);
   const sponsoredUntil = isSponsored
-    ? protocolParamsDatum.projectSponsorshipDuration.milliseconds +
+    ? protocolParams.projectSponsorshipDuration.milliseconds +
       BigInt(txTimeStart)
     : null;
 
   const projectScriptDatum: ProjectScriptDatum = {
     projectId: { id: projectId },
-    stakingKeyDeposit: protocolParamsDatum.stakeKeyDeposit,
+    stakingKeyDeposit: protocolParams.stakeKeyDeposit,
   };
 
   const projectDetailDatum: ProjectDetailDatum = {
@@ -102,7 +142,8 @@ export function createProjectTx(
 
   const dedicatedTreasuryDatum: DedicatedTreasuryDatum = {
     projectId: { id: projectId },
-    governorAda: protocolParamsDatum.governorShareRatio * minTotalFees,
+    governorAda:
+      (protocolParams.governorShareRatio * minTotalFees) / RATIO_MULTIPLIER,
     tag: {
       kind: "TagOriginated",
       seed: seedTxOutputId,
@@ -116,8 +157,9 @@ export function createProjectTx(
 
   let tx = lucid
     .newTx()
-    .collectFrom([seedUtxo])
     .addSigner(ownerAddress)
+    .readFrom([protocolParamsUtxo, projectAtScriptRefUtxo])
+    .collectFrom([seedUtxo])
     .mintAssets(
       {
         [projectATUnit]: 1n,
@@ -126,7 +168,6 @@ export function createProjectTx(
       },
       S.toCbor(S.toData(projectMintingRedeemer, ProjectMintingRedeemer))
     )
-    .readFrom([protocolParamsUtxo, projectScriptUtxo])
     .payToContract(
       projectScriptAddress,
       {
@@ -152,9 +193,9 @@ export function createProjectTx(
       {
         [projectATUnit]: 1n,
         lovelace:
-          protocolParamsDatum.projectPledge -
-          protocolParamsDatum.stakeKeyDeposit -
-          PROJECT_DETAIL_UTXO_ADA +
+          protocolParams.projectPledge -
+          protocolParams.stakeKeyDeposit -
+          PROJECT_DETAIL_UTXO_ADA -
           PROJECT_SCRIPT_UTXO_ADA,
       }
     )
@@ -167,10 +208,9 @@ export function createProjectTx(
       },
       { lovelace: minTotalFees }
     )
-    .attachCertificateValidator(projectStakeValidator);
-
+    .registerStake(projectStakeAddress);
   if (sponsoredUntil) {
-    tx = tx.validFrom(txTimeStart); // TODO: @sk-umiuma: add txTimePadding...
+    tx = tx.validFrom(txTimeStart - txTimePadding);
   }
 
   return tx;

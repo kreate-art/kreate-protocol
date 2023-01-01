@@ -7,6 +7,7 @@ import { compile } from "@/contracts/compile";
 import getTeikiMp from "@/contracts/meta-protocol/teiki.mp/main";
 import getProjectDetailV from "@/contracts/project/project-detail.v/main";
 import getProjectAt from "@/contracts/project/project.at/main";
+import getProjectSv from "@/contracts/project/project.sv/main";
 import getProjectV from "@/contracts/project/project.v/main";
 import getProtocolParamsV from "@/contracts/protocol/protocol-params.v/main";
 import getProtocolProposalV from "@/contracts/protocol/protocol-proposal.v/main";
@@ -39,12 +40,12 @@ export function compileProtocolProposalVScript(
   return compile(getProtocolProposalV(protocolNftMph));
 }
 
-export function compileProjectsAtScript(protocolNftMph: Hex): UplcProgram {
-  return compile(getProjectAt(protocolNftMph));
-}
-
 export function compileProtocolSvScript(protocolNftMph: Hex): UplcProgram {
   return compile(getProtocolSv(protocolNftMph));
+}
+
+export function compileProjectsAtScript(protocolNftMph: Hex): UplcProgram {
+  return compile(getProjectAt(protocolNftMph));
 }
 
 export function compileProjectVScript(
@@ -66,6 +67,22 @@ export function compileProjectScriptVScript(
   protocolNftMph: Hex
 ): UplcProgram {
   return compile(getProjectV({ projectsAuthTokenMph, protocolNftMph }));
+}
+
+export function compileProjectSvScript(
+  projectId: Hex,
+  _stakingSeed: string,
+  projectsAuthTokenMph: Hex,
+  protocolNftMph: Hex
+): UplcProgram {
+  return compile(
+    getProjectSv({
+      projectId,
+      _stakingSeed,
+      projectsAuthTokenMph,
+      protocolNftMph,
+    })
+  );
 }
 
 export function compileTeikiMpScript(nftTeikiPlantMph: Hex): UplcProgram {
