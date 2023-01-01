@@ -1,5 +1,3 @@
-import assert from "assert";
-
 import {
   Address,
   Emulator,
@@ -9,6 +7,7 @@ import {
 } from "lucid-cardano";
 
 import { Hex, UnixTime } from "@/types";
+import { assert } from "@/utils";
 
 export function getCurrentTime(lucid: Lucid): UnixTime {
   return lucid.provider instanceof Emulator ? lucid.provider.now() : Date.now();

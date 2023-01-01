@@ -1,4 +1,20 @@
-import { Assets, Lucid, generateSeedPhrase } from "lucid-cardano";
+import {
+  Assets,
+  DatumHash,
+  Datum,
+  Emulator,
+  generateSeedPhrase,
+  Lucid,
+  OutRef,
+  toHex,
+  UTxO,
+} from "lucid-cardano";
+
+import { assert } from "@/utils";
+
+type Crypto = {
+  getRandomValues<T extends ArrayBufferView | null>(array: T): T;
+};
 
 async function headlessLucid(): Promise<Lucid> {
   return Lucid.new(undefined, "Custom");
@@ -17,4 +33,70 @@ export async function generateAccount(assets?: Assets) {
     address: await lucid.selectWalletFromSeed(seedPhrase).wallet.address(),
     assets: { ...assets, lovelace },
   };
+}
+
+export function generateOutRef(): OutRef {
+  // global.crypto is loaded by Lucid
+  const crypto = (global as unknown as Record<"crypto", Crypto | undefined>)
+    .crypto;
+  assert(crypto, "global.crypto is not loaded");
+  // 32 bytes for txHash, 1 byte for outputIndex
+  const bytes = crypto.getRandomValues(new Uint8Array(33));
+  const txHash = toHex(bytes.slice(0, 32));
+  const outputIndex = bytes[33];
+  return { txHash, outputIndex };
+}
+
+function toLedgerFlatRef(ref: OutRef): string {
+  return ref.txHash + ref.outputIndex;
+}
+
+export function attachUtxos(emulator: Emulator, utxos: UTxO[]): Emulator {
+  emulator.ledger = {
+    ...emulator.ledger,
+    ...Object.fromEntries(
+      utxos.map((utxo) => [toLedgerFlatRef(utxo), { utxo, spent: false }])
+    ),
+  };
+  return emulator;
+}
+
+export function detachUtxos(emulator: Emulator, refs: OutRef[]): Emulator {
+  const toDetach = new Set(refs.map(toLedgerFlatRef));
+  emulator.ledger = Object.fromEntries(
+    Object.entries(emulator.ledger).filter(
+      ([flatRef, _]) => !toDetach.has(flatRef)
+    )
+  );
+  return emulator;
+}
+
+export function spendUtxos(emulator: Emulator, refs: OutRef[]): Emulator {
+  const toSpend = new Set(refs.map(toLedgerFlatRef));
+  emulator.ledger = Object.fromEntries(
+    Object.entries(emulator.ledger).map(([flatRef, { utxo, spent }]) => [
+      flatRef,
+      { utxo, spent: spent || toSpend.has(flatRef) },
+    ])
+  );
+  return emulator;
+}
+
+export function unspendUtxos(emulator: Emulator, refs: OutRef[]): Emulator {
+  const toUnspend = new Set(refs.map(toLedgerFlatRef));
+  emulator.ledger = Object.fromEntries(
+    Object.entries(emulator.ledger).map(([flatRef, { utxo, spent }]) => [
+      flatRef,
+      { utxo, spent: spent && !toUnspend.has(flatRef) },
+    ])
+  );
+  return emulator;
+}
+
+export function attachDatums(
+  emulator: Emulator,
+  datums: Record<DatumHash, Datum>
+): Emulator {
+  emulator.datumTable = { ...emulator.datumTable, ...datums };
+  return emulator;
 }
