@@ -6,7 +6,6 @@ updates:
       interval: "daily"
     commit-message:
       prefix: "build"
-      prefix-development: "build(dev)"
       include: "scope"
     # This strategy is fine in this early stage
     versioning-strategy: increase
