@@ -42,7 +42,7 @@ export function toData<T extends TUplc>(self: Static<T>, schema: T): Data {
       return self.data as Data;
     case "Option":
       return self != null
-        ? new Constr(0, [toData(self, schema.value as TUplc)])
+        ? new Constr(0, [toData(self, schema.option as TUplc)])
         : new Constr(1, []);
     case "Array":
       assert(self instanceof Array, "self must be Array");
@@ -136,7 +136,7 @@ export function fromData<T extends TUplc>(data: Data, schema: T): Static<T> {
           data.fields.length === 1,
           "data (Constr) fields must have exactly 1 element for Option::Some"
         );
-        return fromData(data.fields[0], schema.value as TUplc);
+        return fromData(data.fields[0], schema.option as TUplc);
       } else if (data.index === 1) {
         assert(
           !data.fields.length,

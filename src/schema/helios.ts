@@ -7,51 +7,64 @@ import {
   Map,
   Option,
   Struct,
+  Id,
   type Static,
 } from "./uplc";
 
 // Helios builtins
-export const Hash = Struct({ hash: ByteArray });
+export const Hash = Id("Hash")(Struct({ hash: ByteArray }));
 
-export const ScriptHash = Struct({ script: Hash });
-export const ValidatorHash = ScriptHash;
-export const MintingPolicyHash = ScriptHash;
-export const StakingValidatorHash = ScriptHash;
+const IScriptHash = Struct({ script: Hash });
+export const ScriptHash = Id("ScriptHash")(IScriptHash);
+export const ValidatorHash = Id("ValidatorHash")(IScriptHash);
+export const MintingPolicyHash = Id("MintingPolicyHash")(IScriptHash);
+export const StakingValidatorHash = Id("StakingValidatorHash")(IScriptHash);
 
-export const PubKeyHash = Struct({ key: Hash });
-export const StakeKeyHash = Struct({ key: Hash });
-export const PaymentCredential = Enum("type", {
-  PubKey: Inline(PubKeyHash, "hash"),
-  Validator: Inline(ValidatorHash, "hash"),
-});
+const IKeyHash = Struct({ key: Hash });
+export const PubKeyHash = Id("PubKeyHash")(IKeyHash);
+export const StakeKeyHash = Id("StakeKeyHash")(IKeyHash);
 
-export const StakingCredential = Enum("kind", {
-  Hash: Inline(
-    Enum("type", {
-      StakeKey: Inline(StakeKeyHash, "hash"),
-      Validator: Inline(ValidatorHash, "hash"),
-    })
-  ),
-  Ptr: { slotNo: Int, txIndex: Int, certIndex: Int },
-});
-export const Address = ConStruct({
-  paymentCredential: PaymentCredential,
-  stakingCredential: Option(StakingCredential),
-});
-
-export const TxId = ConStruct(Inline(ByteArray));
-export const TxOutputId = ConStruct({ txId: TxId, index: Int });
-
-export const AssetClass = ConStruct({
-  mintingPolicyHash: MintingPolicyHash,
-  tokenName: ByteArray,
-});
-export const Value = Struct(
-  Inline(Map(MintingPolicyHash, Map(ByteArray, Int)))
+export const PaymentCredential = Id("PaymentCredential")(
+  Enum("type", {
+    PubKey: Inline(PubKeyHash, "hash"),
+    Validator: Inline(ValidatorHash, "hash"),
+  })
+);
+export const StakingCredential = Id("StakingCredential")(
+  Enum("kind", {
+    Hash: Inline(
+      Enum("type", {
+        StakeKey: Inline(StakeKeyHash, "hash"),
+        Validator: Inline(ValidatorHash, "hash"),
+      })
+    ),
+    Ptr: { slotNo: Int, txIndex: Int, certIndex: Int },
+  })
+);
+export const Address = Id("Address")(
+  ConStruct({
+    paymentCredential: PaymentCredential,
+    stakingCredential: Option(StakingCredential),
+  })
 );
 
-export const Time = Struct({ timestamp: Int });
-export const Duration = Struct({ milliseconds: Int });
+export const TxId = Id("TxId")(ConStruct(Inline(ByteArray)));
+export const TxOutputId = Id("TxOutputId")(
+  ConStruct({ txId: TxId, index: Int })
+);
+
+export const AssetClass = Id("AssetClass")(
+  ConStruct({
+    mintingPolicyHash: MintingPolicyHash,
+    tokenName: ByteArray,
+  })
+);
+export const Value = Id("Value")(
+  Struct(Inline(Map(MintingPolicyHash, Map(ByteArray, Int))))
+);
+
+export const Time = Id("Time")(Struct({ timestamp: Int }));
+export const Duration = Id("Duration")(Struct({ milliseconds: Int }));
 
 export type Hash = Static<typeof Hash>;
 export type ScriptHash = Static<typeof ScriptHash>;
