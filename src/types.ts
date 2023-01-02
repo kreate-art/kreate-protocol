@@ -23,3 +23,9 @@ export function isData(value: unknown): value is Data {
     value instanceof Constr
   );
 }
+
+export function isEmpty(value: unknown): value is Record<never, never> {
+  return (
+    typeof value === "object" && value !== null && !Object.keys(value).length
+  );
+}

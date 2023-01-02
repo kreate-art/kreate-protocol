@@ -1,16 +1,16 @@
 import { Address, StakingValidatorHash, Time, TxOutputId } from "../helios";
-import { Bool, Enum, Int, Option, Static, Struct } from "../uplc";
+import { Bool, Enum, Int, Option, Static, Struct, Void } from "../uplc";
 
 import { IpfsCid, ProjectId } from "./common";
 
 // ==================== V | Project ====================
 
 export const ProjectStatus = Enum("status", {
-  Active: {},
+  Active: Void,
   PreClosed: { pendingUntil: Time },
   PreDelisted: { pendingUntil: Time },
-  Closed: {},
-  Delisted: {},
+  Closed: Void,
+  Delisted: Void,
 });
 export type ProjectStatus = Static<typeof ProjectStatus>;
 
@@ -26,12 +26,12 @@ export type ProjectDatum = Static<typeof ProjectDatum>;
 export const ProjectRedeemer = Enum("case", {
   RecordNewMilestone: { newMilestone: Int },
   AllocateStakingValidator: { newStakingValidator: StakingValidatorHash },
-  UpdateStakingDelegationManagement: {},
-  InitiateClose: {},
-  InitiateDelist: {},
-  CancelDelist: {},
-  FinalizeClose: {},
-  Migrate: {},
+  UpdateStakingDelegationManagement: Void,
+  InitiateClose: Void,
+  InitiateDelist: Void,
+  CancelDelist: Void,
+  FinalizeClose: Void,
+  Migrate: Void,
 });
 export type ProjectRedeemer = Static<typeof ProjectRedeemer>;
 
@@ -47,11 +47,11 @@ export const ProjectDetailDatum = Struct({
 export type ProjectDetailDatum = Static<typeof ProjectDetailDatum>;
 
 export const ProjectDetailRedeemer = Enum("case", {
-  WithdrawFunds: {},
-  Update: {},
-  Close: {},
-  Delist: {},
-  Migrate: {},
+  WithdrawFunds: Void,
+  Update: Void,
+  Close: Void,
+  Delist: Void,
+  Migrate: Void,
 });
 export type ProjectDetailRedeemer = Static<typeof ProjectDetailRedeemer>;
 
@@ -64,9 +64,9 @@ export const ProjectScriptDatum = Struct({
 export type ProjectScriptDatum = Static<typeof ProjectScriptDatum>;
 
 export const ProjectScriptRedeemer = Enum("case", {
-  Close: {},
-  Delist: {},
-  Migrate: {},
+  Close: Void,
+  Delist: Void,
+  Migrate: Void,
 });
 export type ProjectScriptRedeemer = Static<typeof ProjectScriptRedeemer>;
 
@@ -74,7 +74,7 @@ export type ProjectScriptRedeemer = Static<typeof ProjectScriptRedeemer>;
 
 export const ProjectMintingRedeemer = Enum("case", {
   NewProject: { projectSeed: TxOutputId },
-  AllocateStaking: {},
-  DeallocateStaking: {},
+  AllocateStaking: Void,
+  DeallocateStaking: Void,
 });
 export type ProjectMintingRedeemer = Static<typeof ProjectMintingRedeemer>;

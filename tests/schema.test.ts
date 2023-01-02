@@ -4,27 +4,26 @@ import * as S from "@/schema";
 import { OutRef, Hex } from "@/types";
 
 describe("complex schema", () => {
-  const OneStruct = S.Struct({
-    [S.Inline]: S.ByteArray,
-  });
+  const OneStruct = S.Struct(S.Inline(S.ByteArray));
   const MiniStruct = S.Struct({
     b: S.Int,
     c: S.String,
   });
   const InlinedEnum = S.Enum("type", {
-    Old: { [S.Inline]: MiniStruct },
-    New: {},
+    Old: S.Inline(MiniStruct),
+    New: S.Void,
   });
+
   const Datum = S.Enum("direction", {
-    Up: {},
-    Down: {},
+    Up: S.Void,
+    Down: S.Void,
     Left: {
       foo: OneStruct,
       bar: S.Option(MiniStruct),
       baz: S.TxOutputId,
       inl: InlinedEnum,
     },
-    Right: {},
+    Right: S.Void,
   });
   type Datum = S.Static<typeof Datum>;
 
