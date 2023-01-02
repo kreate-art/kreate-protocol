@@ -1,10 +1,8 @@
 import {
-  Hint,
   Kind,
   NumericOptions,
   PropertiesReduce,
   TArray,
-  TBoolean,
   TLiteral,
   TNever,
   TProperties,
@@ -45,57 +43,67 @@ export type TUplc =
 
 // Primitives
 export interface TInt extends TSchema, NumericOptions {
+  $id: "Int";
   [Kind]: "Int";
   static: bigint;
   type: "bigint";
 }
 export const Int: TInt = {
   ...Type.Unsafe({}),
+  $id: "Int",
   [Kind]: "Int",
   type: "bigint",
 };
 
-export type TBool = TBoolean;
-export const Bool = Type.Boolean();
+export type TBool = typeof Bool;
+export const Bool = Type.Boolean({ $id: "Bool" });
 
 // Since Hex is just a type alias for string, it's not worth creating a new TSchema
 export type TByteArray = typeof ByteArray;
-export const ByteArray = Type.String({ format: "hex" });
+export const ByteArray = Type.String({ $id: "ByteArray", format: "hex" });
 
 export type TString = typeof String;
-export const String = Type.String({ format: "text" });
+export const String = Type.String({ $id: "String", format: "text" });
 
 // Raw Data
 export type RawData = { data: Data };
 export interface TRawData extends TSchema {
+  $id: "Data";
   [Kind]: "Data";
   static: RawData;
 }
-export const TRawData: TRawData = { ...Type.Unsafe({}), [Kind]: "Data" };
+export const TRawData: TRawData = {
+  ...Type.Unsafe({}),
+  $id: "Data",
+  [Kind]: "Data",
+};
 
 // Basic Structures
 export interface TOption<T extends TSchema = TSchema> extends TSchema {
+  $id: string;
   [Kind]: "Option";
   static: Static<T, this["params"]> | null;
-  value: T;
+  option: T;
   type: "option";
 }
 export function Option<T extends TSchema>(schema: T): TOption<T> {
   return {
     ...Type.Unsafe({}),
+    $id: `Option[${schema.$id ?? "?"}]`,
     [Kind]: "Option",
-    value: schema,
+    option: schema,
     type: "option",
   };
 }
 
 export type TList<T extends TSchema = TSchema> = TArray<T>;
 export function List<T extends TSchema>(schema: T): TArray<T> {
-  return Type.Array(schema);
+  return Type.Array(schema, { $id: `[]${schema.$id ?? "?"}` });
 }
 
 export interface TMap<K extends TSchema = TSchema, V extends TSchema = TSchema>
   extends TSchema {
+  $id: string;
   [Kind]: "Map";
   static: Map<Static<K, this["params"]>, Static<V, this["params"]>>;
   key: K;
@@ -108,6 +116,7 @@ export function Map<K extends TSchema, V extends TSchema>(
 ): TMap<K, V> {
   return {
     ...Type.Unsafe({}),
+    $id: `Map[${keySchema.$id ?? "?"}]${valueSchema.$id ?? "?"}`,
     [Kind]: "Map",
     key: keySchema,
     value: valueSchema,
@@ -147,39 +156,37 @@ export interface TStruct<T extends TStructProps = TStructProps>
   // Other language's structs are encoded using constrs.
   constr: boolean;
 }
-export function Struct(
-  properties: Record<string, never>,
-  constr?: boolean
-): TNever;
-export function Struct<T extends TStructProps>(
-  properties: T,
-  constr?: boolean
-): TStruct<T>;
-export function Struct<T extends TStructProps>(
-  properties: T,
-  constr = false
+function newStruct<T extends TStructProps>(
+  constr: boolean,
+  properties: T
 ): TNever | TStruct<T> {
-  return isEmpty(properties)
-    ? Type.Never()
-    : {
-        ...Type.Unsafe(),
-        [Kind]: "Object",
-        type: "struct",
-        constr,
-        properties,
-      };
+  if (isEmpty(properties)) return Type.Never();
+  return {
+    ...Type.Unsafe(),
+    [Kind]: "Object",
+    type: "struct",
+    constr,
+    properties,
+  };
+}
+export function Struct(properties: Record<string, never>): TNever;
+export function Struct<T extends TStructProps>(properties: T): TStruct<T>;
+export function Struct<T extends TStructProps>(
+  properties: T
+): TNever | TStruct<T> {
+  return newStruct(false, properties);
 }
 export function ConStruct(properties: Record<string, never>): TNever;
 export function ConStruct<T extends TStructProps>(properties: T): TStruct<T>;
 export function ConStruct<T extends TStructProps>(
   properties: T
 ): TNever | TStruct<T> {
-  return Struct(properties, true);
+  return newStruct(true, properties);
 }
 
 const Error: unique symbol = Symbol.for("Error");
 type Error = typeof Error;
-type AggNever<T> = keyof T extends never
+type Agg<T> = keyof T extends never
   ? unknown
   : Error extends T[keyof T]
   ? never
@@ -192,7 +199,7 @@ export interface TEnum<
   T extends Record<string, TEnumProps> = {}
 > extends TSchema {
   [Kind]: "Union";
-  static: AggNever<{
+  static: Agg<{
     [K in keyof T]: K extends string
       ? T[K] extends TVoid
         ? { [L in D]: K }
@@ -231,13 +238,10 @@ export function Enum<D extends string, T extends Record<string, TEnumProps>>(
   } else return Type.Never();
 }
 
-// Annotations
-export type TAnnotated<A extends string, T extends TSchema = TSchema> = {
-  [Hint]: A;
-} & T;
-export function Annotated<A extends string, T extends TSchema>(
-  annotation: A,
-  schema: T
-): TAnnotated<A, T> {
-  return { ...schema, [Hint]: annotation };
+// Identity
+type Id<I extends string, T extends TSchema> = { $id: I } & T;
+export function Id<I extends string>(
+  id: I
+): <T extends TSchema>(schema: T) => Id<I, T> {
+  return (schema) => ({ ...schema, $id: id });
 }
