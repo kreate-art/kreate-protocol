@@ -9,6 +9,10 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
+import {
+  constructTxOutputId,
+  extractPaymentPubKeyHash,
+} from "../helpers/constructors";
 import { getCurrentTime } from "../helpers/lucid";
 
 export type ProposeProtocolTxParams = {
@@ -35,13 +39,9 @@ export function proposeProtocolProposalTx(
     ProtocolParamsDatum
   );
 
-  assert(
-    protocolParamsDatum.governorAddress.paymentCredential.paymentType ===
-      "PubKey",
-    "Governor address must have a public-key hash credential"
+  const protocolGovernorPkh = extractPaymentPubKeyHash(
+    protocolParamsDatum.governorAddress
   );
-  const protocolGovernorPkh =
-    protocolParamsDatum.governorAddress.paymentCredential.$.pubKeyHash.$hash;
 
   const txTimeEnd = getCurrentTime(lucid) + txTimePadding;
 
@@ -53,10 +53,7 @@ export function proposeProtocolProposalTx(
           protocolParamsDatum.proposalWaitingPeriod.milliseconds +
           1n,
       },
-      base: {
-        txId: { $txId: protocolParamsUtxo.txHash },
-        index: BigInt(protocolParamsUtxo.outputIndex),
-      },
+      base: constructTxOutputId(protocolParamsUtxo),
       params: proposedProtocolParamsDatum,
     },
   };

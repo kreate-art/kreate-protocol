@@ -1,6 +1,12 @@
+import { OutRef } from "@/types";
+
 import { helios, HeliosSource } from "../../program";
 
-export default function main(seedTxId: string, seedTxIx: string): HeliosSource {
+export type Params = {
+  protocolSeed: OutRef;
+};
+
+export default function main({ protocolSeed }: Params): HeliosSource {
   return helios`
     minting nft__protocol
 
@@ -14,7 +20,10 @@ export default function main(seedTxId: string, seedTxIx: string): HeliosSource {
     } from constants
 
     const seed_output_id: TxOutputId =
-      TxOutputId::new(TxId::new(#${seedTxId}), ${seedTxIx})
+      TxOutputId::new(
+        TxId::new(#${protocolSeed.txHash}),
+        ${protocolSeed.outputIndex.toString()}
+      )
 
     func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;

@@ -1,3 +1,5 @@
+// TODO: @sk-saru, @sk-umiuma: Share these constants with contracts
+
 export const INACTIVE_PROJECT_UTXO_ADA = 2_000_000n;
 export const PROJECT_DETAIL_UTXO_ADA = 2_000_000n;
 export const PROJECT_MIN_FUNDS_WITHDRAWAL_ADA = 100_000_000n;

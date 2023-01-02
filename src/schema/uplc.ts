@@ -16,9 +16,15 @@ import { Custom } from "@sinclair/typebox/custom";
 import { Data } from "lucid-cardano";
 
 import { isData } from "@/types";
+import { assert } from "@/utils";
 
 // Re-exports
-export { type Static };
+export { type Static, type TProperties };
+
+// Inlining
+export const Inline: unique symbol = Symbol.for("Inline");
+export type TInline = { [Inline]: TSchema };
+export type TPropertiesPlus = TProperties | TInline;
 
 // Custom typebox
 Custom.Set("Int", (_, value) => typeof value === "bigint");
@@ -112,34 +118,66 @@ export function Map<K extends TSchema, V extends TSchema>(
 }
 
 // Constructs
-export interface TStruct<T extends TProperties = TProperties> extends TSchema {
+export interface TStruct<T extends TPropertiesPlus = TPropertiesPlus>
+  extends TSchema {
   [Kind]: "Object";
-  static: PropertiesReduce<T, this["params"]>;
+  static: T extends TInline
+    ? Static<T[typeof Inline]>
+    : PropertiesReduce<T, this["params"]>;
   properties: T;
   type: "struct";
   // Helios structs are encoded using data-lists.
   // Other language's structs are encoded using constrs.
   constr: boolean;
 }
-export function Struct<T extends TProperties>(properties: T): TStruct<T> {
-  return { ...Type.Object(properties), type: "struct", constr: false };
+export function Struct<T extends TPropertiesPlus>(
+  properties: T,
+  constr = false
+): TStruct<T> {
+  if (Inline in properties) {
+    // TODO: Enforce this at type-level
+    assert(
+      !Object.keys(properties).length,
+      "inlined struct must not have any other property"
+    );
+  }
+  return {
+    ...Type.Unsafe(),
+    [Kind]: "Object",
+    type: "struct",
+    constr,
+    properties,
+  };
 }
-export function ConStruct<T extends TProperties>(properties: T): TStruct<T> {
-  return { ...Type.Object(properties), type: "struct", constr: true };
+export function ConStruct<T extends TPropertiesPlus>(
+  properties: T
+): TStruct<T> {
+  return Struct(properties, true);
 }
 
-type ValueOf<T> = keyof T extends never ? unknown : T[keyof T];
+const Never: unique symbol = Symbol.for("Never");
+type Never = typeof Never;
+type Simplify<T> = T extends object ? { [K in keyof T]: T[K] } : T;
+type AggNever<T> = keyof T extends never
+  ? unknown
+  : Never extends T[keyof T]
+  ? never
+  : T[keyof T];
 
 export interface TEnum<
   D extends string = string,
   // eslint-disable-next-line @typescript-eslint/ban-types
-  T extends Record<string, TProperties> = {}
+  T extends Record<string, TPropertiesPlus> = {}
 > extends TSchema {
   [Kind]: "Union";
-  static: ValueOf<{
+  static: AggNever<{
     [K in keyof T]: K extends string
-      ? PropertiesReduce<{ [L in D]: TLiteral<K> } & T[K], this["params"]>
-      : never;
+      ? T[K] extends TInline
+        ? T[K][typeof Inline][typeof Kind] extends "Object" | "Union"
+          ? Simplify<{ [L in D]: K } & Static<T[K][typeof Inline]>>
+          : Never
+        : PropertiesReduce<{ [L in D]: TLiteral<K> } & T[K], this["params"]>
+      : Never;
   }>;
   discriminator: D;
   variants: T;
@@ -150,15 +188,28 @@ export function Enum<D extends string>(
   _: D,
   variants: Record<string, never>
 ): TNever;
-export function Enum<D extends string, T extends Record<string, TProperties>>(
-  discriminator: D,
-  variants: T
-): TEnum<D, T>;
-export function Enum<D extends string, T extends Record<string, TProperties>>(
-  discriminator: D,
-  variants: T
-): TNever | TEnum<D, T> {
-  if (variants)
+export function Enum<
+  D extends string,
+  T extends Record<string, TPropertiesPlus>
+>(discriminator: D, variants: T): TEnum<D, T>;
+export function Enum<
+  D extends string,
+  T extends Record<string, TPropertiesPlus>
+>(discriminator: D, variants: T): TNever | TEnum<D, T> {
+  if (variants) {
+    for (const variant of Object.values(variants)) {
+      if (Inline in variant) {
+        assert(
+          !Object.keys(variant).length,
+          "inlined enum variant must not have any other property"
+        );
+        const kind = variant[Inline][Kind];
+        assert(
+          kind === "Object" || kind === "Union",
+          "inlined enum variant must points to Struct or Enum"
+        );
+      }
+    }
     return {
       ...Type.Unsafe({}),
       [Kind]: "Union",
@@ -166,17 +217,17 @@ export function Enum<D extends string, T extends Record<string, TProperties>>(
       variants,
       type: "enum",
     };
-  else return Type.Never();
+  } else return Type.Never();
 }
 
 // Tagging
-export type TTagged<A extends string, T extends TSchema = TSchema> = {
+export type TAnnotated<A extends string, T extends TSchema = TSchema> = {
   [Hint]: A;
 } & T;
 
 export function Annotated<A extends string, T extends TSchema>(
   annotation: A,
   schema: T
-): TTagged<A, T> {
+): TAnnotated<A, T> {
   return { ...schema, [Hint]: annotation };
 }

@@ -8,10 +8,7 @@ import {
 } from "@/schema/teiki/protocol";
 import { Hex } from "@/types";
 
-import {
-  constructMigratableScript,
-  constructScriptHash,
-} from "../transactions/helpers/constructors";
+import { constructMigratableScript } from "../transactions/helpers/constructors";
 
 import {
   compileBackingVScript,
@@ -133,9 +130,9 @@ export function getProtocolRegistry(
   );
 
   return {
-    protocolStakingValidator: constructScriptHash(
-      registryScript.protocolStakeValidatorHash
-    ),
+    protocolStakingValidator: {
+      script: { hash: registryScript.protocolStakeValidatorHash },
+    },
     projectValidator: getMigratableScript(
       registryScript.projectValidatorHash,
       migrateTokenMph,
