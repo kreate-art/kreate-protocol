@@ -10,6 +10,8 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
+import { extractPaymentPubKeyHash } from "../helpers/constructors";
+
 export type ApplyProtocolTxParams = {
   protocolParamsUtxo: UTxO;
   protocolProposalUtxo: UTxO;
@@ -41,13 +43,9 @@ export function applyProtocolProposalTx(
   assert(protocolProposalDatum.proposal, "Protocol proposal must not be empty");
   const appliedProtocolParamsDatum = protocolProposalDatum.proposal.params;
 
-  assert(
-    protocolParamsDatum.governorAddress.paymentCredential.paymentType ===
-      "PubKey",
-    "Governor address must have a public-key hash credential"
+  const protocolGovernorPkh = extractPaymentPubKeyHash(
+    protocolParamsDatum.governorAddress
   );
-  const protocolGovernorPkh =
-    protocolParamsDatum.governorAddress.paymentCredential.$.pubKeyHash.$hash;
 
   return lucid
     .newTx()

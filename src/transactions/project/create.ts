@@ -2,6 +2,7 @@ import { Address, Lucid, PolicyId, Script, Unit, UTxO } from "lucid-cardano";
 
 import { PROJECT_AT_TOKEN_NAMES } from "@/contracts/common/constants";
 import * as S from "@/schema";
+import { TxOutputId } from "@/schema";
 import { IpfsCid } from "@/schema/teiki/common";
 import {
   ProjectDatum,
@@ -16,6 +17,7 @@ import { PROJECT_DETAIL_UTXO_ADA } from "../helpers/constants";
 import {
   constructAddress,
   constructProjectIdUsingBlake2b,
+  constructTxOutputId,
 } from "../helpers/constructors";
 import { getCurrentTime } from "../helpers/lucid";
 
@@ -96,24 +98,20 @@ export function createProjectTx(
     status: { status: "Active" },
   };
 
+  const seedTxOutputId: TxOutputId = constructTxOutputId(seedUtxo);
+
   const dedicatedTreasuryDatum: DedicatedTreasuryDatum = {
     projectId: { id: projectId },
     governorAda: protocolParamsDatum.governorShareRatio * minTotalFees,
     tag: {
       kind: "TagOriginated",
-      seed: {
-        txId: { $txId: seedUtxo.txHash },
-        index: BigInt(seedUtxo.outputIndex),
-      },
+      seed: seedTxOutputId,
     },
   };
 
   const projectMintingRedeemer: ProjectMintingRedeemer = {
     case: "NewProject",
-    projectSeed: {
-      txId: { $txId: seedUtxo.txHash },
-      index: BigInt(seedUtxo.outputIndex),
-    },
+    projectSeed: seedTxOutputId,
   };
 
   let tx = lucid

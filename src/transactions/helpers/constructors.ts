@@ -2,9 +2,9 @@ import {
   Address,
   C,
   fromHex,
+  getAddressDetails,
   OutRef,
   toHex,
-  getAddressDetails,
 } from "lucid-cardano";
 
 import * as S from "@/schema";
@@ -12,22 +12,19 @@ import { MigratableScript } from "@/schema/teiki/protocol";
 import { Hex } from "@/types";
 import { assert } from "@/utils";
 
-// TODO: Extract to a constructors module
-
-export function constructProjectIdUsingBlake2b({
+export function constructTxOutputId({
   txHash,
   outputIndex,
-}: OutRef): Hex {
-  const outputId: S.TxOutputId = {
-    txId: { $txId: txHash },
+}: OutRef): S.TxOutputId {
+  return {
+    txId: txHash,
     index: BigInt(outputIndex),
   };
-  const cbor = S.toCbor(S.toData(outputId, S.TxOutputId));
-  return toHex(C.hash_blake2b256(fromHex(cbor)));
 }
 
-export function constructScriptHash(hash: Hex): S.ScriptHash {
-  return { scriptHash: { $hash: hash } };
+export function constructProjectIdUsingBlake2b(ref: OutRef): Hex {
+  const cbor = S.toCbor(S.toData(constructTxOutputId(ref), S.TxOutputId));
+  return toHex(C.hash_blake2b256(fromHex(cbor)));
 }
 
 export function constructAssetClass(
@@ -35,7 +32,7 @@ export function constructAssetClass(
   tokenName: Hex
 ): S.AssetClass {
   return {
-    mintingPolicyHash: constructScriptHash(mintingPolicyHash),
+    mintingPolicyHash: { script: { hash: mintingPolicyHash } },
     tokenName: tokenName,
   };
 }
@@ -45,11 +42,11 @@ export function constructMigratableScript(
   migrations: Record<Hex, { mintingPolicyHash: Hex; tokenName: Hex }>
 ): MigratableScript {
   return {
-    latest: { scriptHash: { $hash: latestScriptHash } },
+    latest: { script: { hash: latestScriptHash } },
     migrations: new Map(
       Object.entries(migrations).map(
         ([migratingScriptHash, { mintingPolicyHash, tokenName }]) => [
-          constructScriptHash(migratingScriptHash),
+          { script: { hash: migratingScriptHash } },
           constructAssetClass(mintingPolicyHash, tokenName),
         ]
       )
@@ -64,21 +61,19 @@ export function constructAddress(address: Address): S.Address {
   const conPaymentCredential: S.PaymentCredential =
     paymentCredential.type === "Key"
       ? {
-          paymentType: "PubKey",
-          $: { pubKeyHash: { $hash: paymentCredential.hash } },
+          type: "PubKey",
+          key: { hash: paymentCredential.hash },
         }
       : {
-          paymentType: "Validator",
-          $: { scriptHash: { $hash: paymentCredential.hash } },
+          type: "Validator",
+          script: { hash: paymentCredential.hash },
         };
 
   const conStakingCredential: S.StakingCredential | null = stakeCredential
     ? {
-        stakingType: "Hash",
-        $: {
-          stakingHash: "Validator",
-          $: { scriptHash: { $hash: stakeCredential.hash } },
-        },
+        kind: "Hash",
+        type: "Validator",
+        script: { hash: stakeCredential.hash },
       }
     : null;
 
@@ -86,4 +81,14 @@ export function constructAddress(address: Address): S.Address {
     paymentCredential: conPaymentCredential,
     stakingCredential: conStakingCredential,
   };
+}
+
+// TODO: We shouldn't rely on this function for transaction building
+// We should support other kinds of credential in the future.
+export function extractPaymentPubKeyHash(address: S.Address): Hex {
+  assert(
+    address.paymentCredential.type === "PubKey",
+    "Address must have a public-key hash payment credential"
+  );
+  return address.paymentCredential.key.hash;
 }

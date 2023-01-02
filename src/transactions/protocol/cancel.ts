@@ -8,6 +8,8 @@ import {
 } from "@/schema/teiki/protocol";
 import { assert } from "@/utils";
 
+import { extractPaymentPubKeyHash } from "../helpers/constructors";
+
 export type CancelProtocolTxParams = {
   protocolParamsUtxo: UTxO;
   protocolProposalUtxo: UTxO;
@@ -28,13 +30,9 @@ export function cancelProtocolProposalTx(
     ProtocolParamsDatum
   );
 
-  assert(
-    protocolParamsDatum.governorAddress.paymentCredential.paymentType ===
-      "PubKey",
-    "Governor address must have a public-key hash credential"
+  const protocolGovernorPkh = extractPaymentPubKeyHash(
+    protocolParamsDatum.governorAddress
   );
-  const protocolGovernorPkh =
-    protocolParamsDatum.governorAddress.paymentCredential.$.pubKeyHash.$hash;
 
   return lucid
     .newTx()

@@ -5,11 +5,15 @@ import { OutRef, Hex } from "@/types";
 
 describe("complex schema", () => {
   const OneStruct = S.Struct({
-    a: S.ByteArray,
+    [S.Inline]: S.ByteArray,
   });
   const MiniStruct = S.Struct({
     b: S.Int,
     c: S.String,
+  });
+  const InlinedEnum = S.Enum("type", {
+    Old: { [S.Inline]: MiniStruct },
+    New: {},
   });
   const Datum = S.Enum("direction", {
     Up: {},
@@ -18,6 +22,7 @@ describe("complex schema", () => {
       foo: OneStruct,
       bar: S.Option(MiniStruct),
       baz: S.TxOutputId,
+      inl: InlinedEnum,
     },
     Right: {},
   });
@@ -36,6 +41,11 @@ describe("complex schema", () => {
     struct MiniStruct {
       b: Int
       c: String
+    }
+
+    enum InlinedEnum {
+      Old { inline: MiniStruct }
+      New
     }
 
     enum Datum {
@@ -67,12 +77,13 @@ describe("complex schema", () => {
   function buildDatum({ a, b, c, d }: Params): Datum {
     return {
       direction: "Left",
-      foo: { a },
+      foo: a,
       bar: { b: BigInt(b), c },
       baz: {
-        txId: { $txId: d.txHash },
+        txId: d.txHash,
         index: BigInt(d.outputIndex),
       },
+      inl: { type: "Old", b: BigInt(b), c },
     };
   }
 
@@ -91,7 +102,7 @@ describe("complex schema", () => {
 
   test("round trip", () => {
     const sampleCbor =
-      "d87b9f44beef1234d8799f9f182a4b48656c6c6f20576f726c64ffffd8799fd8799f5820e1ffe6d8e94556ce6f24e53d94dc5d9559c2cbc8f00dad3737c61cd0d60a91dcff0affff";
+      "d87b9f44beef1234d8799f9f182a4b48656c6c6f20576f726c64ffffd8799fd8799f5820e1ffe6d8e94556ce6f24e53d94dc5d9559c2cbc8f00dad3737c61cd0d60a91dcff0affd8799f9f182a4b48656c6c6f20576f726c64ffffff";
     const cbor = S.toCbor(S.toData(datum, Datum));
     expect(cbor).toBe(sampleCbor);
 

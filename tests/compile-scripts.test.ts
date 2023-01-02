@@ -20,16 +20,16 @@ import getDedicatedTreasuryV from "@/contracts/treasury/dedicated-treasury.v/mai
 import getOpenTreasuryV from "@/contracts/treasury/open-treasury.v/main";
 import getSharedTreasuryV from "@/contracts/treasury/shared-treasury.v/main";
 
+const BLANK_OUT_REF = { txHash: "00".repeat(32), outputIndex: 0 };
+
 const ALL_SCRIPTS = {
   "Meta-Protocol": {
-    "NFT | Teiki Plant": getTeikiPlantNft({
-      teikiPlantSeed: { txHash: "", outputIndex: 1 },
-    }),
+    "NFT | Teiki Plant": getTeikiPlantNft({ teikiPlantSeed: BLANK_OUT_REF }),
     "V | Teiki Plant": getTeikiPlantV(""),
     "MP | Teiki": getTeikiMp({ nftTeikiPlantMph: "" }),
   },
   Protocol: {
-    "NFT | Protocol": getProtocolNft("", "0"),
+    "NFT | Protocol": getProtocolNft({ protocolSeed: BLANK_OUT_REF }),
     "V | Protocol Params": getProtocolParamsV(""),
     "V | Protocol Proposal": getProtocolProposalV(""),
     "V | Protocol Script": getProtocolScriptV(""),

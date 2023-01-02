@@ -20,9 +20,7 @@ import getSharedTreasuryV from "@/contracts/treasury/shared-treasury.v/main";
 // both this file and the contracts.
 
 export function compileProtocolNftScript(seedUtxo: UTxO): UplcProgram {
-  return compile(
-    getProtocolNft(seedUtxo.txHash, seedUtxo.outputIndex.toString())
-  );
+  return compile(getProtocolNft({ protocolSeed: seedUtxo }));
 }
 
 export function compileProtocolParamsVScript(

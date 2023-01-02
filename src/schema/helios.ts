@@ -2,6 +2,7 @@ import {
   ByteArray,
   ConStruct,
   Enum,
+  Inline,
   Int,
   Map,
   Option,
@@ -10,24 +11,25 @@ import {
 } from "./uplc";
 
 // Helios builtins
-export const Hash = Struct({ $hash: ByteArray });
+export const Hash = Struct({ hash: ByteArray });
 
-export const ScriptHash = Struct({ scriptHash: Hash });
+export const ScriptHash = Struct({ script: Hash });
 export const ValidatorHash = ScriptHash;
 export const MintingPolicyHash = ScriptHash;
 export const StakingValidatorHash = ScriptHash;
 
-export const PubKeyHash = Struct({ pubKeyHash: Hash });
-export const StakeKeyHash = Struct({ stakeKeyHash: Hash });
-export const PaymentCredential = Enum("paymentType", {
-  PubKey: { $: PubKeyHash },
-  Validator: { $: ValidatorHash },
+export const PubKeyHash = Struct({ key: Hash });
+export const StakeKeyHash = Struct({ key: Hash });
+export const PaymentCredential = Enum("type", {
+  PubKey: { [Inline]: PubKeyHash },
+  Validator: { [Inline]: ValidatorHash },
 });
-export const StakingCredential = Enum("stakingType", {
+
+export const StakingCredential = Enum("kind", {
   Hash: {
-    $: Enum("stakingHash", {
-      StakeKey: { $: StakeKeyHash },
-      Validator: { $: ValidatorHash },
+    [Inline]: Enum("type", {
+      StakeKey: { [Inline]: StakeKeyHash },
+      Validator: { [Inline]: ValidatorHash },
     }),
   },
   Ptr: { slotNo: Int, txIndex: Int, certIndex: Int },
@@ -37,7 +39,7 @@ export const Address = ConStruct({
   stakingCredential: Option(StakingCredential),
 });
 
-export const TxId = ConStruct({ $txId: ByteArray });
+export const TxId = ConStruct({ [Inline]: ByteArray });
 export const TxOutputId = ConStruct({ txId: TxId, index: Int });
 
 export const AssetClass = ConStruct({
@@ -50,9 +52,6 @@ export const Value = Struct({
 
 export const Time = Struct({ timestamp: Int });
 export const Duration = Struct({ milliseconds: Int });
-
-export const DatumHash = Struct({ datumHash: Hash });
-export const PubKey = Struct({ pubKey: ByteArray });
 
 export type Hash = Static<typeof Hash>;
 export type ScriptHash = Static<typeof ScriptHash>;
@@ -70,12 +69,12 @@ export type AssetClass = Static<typeof AssetClass>;
 export type Value = Static<typeof Value>;
 export type Time = Static<typeof Time>;
 export type Duration = Static<typeof Duration>;
-export type DatumHash = Static<typeof DatumHash>;
-export type PubKey = Static<typeof PubKey>;
 
 // Missing types
 // - DCert
+// - DatumHash
 // - OutputDatum
+// - PubKey
 // - ScriptContext
 // - ScriptPurpose
 // - StakingPurpose
