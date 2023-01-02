@@ -1,5 +1,5 @@
 import { StakingValidatorHash, Time } from "../helios";
-import { Bool, Enum, Int, Map, Static, Struct } from "../uplc";
+import { Bool, Enum, Int, Map, Static, Struct, Void } from "../uplc";
 
 import { ProjectId } from "./common";
 import { TreasuryTag } from "./tags";
@@ -15,9 +15,9 @@ export type DedicatedTreasuryDatum = Static<typeof DedicatedTreasuryDatum>;
 
 export const DedicatedTreasuryRedeemer = Enum("case", {
   CollectFees: { minFees: Int, split: Bool },
-  WithdrawAda: {},
-  Revoke: {},
-  Migrate: {},
+  WithdrawAda: Void,
+  Revoke: Void,
+  Migrate: Void,
 });
 export type DedicatedTreasuryRedeemer = Static<
   typeof DedicatedTreasuryRedeemer
@@ -26,18 +26,18 @@ export type DedicatedTreasuryRedeemer = Static<
 // ==================== V | Shared Treasury ====================
 
 export const BurnAction = Enum("burn", {
-  BurnPeriodically: {},
-  BurnEntirely: {},
+  BurnPeriodically: Void,
+  BurnEntirely: Void,
 });
 export type BurnAction = Static<typeof BurnAction>;
 
 export const ProjectTeiki = Enum("teikiCondition", {
-  TeikiEmpty: {},
+  TeikiEmpty: Void,
   TeikiBurntPeriodically: {
     available: Int,
     lastBurnAt: Time,
   },
-  TeikiBurntEntirely: {},
+  TeikiBurntEntirely: Void,
 });
 export type ProjectTeiki = Static<typeof ProjectTeiki>;
 
@@ -55,7 +55,7 @@ export const SharedTreasuryRedeemer = Enum("case", {
     burnAmount: Int,
     rewards: Int,
   },
-  Migrate: {},
+  Migrate: Void,
 });
 export type SharedTreasuryRedeemer = Static<typeof SharedTreasuryRedeemer>;
 
@@ -71,7 +71,7 @@ export const OpenTreasuryRedeemer = Enum("case", {
   CollectDelayedStakingRewards: {
     stakingWithdrawals: Map(StakingValidatorHash, Int),
   },
-  WithdrawAda: {},
-  Migrate: {},
+  WithdrawAda: Void,
+  Migrate: Void,
 });
 export type OpenTreasuryRedeemer = Static<typeof OpenTreasuryRedeemer>;

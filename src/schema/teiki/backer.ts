@@ -1,5 +1,5 @@
 import { Address, Time, TxOutputId } from "../helios";
-import { Bool, Enum, Int, List, Static, Struct } from "../uplc";
+import { Bool, Enum, Int, List, Static, Struct, Void } from "../uplc";
 
 import { ProjectId } from "./common";
 
@@ -14,8 +14,8 @@ export const BackingDatum = Struct({
 export type BackingDatum = Static<typeof BackingDatum>;
 
 export const BackingRedeemer = Enum("case", {
-  Unstake: {},
-  Migrate: {},
+  Unstake: Void,
+  Migrate: Void,
 });
 export type BackingRedeemer = Static<typeof BackingRedeemer>;
 
@@ -36,5 +36,5 @@ export type Plant = Static<typeof Plant>;
 export const ProofOfBackingMintingRedeemer = Enum("case", {
   Plant: { cleanup: Bool },
   ClaimRewards: { flowers: List(Plant) },
-  Migrate: {},
+  Migrate: Void,
 });

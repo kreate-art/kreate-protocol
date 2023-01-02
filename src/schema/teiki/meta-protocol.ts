@@ -13,22 +13,23 @@ import {
   Option,
   Static,
   Struct,
+  Void,
 } from "../uplc";
 
 // ==================== Predicates ====================
 
 export const MintingRedeemer = Enum("redeemer", {
-  Any: {},
+  Any: Void,
   ConstrIn: { constrs: List(Int) },
   ConstrNotIn: { constrs: List(Int) },
 });
 export type MintingRedeemer = Static<typeof MintingRedeemer>;
 
 export const MintingAmount = Enum("amount", {
-  Zero: {},
-  NonZero: {},
-  Positive: {},
-  Negative: {},
+  Zero: Void,
+  NonZero: Void,
+  Positive: Void,
+  Negative: Void,
 });
 export type MintingAmount = Static<typeof MintingAmount>;
 
@@ -74,15 +75,15 @@ export const TeikiPlantDatum = Struct({
 export type TeikiPlantDatum = Static<typeof TeikiPlantDatum>;
 
 export const TeikiPlantRedeemer = Enum("case", {
-  Propose: {},
-  Apply: {},
-  Cancel: {},
+  Propose: Void,
+  Apply: Void,
+  Cancel: Void,
 });
 export type TeikiPlantRedeemer = Static<typeof TeikiPlantRedeemer>;
 
 // ==================== NFT | Teiki Plant ====================
 
-export const TeikiPlantNftMintingRedeemer = Enum("case", { Bootstrap: {} });
+export const TeikiPlantNftMintingRedeemer = Enum("case", { Bootstrap: Void });
 export type TeikiPlantNftMintingRedeemer = Static<
   typeof TeikiPlantNftMintingRedeemer
 >;
@@ -90,8 +91,8 @@ export type TeikiPlantNftMintingRedeemer = Static<
 // ==================== MP | Teiki ====================
 
 export const TeikiMintingRedeemer = Enum("case", {
-  Mint: {},
-  Burn: {},
-  Evolve: {},
+  Mint: Void,
+  Burn: Void,
+  Evolve: Void,
 });
 export type TeikiMintingRedeemer = Static<typeof TeikiMintingRedeemer>;

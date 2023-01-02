@@ -21,17 +21,17 @@ export const StakingValidatorHash = ScriptHash;
 export const PubKeyHash = Struct({ key: Hash });
 export const StakeKeyHash = Struct({ key: Hash });
 export const PaymentCredential = Enum("type", {
-  PubKey: { [Inline]: PubKeyHash },
-  Validator: { [Inline]: ValidatorHash },
+  PubKey: Inline(PubKeyHash, "hash"),
+  Validator: Inline(ValidatorHash, "hash"),
 });
 
 export const StakingCredential = Enum("kind", {
-  Hash: {
-    [Inline]: Enum("type", {
-      StakeKey: { [Inline]: StakeKeyHash },
-      Validator: { [Inline]: ValidatorHash },
-    }),
-  },
+  Hash: Inline(
+    Enum("type", {
+      StakeKey: Inline(StakeKeyHash, "hash"),
+      Validator: Inline(ValidatorHash, "hash"),
+    })
+  ),
   Ptr: { slotNo: Int, txIndex: Int, certIndex: Int },
 });
 export const Address = ConStruct({
@@ -39,16 +39,16 @@ export const Address = ConStruct({
   stakingCredential: Option(StakingCredential),
 });
 
-export const TxId = ConStruct({ [Inline]: ByteArray });
+export const TxId = ConStruct(Inline(ByteArray));
 export const TxOutputId = ConStruct({ txId: TxId, index: Int });
 
 export const AssetClass = ConStruct({
   mintingPolicyHash: MintingPolicyHash,
   tokenName: ByteArray,
 });
-export const Value = Struct({
-  $value: Map(MintingPolicyHash, Map(ByteArray, Int)),
-});
+export const Value = Struct(
+  Inline(Map(MintingPolicyHash, Map(ByteArray, Int)))
+);
 
 export const Time = Struct({ timestamp: Int });
 export const Duration = Struct({ milliseconds: Int });

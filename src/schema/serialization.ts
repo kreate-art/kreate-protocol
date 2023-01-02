@@ -5,14 +5,7 @@ import { Constr, Data, fromText, toText } from "lucid-cardano";
 import { Hex } from "@/types";
 import { assert } from "@/utils";
 
-import {
-  Inline,
-  Static,
-  TEnum,
-  TProperties,
-  TPropertiesPlus,
-  TUplc,
-} from "./uplc";
+import { Static, TEnum, TEnumProps, TProperties, TUplc } from "./uplc";
 
 export function toCbor(data: Data): Hex {
   return Data.to(data);
@@ -66,8 +59,9 @@ export function toData<T extends TUplc>(self: Static<T>, schema: T): Data {
     case "Object": {
       // assert(schema.type === "struct", "expect Struct or ConStruct schema");
       const properties = schema.properties;
-      if (Inline in properties) {
-        const data = toData(self, properties[Inline] as TUplc);
+      if (Kind in properties) {
+        // assert(properties[Kind] === "Inline")
+        const data = toData(self, properties.schema as TUplc);
         // Helios has special encoding for 1-field structs (newtypes)
         return schema.constr ? new Constr(0, [data]) : data;
       } else {
@@ -88,13 +82,21 @@ export function toData<T extends TUplc>(self: Static<T>, schema: T): Data {
       const record = self as Record<string, unknown>;
       const variantName = record[schema.discriminator] as string;
       assert(variantName, "no enum variant specified");
-      const result = selectVariant(schema, (index, name, properties) =>
-        name === variantName
-          ? Inline in properties
-            ? new Constr(index, [toData(record, properties[Inline] as TUplc)])
-            : new Constr(index, toDataUsingProperties(record, properties))
-          : undefined
-      );
+      const result = selectVariant(schema, (index, name, properties) => {
+        if (name !== variantName) return undefined;
+        if (Kind in properties) {
+          switch (properties[Kind]) {
+            case "Inline":
+              return new Constr(index, [
+                toData(record, properties.schema as TUplc),
+              ]);
+            case "Void":
+              return new Constr(index, []);
+          }
+        } else {
+          return new Constr(index, toDataUsingProperties(record, properties));
+        }
+      });
       assert(result !== undefined, `invalid enum variant: ${variantName}`);
       return result;
     }
@@ -158,6 +160,7 @@ export function fromData<T extends TUplc>(data: Data, schema: T): Static<T> {
       // assert(schema.type === "struct", "expect Struct or ConStruct schema");
       let datas: Data[];
       const properties = schema.properties;
+      const isInlined = Kind in properties; // && properties[Kind] === "Inline"
       if (schema.constr) {
         assert(
           data instanceof Constr && data.index === 0,
@@ -165,8 +168,7 @@ export function fromData<T extends TUplc>(data: Data, schema: T): Static<T> {
         );
         datas = data.fields;
       } else {
-        // There's Inline symbol
-        if (Object.keys(properties).length <= 1) {
+        if (isInlined || Object.keys(properties).length === 1) {
           // Helios has special encoding for 1-field structs (newtypes)
           datas = [data];
         } else {
@@ -174,9 +176,9 @@ export function fromData<T extends TUplc>(data: Data, schema: T): Static<T> {
           datas = data;
         }
       }
-      if (Inline in properties) {
+      if (isInlined) {
         assert(datas.length === 1, "inlined struct");
-        return fromData(datas[0], properties[Inline] as TUplc);
+        return fromData(datas[0], properties.schema as TUplc);
       } else {
         return fromDataUsingProperties(datas, properties);
       }
@@ -186,20 +188,24 @@ export function fromData<T extends TUplc>(data: Data, schema: T): Static<T> {
       assert(data instanceof Constr, "data must be Constr");
       const result = selectVariant(schema, (index, name, properties) => {
         if (index !== data.index) return undefined;
-        if (Inline in properties) {
-          assert(data.fields.length === 1, "inlined enum variant");
-          return {
-            [schema.discriminator]: name,
-            ...(fromData(data.fields[0], properties[Inline] as TUplc) as Record<
-              string,
-              unknown
-            >),
-          };
+        const variant = { [schema.discriminator]: name };
+        if (Kind in properties) {
+          switch (properties[Kind]) {
+            case "Inline":
+              assert(data.fields.length === 1, "inlined enum variant");
+              return Object.assign(
+                variant,
+                fromData(data.fields[0], properties.schema as TUplc)
+              );
+            case "Void":
+              assert(data.fields.length === 0, "void enum variant");
+              return variant;
+          }
         } else {
-          return {
-            [schema.discriminator]: name,
-            ...fromDataUsingProperties(data.fields, properties),
-          };
+          return Object.assign(
+            variant,
+            fromDataUsingProperties(data.fields, properties)
+          );
         }
       });
       assert(result !== undefined, `enum variant out of bound: ${data.index}`);
@@ -210,7 +216,7 @@ export function fromData<T extends TUplc>(data: Data, schema: T): Static<T> {
 
 function selectVariant<
   D extends string,
-  P extends TPropertiesPlus,
+  P extends TEnumProps,
   T extends Record<string, P>,
   R
 >(

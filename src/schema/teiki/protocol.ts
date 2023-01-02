@@ -7,7 +7,7 @@ import {
   TxOutputId,
   ValidatorHash,
 } from "../helios";
-import { Enum, Int, List, Map, Option, Static, Struct } from "../uplc";
+import { Enum, Int, List, Map, Option, Static, Struct, Void } from "../uplc";
 
 // ==================== V | Protocol Params ====================
 
@@ -57,7 +57,7 @@ export type ProtocolNonScriptParams = Omit<
 >;
 
 export const ProtocolParamsRedeemer = Enum("case", {
-  ApplyProposal: {},
+  ApplyProposal: Void,
 });
 export type ProtocolParamsRedeemer = Static<typeof ProtocolParamsRedeemer>;
 
@@ -76,16 +76,16 @@ export const ProtocolProposalDatum = Struct({
 export type ProtocolProposalDatum = Static<typeof ProtocolProposalDatum>;
 
 export const ProtocolProposalRedeemer = Enum("case", {
-  Propose: {},
-  Apply: {},
-  Cancel: {},
+  Propose: Void,
+  Apply: Void,
+  Cancel: Void,
 });
 export type ProtocolProposalRedeemer = Static<typeof ProtocolProposalRedeemer>;
 
 // ==================== NFT | Protocol ====================
 
 export const ProtocolNftMintingRedeemer = Enum("case", {
-  Bootstrap: {},
+  Bootstrap: Void,
 });
 export type ProtocolNftMintingRedeemer = Static<
   typeof ProtocolNftMintingRedeemer
