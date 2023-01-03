@@ -70,6 +70,7 @@ export default function main({
       redeemer.switch {
         plant: Plant => {
           cleanup: Bool = plant.cleanup;
+
           pparams_datum: PParamsDatum =
             find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
 
@@ -449,7 +450,7 @@ export default function main({
                 produced_backing_datums.all(
                   (produced_backing_datum: BackingDatum) -> Bool {
                     produced_backing_datum.backer_address == produced_backer_address
-                      && produced_backing_datum.staked_at == tx.time_range.start
+                      && produced_backing_datum.staked_at == tx.time_range.end
                       && produced_backing_datum.milestone_backed == project_datum.milestone_reached
                   }
                 )
@@ -460,7 +461,11 @@ export default function main({
                   && produced_backing_txouts.all(
                     (output: TxOutput) -> Bool {
                       output.address == Address::new (
-                        produced_backer_address.credential,
+                        Credential::new_validator(
+                          pparams_datum.registry
+                            .backing_validator
+                            .latest
+                        ),
                         ref_option_staking_credential
                       )
                     }
