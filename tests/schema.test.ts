@@ -99,7 +99,7 @@ describe("complex schema", () => {
 
   const datum: Datum = buildDatum(sampleParams);
 
-  test("round trip", () => {
+  it("round trip", () => {
     const sampleCbor =
       "d87b9f44beef1234d8799f9f182a4b48656c6c6f20576f726c64ffffd8799fd8799f5820e1ffe6d8e94556ce6f24e53d94dc5d9559c2cbc8f00dad3737c61cd0d60a91dcff0affd8799f9f182a4b48656c6c6f20576f726c64ffffff";
     const cbor = S.toCbor(S.toData(datum, Datum));
@@ -109,7 +109,7 @@ describe("complex schema", () => {
     expect(deserialized).toStrictEqual(datum);
   });
 
-  test("compatible with helios", async () => {
+  it("helios compatibility", async () => {
     expect.assertions(2);
     const cbor = S.toCbor(S.toData(datum, Datum));
     const heliosScript = buildHeliosScript(sampleParams);

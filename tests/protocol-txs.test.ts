@@ -34,8 +34,8 @@ const BOOTSTRAP_ACCOUNT = await generateAccount();
 const emulator = new Emulator([BOOTSTRAP_ACCOUNT]);
 const lucid = await Lucid.new(emulator);
 
-describe("Protocol transactions", () => {
-  test("Bootstrap tx", async () => {
+describe("protocol transactions", () => {
+  it("bootstrap tx", async () => {
     expect.assertions(2);
 
     lucid.selectWalletFromSeed(BOOTSTRAP_ACCOUNT.seedPhrase);
@@ -98,10 +98,10 @@ describe("Protocol transactions", () => {
     const txComplete = await tx.complete();
     const txHash = await signAndSubmit(txComplete);
 
-    expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+    await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
   });
 
-  test("Propose", async () => {
+  it("propose", async () => {
     expect.assertions(1);
 
     const governorAddress = await lucid.wallet.address();
@@ -181,10 +181,10 @@ describe("Protocol transactions", () => {
     const txComplete = await tx.complete();
     const txHash = await signAndSubmit(txComplete);
 
-    expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+    await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
   });
 
-  test("Withdraw staking rewards tx", async () => {
+  it("withdraw staking rewards tx", async () => {
     expect.assertions(2);
 
     const poolId = "pool1ve7vhcyde2d342wmqcwcudd906jk749t37y7fmz5e6mvgghrwh3";
@@ -254,7 +254,7 @@ describe("Protocol transactions", () => {
       protocolStakeCredential
     );
 
-    const delegateTx = await lucid
+    const delegateTxC = await lucid
       .newTx()
       .addSignerKey(getPaymentKeyHash(governorAddress))
       .readFrom([protocolParamsUtxo, protocolStakeScriptRefUtxo])
@@ -262,7 +262,8 @@ describe("Protocol transactions", () => {
       .delegateTo(protocolStakeAddress, poolId, Data.void())
       .complete();
 
-    expect(lucid.awaitTx(await signAndSubmit(delegateTx))).resolves.toBe(true);
+    const delegateTxHash = await signAndSubmit(delegateTxC);
+    await expect(lucid.awaitTx(delegateTxHash)).resolves.toBe(true);
 
     emulator.distributeRewards(rewardAmount);
 
@@ -274,10 +275,9 @@ describe("Protocol transactions", () => {
       openTreasuryAddress,
     });
 
-    const withdrawTxComplete = await withdrawTx.complete();
+    const withdrawTxC = await withdrawTx.complete();
+    const withdrawTxHash = await signAndSubmit(withdrawTxC);
 
-    expect(
-      lucid.awaitTx(await signAndSubmit(withdrawTxComplete))
-    ).resolves.toBe(true);
+    await expect(lucid.awaitTx(withdrawTxHash)).resolves.toBe(true);
   });
 });

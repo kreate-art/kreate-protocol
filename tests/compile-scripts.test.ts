@@ -81,7 +81,7 @@ const ALL_SCRIPTS = {
 describe.each(Object.entries(ALL_SCRIPTS))(
   "%s Scripts",
   (_category, scripts) => {
-    test.concurrent.each(Object.entries(scripts))("%s", (name, script) => {
+    it.concurrent.each(Object.entries(scripts))("%s", (name, script) => {
       const uplcProgram = compile(script);
       const size = uplcProgram.calcSize();
       expect(size).toBeGreaterThan(0);

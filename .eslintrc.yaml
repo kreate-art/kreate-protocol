@@ -10,6 +10,20 @@ plugins:
   - "@typescript-eslint"
   - prettier
   - import
+parserOptions:
+  ecmaVersion: 2020
+  project:
+    - tsconfig.json
+  sourceType: module
+overrides:
+  - files:
+      - "tests/**"
+    plugins:
+      - jest
+      - jest-formatting
+    extends:
+      - plugin:jest/all
+      - plugin:jest-formatting/recommended
 settings:
   import/parsers:
     "@typescript-eslint/parser":
@@ -45,3 +59,8 @@ rules:
         order: asc
         caseInsensitive: true
         # orderImportKind: asc
+  jest/prefer-expect-assertions:
+    - error
+    - onlyFunctionsWithAsyncKeyword: true
+      onlyFunctionsWithExpectInLoop: true
+      onlyFunctionsWithExpectInCallback: true
