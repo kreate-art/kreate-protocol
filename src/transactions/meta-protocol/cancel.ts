@@ -5,21 +5,27 @@ import {
   TeikiPlantDatum,
   TeikiPlantRedeemer,
 } from "@/schema/teiki/meta-protocol";
+import { assert } from "@/utils";
 
 export type CancelMetaProtocolTxParams = {
-  teikiPlantDatum: TeikiPlantDatum;
   teikiPlantUtxo: UTxO;
   teikiPlantScriptUtxo: UTxO;
 };
 
 export function cancelMetaProtocolProposalTx(
   lucid: Lucid,
-  {
-    teikiPlantDatum,
-    teikiPlantUtxo,
-    teikiPlantScriptUtxo,
-  }: CancelMetaProtocolTxParams
+  { teikiPlantUtxo, teikiPlantScriptUtxo }: CancelMetaProtocolTxParams
 ) {
+  assert(
+    teikiPlantUtxo.datum,
+    "Invalid Teiki plant UTxO: Missing inline datum"
+  );
+
+  const teikiPlantDatum = S.fromData(
+    S.fromCbor(teikiPlantUtxo.datum),
+    TeikiPlantDatum
+  );
+
   const teikiPlantRedeemer: TeikiPlantRedeemer = { case: "Cancel" };
 
   const canceledTeikiPlantDatum: TeikiPlantDatum = {
