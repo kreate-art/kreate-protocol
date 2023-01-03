@@ -18,6 +18,10 @@ import {
   BootstrapMetaProtocolTxParams,
 } from "@/transactions/meta-protocol/bootstrap";
 import {
+  cancelMetaProtocolProposalTx,
+  CancelMetaProtocolTxParams,
+} from "@/transactions/meta-protocol/cancel";
+import {
   proposeMetaProtocolProposalTx,
   ProposeMetaProtocolTxParams,
 } from "@/transactions/meta-protocol/propose";
@@ -172,4 +176,91 @@ describe("meta-protocol transactions", () => {
   it.todo("propose meta-protocol proposal tx - musthave authorization");
 
   it.todo("propose meta-protocol proposal tx - mustmint authorization");
+
+  it("cancel meta-protocol proposal tx", async () => {
+    expect.assertions(1);
+
+    const governorAddress = await lucid.wallet.address();
+
+    const teikiPlantSeed = generateOutRef();
+
+    const teikiPlantNftScript = exportScript(
+      compileTeikiPlantNftScript(teikiPlantSeed)
+    );
+    const teikiPlantNftMph = lucid.utils.mintingPolicyToId(teikiPlantNftScript);
+    const teikiPlantValidator = exportScript(
+      compileTeikiPlantVScript(teikiPlantNftMph)
+    );
+
+    const teikiPlantValidatorHash =
+      lucid.utils.validatorToScriptHash(teikiPlantValidator);
+
+    const teikiPlantAddress = lucid.utils.credentialToAddress(
+      lucid.utils.scriptHashToCredential(teikiPlantValidatorHash)
+    );
+    const protocolScriptAddress = lucid.utils.credentialToAddress(
+      lucid.utils.scriptHashToCredential(generateBlake2b224Hash())
+    );
+
+    const teikiPlantNftUnit: Unit =
+      teikiPlantNftMph + TEIKI_PLANT_NFT_TOKEN_NAME;
+
+    const teikiPlantDatum: TeikiPlantDatum = {
+      rules: {
+        teikiMintingRules: [],
+        proposalAuthorizations: [
+          {
+            authorization: "MustBe",
+            credential: {
+              type: "PubKey",
+              key: { hash: getPaymentKeyHash(governorAddress) },
+            },
+          },
+        ],
+        proposalWaitingPeriod: { milliseconds: 20_000n },
+      },
+      proposal: null,
+    };
+
+    const proposedTeikiPlantDatum: TeikiPlantDatum = {
+      ...teikiPlantDatum,
+      proposal: {
+        inEffectAt: { timestamp: BigInt(getCurrentTime(lucid) + 50_000) },
+        rules: {
+          ...teikiPlantDatum.rules,
+          proposalWaitingPeriod: { milliseconds: 10_000n },
+        },
+      },
+    };
+
+    const teikiPlantUtxo: UTxO = {
+      ...generateOutRef(),
+      address: teikiPlantAddress,
+      assets: { lovelace: 2_000_000n, [teikiPlantNftUnit]: 1n },
+      datum: S.toCbor(S.toData(proposedTeikiPlantDatum, TeikiPlantDatum)),
+    };
+
+    const teikiPlantScriptUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolScriptAddress,
+      assets: { lovelace: 2_000_000n },
+      scriptRef: teikiPlantValidator,
+    };
+
+    attachUtxos(emulator, [teikiPlantUtxo, teikiPlantScriptUtxo]);
+
+    const params: CancelMetaProtocolTxParams = {
+      teikiPlantUtxo,
+      teikiPlantScriptUtxo,
+    };
+
+    const tx = cancelMetaProtocolProposalTx(lucid, params).addSigner(
+      governorAddress
+    );
+
+    const txComplete = await tx.complete();
+    const txHash = await signAndSubmit(txComplete);
+
+    await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+  });
 });
