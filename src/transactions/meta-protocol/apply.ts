@@ -6,11 +6,11 @@ import {
   TeikiPlantRedeemer,
 } from "@/schema/teiki/meta-protocol";
 import { TimeDifference } from "@/types";
+import { assert } from "@/utils";
 
 import { getCurrentTime } from "../helpers/lucid";
 
 export type ApplyMetaProtocolTxParams = {
-  teikiPlantDatum: TeikiPlantDatum;
   teikiPlantUtxo: UTxO;
   teikiPlantScriptUtxo: UTxO;
   txTimePadding?: TimeDifference;
@@ -19,12 +19,20 @@ export type ApplyMetaProtocolTxParams = {
 export function applyMetaProtocolProposalTx(
   lucid: Lucid,
   {
-    teikiPlantDatum,
     teikiPlantUtxo,
     teikiPlantScriptUtxo,
     txTimePadding = 20000,
   }: ApplyMetaProtocolTxParams
 ) {
+  assert(
+    teikiPlantUtxo.datum != null,
+    "Invalid Teiki plant UTxO: Missing inline datum"
+  );
+  const teikiPlantDatum = S.fromData(
+    S.fromCbor(teikiPlantUtxo.datum),
+    TeikiPlantDatum
+  );
+
   if (!teikiPlantDatum.proposal) {
     throw new Error("Proposed rule cannot be null");
   }
