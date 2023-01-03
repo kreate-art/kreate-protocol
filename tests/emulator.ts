@@ -117,3 +117,7 @@ export function attachDatums(
 export function generateBlake2b224Hash(): KeyHash | ScriptHash {
   return toHex(loadCrypto().getRandomValues(new Uint8Array(28)));
 }
+
+export function generateBlake2b256Hash(): KeyHash | ScriptHash {
+  return toHex(loadCrypto().getRandomValues(new Uint8Array(32)));
+}
