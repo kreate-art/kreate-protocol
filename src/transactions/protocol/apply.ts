@@ -11,6 +11,7 @@ import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
 import { extractPaymentPubKeyHash } from "../helpers/constructors";
+import { getCurrentTime } from "../helpers/lucid";
 
 export type ApplyProtocolTxParams = {
   protocolParamsUtxo: UTxO;
@@ -73,5 +74,5 @@ export function applyProtocolProposalTx(
       },
       protocolParamsUtxo.assets
     )
-    .validFrom(Date.now() - txTimePadding);
+    .validFrom(getCurrentTime(lucid) - txTimePadding);
 }

@@ -2,6 +2,7 @@ import { Data, Emulator, Lucid, Unit, UTxO } from "lucid-cardano";
 
 import {
   compileProtocolNftScript,
+  compileProtocolParamsVScript,
   compileProtocolProposalVScript,
   compileProtocolSvScript,
 } from "@/commands/compile-scripts";
@@ -17,7 +18,15 @@ import {
   constructAddress,
   constructTxOutputId,
 } from "@/transactions/helpers/constructors";
-import { getPaymentKeyHash, signAndSubmit } from "@/transactions/helpers/lucid";
+import {
+  getCurrentTime,
+  getPaymentKeyHash,
+  signAndSubmit,
+} from "@/transactions/helpers/lucid";
+import {
+  applyProtocolProposalTx,
+  ApplyProtocolTxParams,
+} from "@/transactions/protocol/apply";
 import {
   BootstrapProtocolParams,
   bootstrapProtocolTx,
@@ -273,6 +282,110 @@ describe("protocol transactions", () => {
     };
 
     const tx = cancelProtocolProposalTx(lucid, params);
+
+    const txComplete = await tx.complete();
+    const txHash = await signAndSubmit(txComplete);
+
+    await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+  });
+
+  it("apply protocol proposal tx", async () => {
+    expect.assertions(1);
+
+    const governorAddress = await lucid.wallet.address();
+
+    const protocolNftMph = generateBlake2b224Hash();
+
+    const protocolParamsNftUnit: Unit =
+      protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
+    const protocolProposalNftUnit: Unit =
+      protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PROPOSAL;
+
+    const protocolParamsValidator = exportScript(
+      compileProtocolParamsVScript(protocolNftMph)
+    );
+    const protocolProposalValidator = exportScript(
+      compileProtocolProposalVScript(protocolNftMph)
+    );
+
+    const protocolParamsValidatorHash = lucid.utils.validatorToScriptHash(
+      protocolParamsValidator
+    );
+    const protocolProposalValidatorHash = lucid.utils.validatorToScriptHash(
+      protocolProposalValidator
+    );
+
+    const protocolParamsAddress = lucid.utils.credentialToAddress(
+      lucid.utils.scriptHashToCredential(protocolParamsValidatorHash)
+    );
+    const protocolProposalAddress = lucid.utils.credentialToAddress(
+      lucid.utils.scriptHashToCredential(protocolProposalValidatorHash)
+    );
+    const protocolScriptAddress = lucid.utils.credentialToAddress(
+      lucid.utils.scriptHashToCredential(generateBlake2b224Hash())
+    );
+
+    const registry = generateProtocolRegistry(generateBlake2b224Hash());
+
+    const protocolParamsDatum: ProtocolParamsDatum = {
+      registry,
+      governorAddress: constructAddress(governorAddress),
+      ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+    };
+
+    const protocolParamsUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolParamsAddress,
+      assets: { lovelace: 2_000_000n, [protocolParamsNftUnit]: 1n },
+      datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
+    };
+
+    const protocolProposalDatum: ProtocolProposalDatum = {
+      proposal: {
+        params: { ...protocolParamsDatum, projectPledge: 2_000_000_000n },
+        base: constructTxOutputId(protocolParamsUtxo),
+        inEffectAt: { timestamp: BigInt(getCurrentTime(lucid)) },
+      },
+    };
+
+    const protocolProposalUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolProposalAddress,
+      assets: { lovelace: 2_000_000n, [protocolProposalNftUnit]: 1n },
+      datum: S.toCbor(S.toData(protocolProposalDatum, ProtocolProposalDatum)),
+    };
+    const protocolParamsScriptUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolScriptAddress,
+      assets: { lovelace: 2_000_000n },
+      scriptRef: protocolParamsValidator,
+    };
+    const protocolProposalScriptUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolScriptAddress,
+      assets: { lovelace: 2_000_000n },
+      scriptRef: protocolProposalValidator,
+    };
+
+    attachUtxos(emulator, [
+      protocolParamsUtxo,
+      protocolProposalUtxo,
+      protocolParamsScriptUtxo,
+      protocolProposalScriptUtxo,
+    ]);
+
+    const params: ApplyProtocolTxParams = {
+      protocolParamsUtxo,
+      protocolProposalUtxo,
+      protocolScriptUtxos: [
+        protocolParamsScriptUtxo,
+        protocolProposalScriptUtxo,
+      ],
+    };
+
+    emulator.awaitSlot(200);
+
+    const tx = applyProtocolProposalTx(lucid, params);
 
     const txComplete = await tx.complete();
     const txHash = await signAndSubmit(txComplete);
