@@ -1,6 +1,8 @@
+import { Hex } from "@/types";
+
 import { HeliosSource, helios } from "../../program";
 
-export default function main(teikiPlantNftMph: string): HeliosSource {
+export default function main(teikiPlantNftMph: Hex): HeliosSource {
   return helios`
     spending v__teiki_plant
 
