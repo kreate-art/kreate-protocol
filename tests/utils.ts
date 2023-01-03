@@ -6,45 +6,70 @@ import { Hex } from "@/types";
 
 import { generateBlake2b224Hash } from "./emulator";
 
+type ValidatorScriptHashRegistry = {
+  project?: Hex;
+  projectDetail?: Hex;
+  projectScript?: Hex;
+  backing?: Hex;
+  dedicatedTreasury?: Hex;
+  openTreasury?: Hex;
+  sharedTreasury?: Hex;
+};
+
 export function generateProtocolRegistry(
-  protocolStakeValidatorHash: Hex
+  protocolStakeValidatorHash: Hex,
+  validatorScriptHashRegistry?: ValidatorScriptHashRegistry
 ): Registry {
   const migrateTokenName = fromText("migration");
 
   return {
     protocolStakingValidator: { script: { hash: protocolStakeValidatorHash } },
     projectValidator: getMigratableScript(
-      generateBlake2b224Hash(),
+      validatorScriptHashRegistry?.project
+        ? validatorScriptHashRegistry?.project
+        : generateBlake2b224Hash(),
       generateBlake2b224Hash(),
       migrateTokenName
     ),
     projectDetailValidator: getMigratableScript(
-      generateBlake2b224Hash(),
+      validatorScriptHashRegistry?.projectDetail
+        ? validatorScriptHashRegistry?.projectDetail
+        : generateBlake2b224Hash(),
       generateBlake2b224Hash(),
       migrateTokenName
     ),
     projectScriptValidator: getMigratableScript(
-      generateBlake2b224Hash(),
+      validatorScriptHashRegistry?.projectScript
+        ? validatorScriptHashRegistry?.projectScript
+        : generateBlake2b224Hash(),
       generateBlake2b224Hash(),
       migrateTokenName
     ),
     backingValidator: getMigratableScript(
-      generateBlake2b224Hash(),
+      validatorScriptHashRegistry?.backing
+        ? validatorScriptHashRegistry?.backing
+        : generateBlake2b224Hash(),
       generateBlake2b224Hash(),
       migrateTokenName
     ),
     dedicatedTreasuryValidator: getMigratableScript(
-      generateBlake2b224Hash(),
+      validatorScriptHashRegistry?.dedicatedTreasury
+        ? validatorScriptHashRegistry?.dedicatedTreasury
+        : generateBlake2b224Hash(),
       generateBlake2b224Hash(),
       migrateTokenName
     ),
     sharedTreasuryValidator: getMigratableScript(
-      generateBlake2b224Hash(),
+      validatorScriptHashRegistry?.sharedTreasury
+        ? validatorScriptHashRegistry?.sharedTreasury
+        : generateBlake2b224Hash(),
       generateBlake2b224Hash(),
       migrateTokenName
     ),
     openTreasuryValidator: getMigratableScript(
-      generateBlake2b224Hash(),
+      validatorScriptHashRegistry?.openTreasury
+        ? validatorScriptHashRegistry?.openTreasury
+        : generateBlake2b224Hash(),
       generateBlake2b224Hash(),
       migrateTokenName
     ),
