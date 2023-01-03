@@ -9,13 +9,23 @@ import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/gen-protocol-param
 import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
 import * as S from "@/schema";
-import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
-import { constructAddress } from "@/transactions/helpers/constructors";
+import {
+  ProtocolParamsDatum,
+  ProtocolProposalDatum,
+} from "@/schema/teiki/protocol";
+import {
+  constructAddress,
+  constructTxOutputId,
+} from "@/transactions/helpers/constructors";
 import { getPaymentKeyHash, signAndSubmit } from "@/transactions/helpers/lucid";
 import {
   BootstrapProtocolParams,
   bootstrapProtocolTx,
 } from "@/transactions/protocol/bootstrap";
+import {
+  cancelProtocolProposalTx,
+  CancelProtocolTxParams,
+} from "@/transactions/protocol/cancel";
 import {
   proposeProtocolProposalTx,
   ProposeProtocolTxParams,
@@ -101,7 +111,7 @@ describe("protocol transactions", () => {
     await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
   });
 
-  it("propose", async () => {
+  it("propose protocol proposal tx", async () => {
     expect.assertions(1);
 
     const governorAddress = await lucid.wallet.address();
@@ -159,7 +169,7 @@ describe("protocol transactions", () => {
     const protocolProposalScriptUtxo: UTxO = {
       ...generateOutRef(),
       address: protocolProposalScriptAddress,
-      assets: { lovelace: 2_000_00n },
+      assets: { lovelace: 2_000_000n },
       scriptRef: protocolProposalValidator,
     };
 
@@ -177,6 +187,92 @@ describe("protocol transactions", () => {
     };
 
     const tx = proposeProtocolProposalTx(lucid, params);
+
+    const txComplete = await tx.complete();
+    const txHash = await signAndSubmit(txComplete);
+
+    await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+  });
+
+  it("cancel protocol proposal tx", async () => {
+    expect.assertions(1);
+
+    const governorAddress = await lucid.wallet.address();
+
+    const protocolNftMph = generateBlake2b224Hash();
+
+    const protocolParamsNftUnit: Unit =
+      protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
+    const protocolProposalNftUnit: Unit =
+      protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PROPOSAL;
+
+    const protocolProposalValidator = exportScript(
+      compileProtocolProposalVScript(protocolNftMph)
+    );
+
+    const protocolProposalValidatorHash = lucid.utils.validatorToScriptHash(
+      protocolProposalValidator
+    );
+
+    const protocolParamsAddress = lucid.utils.credentialToAddress(
+      lucid.utils.scriptHashToCredential(generateBlake2b224Hash())
+    );
+    const protocolProposalAddress = lucid.utils.credentialToAddress(
+      lucid.utils.scriptHashToCredential(protocolProposalValidatorHash)
+    );
+    const protocolProposalScriptAddress = lucid.utils.credentialToAddress(
+      lucid.utils.scriptHashToCredential(generateBlake2b224Hash())
+    );
+
+    const registry = generateProtocolRegistry(generateBlake2b224Hash());
+
+    const protocolParamsDatum: ProtocolParamsDatum = {
+      registry,
+      governorAddress: constructAddress(governorAddress),
+      ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+    };
+
+    const protocolParamsUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolParamsAddress,
+      assets: { lovelace: 2_000_000n, [protocolParamsNftUnit]: 1n },
+      datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
+    };
+
+    const protocolProposalDatum: ProtocolProposalDatum = {
+      proposal: {
+        params: { ...protocolParamsDatum, projectPledge: 2_000_000_000n },
+        base: constructTxOutputId(protocolParamsUtxo),
+        inEffectAt: { timestamp: 0n },
+      },
+    };
+
+    const protocolProposalUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolProposalAddress,
+      assets: { lovelace: 2_000_000n, [protocolProposalNftUnit]: 1n },
+      datum: S.toCbor(S.toData(protocolProposalDatum, ProtocolProposalDatum)),
+    };
+    const protocolProposalScriptUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolProposalScriptAddress,
+      assets: { lovelace: 2_000_000n },
+      scriptRef: protocolProposalValidator,
+    };
+
+    attachUtxos(emulator, [
+      protocolParamsUtxo,
+      protocolProposalUtxo,
+      protocolProposalScriptUtxo,
+    ]);
+
+    const params: CancelProtocolTxParams = {
+      protocolParamsUtxo,
+      protocolProposalUtxo,
+      protocolProposalScriptUtxo,
+    };
+
+    const tx = cancelProtocolProposalTx(lucid, params);
 
     const txComplete = await tx.complete();
     const txHash = await signAndSubmit(txComplete);
