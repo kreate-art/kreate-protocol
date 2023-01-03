@@ -1,10 +1,11 @@
 import { UplcProgram } from "@hyperionbt/helios";
-import { UTxO } from "lucid-cardano";
+import { OutRef, UTxO } from "lucid-cardano";
 
 import getBackingV from "@/contracts/backing/backing.v/main";
 import getProofOfBackingMp from "@/contracts/backing/proof-of-backing.mp/main";
 import { compile } from "@/contracts/compile";
 import getTeikiPlantNft from "@/contracts/meta-protocol/teiki-plant.nft/main";
+import getTeikiPlantV from "@/contracts/meta-protocol/teiki-plant.v/main";
 import getTeikiMp from "@/contracts/meta-protocol/teiki.mp/main";
 import getProjectDetailV from "@/contracts/project/project-detail.v/main";
 import getProjectAt from "@/contracts/project/project.at/main";
@@ -86,7 +87,13 @@ export function compileProjectSvScript(
   );
 }
 
-export function compileTeikiPlantNftScript(teikiPlantSeed: UTxO): UplcProgram {
+export function compileTeikiPlantVScript(teikiPlantNftMph: Hex): UplcProgram {
+  return compile(getTeikiPlantV(teikiPlantNftMph));
+}
+
+export function compileTeikiPlantNftScript(
+  teikiPlantSeed: OutRef
+): UplcProgram {
   return compile(getTeikiPlantNft({ teikiPlantSeed }));
 }
 
