@@ -4,6 +4,7 @@ import { UTxO } from "lucid-cardano";
 import getBackingV from "@/contracts/backing/backing.v/main";
 import getProofOfBackingMp from "@/contracts/backing/proof-of-backing.mp/main";
 import { compile } from "@/contracts/compile";
+import getTeikiPlantNft from "@/contracts/meta-protocol/teiki-plant.nft/main";
 import getTeikiMp from "@/contracts/meta-protocol/teiki.mp/main";
 import getProjectDetailV from "@/contracts/project/project-detail.v/main";
 import getProjectAt from "@/contracts/project/project.at/main";
@@ -83,6 +84,10 @@ export function compileProjectSvScript(
       protocolNftMph,
     })
   );
+}
+
+export function compileTeikiPlantNftScript(teikiPlantSeed: UTxO): UplcProgram {
+  return compile(getTeikiPlantNft({ teikiPlantSeed }));
 }
 
 export function compileTeikiMpScript(nftTeikiPlantMph: Hex): UplcProgram {
