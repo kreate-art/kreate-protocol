@@ -26,6 +26,7 @@
   "dependencies": {
     "@hyperionbt/helios": "^0.10.5",
     "@sinclair/typebox": "^0.25.16",
+    "eslint-plugin-jest-formatting": "^3.1.0",
     "lucid-cardano": "^0.8.4"
   },
   "devDependencies": {
@@ -37,6 +38,7 @@
     "eslint-config-prettier": "^8.6.0",
     "eslint-import-resolver-typescript": "^3.5.2",
     "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jest": "^27.2.0",
     "eslint-plugin-prettier": "^4.2.1",
     "prettier": "^2.8.1",
     "sort-package-json": "^2.1.0",
