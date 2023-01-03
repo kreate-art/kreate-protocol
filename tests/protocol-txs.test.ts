@@ -1,7 +1,8 @@
-import { Address, Data, Emulator, Lucid, Unit, UTxO } from "lucid-cardano";
+import { Data, Emulator, Lucid, Unit, UTxO } from "lucid-cardano";
 
 import {
   compileProtocolNftScript,
+  compileProtocolProposalVScript,
   compileProtocolSvScript,
 } from "@/commands/compile-scripts";
 import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/gen-protocol-params";
@@ -15,6 +16,10 @@ import {
   BootstrapProtocolParams,
   bootstrapProtocolTx,
 } from "@/transactions/protocol/bootstrap";
+import {
+  proposeProtocolProposalTx,
+  ProposeProtocolTxParams,
+} from "@/transactions/protocol/propose";
 import { withdrawProtocolRewardTx } from "@/transactions/protocol/withdraw";
 
 import {
@@ -35,7 +40,7 @@ describe("Protocol transactions", () => {
 
     lucid.selectWalletFromSeed(BOOTSTRAP_ACCOUNT.seedPhrase);
 
-    const governorAddress: Address = await lucid.wallet.address();
+    const governorAddress = await lucid.wallet.address();
 
     const poolId = "pool1ve7vhcyde2d342wmqcwcudd906jk749t37y7fmz5e6mvgghrwh3";
 
@@ -96,13 +101,96 @@ describe("Protocol transactions", () => {
     expect(lucid.awaitTx(txHash)).resolves.toBe(true);
   });
 
+  test("Propose", async () => {
+    expect.assertions(1);
+
+    const governorAddress = await lucid.wallet.address();
+
+    const protocolNftMph = generateBlake2b224Hash();
+
+    const protocolParamsNftUnit: Unit =
+      protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
+    const protocolProposalNftUnit: Unit =
+      protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PROPOSAL;
+
+    const protocolProposalValidator = exportScript(
+      compileProtocolProposalVScript(protocolNftMph)
+    );
+
+    const protocolProposalValidatorHash = lucid.utils.validatorToScriptHash(
+      protocolProposalValidator
+    );
+
+    const protocolParamsAddress = lucid.utils.credentialToAddress(
+      lucid.utils.scriptHashToCredential(generateBlake2b224Hash())
+    );
+    const protocolProposalAddress = lucid.utils.credentialToAddress(
+      lucid.utils.scriptHashToCredential(protocolProposalValidatorHash)
+    );
+    const protocolProposalScriptAddress = lucid.utils.credentialToAddress(
+      lucid.utils.scriptHashToCredential(generateBlake2b224Hash())
+    );
+
+    const registry = generateProtocolRegistry(generateBlake2b224Hash());
+
+    const protocolParamsDatum: ProtocolParamsDatum = {
+      registry,
+      governorAddress: constructAddress(governorAddress),
+      ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+    };
+    const proposedProtocolParamsDatum: ProtocolParamsDatum = {
+      ...protocolParamsDatum,
+      projectPledge: 2_000_000_000n,
+    };
+
+    const protocolParamsUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolParamsAddress,
+      assets: { lovelace: 2_000_000n, [protocolParamsNftUnit]: 1n },
+      datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
+    };
+
+    const protocolProposalUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolProposalAddress,
+      assets: { lovelace: 2_000_000n, [protocolProposalNftUnit]: 1n },
+      datum: Data.void(),
+    };
+    const protocolProposalScriptUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolProposalScriptAddress,
+      assets: { lovelace: 2_000_00n },
+      scriptRef: protocolProposalValidator,
+    };
+
+    attachUtxos(emulator, [
+      protocolParamsUtxo,
+      protocolProposalUtxo,
+      protocolProposalScriptUtxo,
+    ]);
+
+    const params: ProposeProtocolTxParams = {
+      protocolParamsUtxo,
+      proposedProtocolParamsDatum,
+      protocolProposalUtxo,
+      protocolProposalScriptUtxo,
+    };
+
+    const tx = proposeProtocolProposalTx(lucid, params);
+
+    const txComplete = await tx.complete();
+    const txHash = await signAndSubmit(txComplete);
+
+    expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+  });
+
   test("Withdraw staking rewards tx", async () => {
     expect.assertions(2);
 
     const poolId = "pool1ve7vhcyde2d342wmqcwcudd906jk749t37y7fmz5e6mvgghrwh3";
     const rewardAmount = 1_000_000_000n;
     lucid.selectWalletFromSeed(BOOTSTRAP_ACCOUNT.seedPhrase);
-    const governorAddress: Address = await lucid.wallet.address();
+    const governorAddress = await lucid.wallet.address();
 
     const protocolNftMph = generateBlake2b224Hash();
 
