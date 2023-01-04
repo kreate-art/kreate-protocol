@@ -33,9 +33,10 @@ export function applyMetaProtocolProposalTx(
     TeikiPlantDatum
   );
 
-  if (!teikiPlantDatum.proposal) {
-    throw new Error("Proposed rule cannot be null");
-  }
+  assert(
+    teikiPlantDatum.proposal,
+    "Invalid Teiki plant datum: Proposed rule cannot be null"
+  );
   const txTimeStart = getCurrentTime(lucid) - txTimePadding;
   const teikiPlantRedeemer: TeikiPlantRedeemer = { case: "Apply" };
 

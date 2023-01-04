@@ -3,6 +3,7 @@ import { Data, Lucid, PolicyId, Script, Unit, UTxO } from "lucid-cardano";
 import { PROJECT_AT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { ProjectDatum } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
+import { assert } from "@/utils";
 
 type Actor = "protocol-governor" | "project-owner";
 
@@ -25,20 +26,14 @@ export function allocateStakingTx(
     protocolParamsUtxo,
     projectUtxo,
     // stakingValidatorSeed,
-    actor,
+    // actor,
     projectATPolicyId,
     projectStakeValidator,
   }: AllocateStakingParams
 ) {
   // TODO: Move this somewhere else?
   const PROJECT_SCRIPT_UTXO_ADA = 2_000_000n;
-  if (!projectUtxo.datum) {
-    throw new Error("Project UTxO does not contain datum");
-  }
-
-  if (actor !== "protocol-governor" && actor !== "project-owner") {
-    throw new Error("Invalid actor");
-  }
+  assert(projectUtxo.datum, "Invalid project UTxO: Missing inline datum");
 
   const projectATUnit: Unit =
     projectATPolicyId + PROJECT_AT_TOKEN_NAMES.PROJECT;
