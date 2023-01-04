@@ -16,6 +16,7 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2020",
+    "outDir": "dist",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
@@ -27,5 +28,5 @@
     "require": ["tsconfig-paths/register"]
   },
   "include": ["src", "tests"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }
