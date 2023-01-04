@@ -16,6 +16,16 @@
   "license": "GPL-3.0",
   "author": "Shinka Network",
   "type": "module",
+  "exports": {
+    "./": "./src/"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./src/*"
+      ]
+    }
+  },
   "scripts": {
     "lint": "eslint src tests",
     "lint:fix": "eslint --fix src tests",
