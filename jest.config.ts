@@ -12,6 +12,7 @@ const jestConfig: JestConfigWithTsJest = {
   testEnvironment: "node",
   roots: ["<rootDir>"],
   extensionsToTreatAsEsm: [".ts"],
+  testPathIgnorePatterns: ["/node_modules/", "<rootDir>/dist/"],
   modulePaths: [compilerOptions.baseUrl],
   moduleNameMapper: {
     "(.+)\\.[jt]sx?": "$1",
