@@ -147,10 +147,7 @@ export function createProjectTx(
     projectId: { id: projectId },
     governorAda:
       (protocolParams.governorShareRatio * minTotalFees) / RATIO_MULTIPLIER,
-    tag: {
-      kind: "TagOriginated",
-      seed: seedTxOutputId,
-    },
+    tag: { kind: "TagOriginated", seed: seedTxOutputId },
   };
 
   const projectMintingRedeemer: ProjectMintingRedeemer = {

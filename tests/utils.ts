@@ -6,7 +6,7 @@ import { Hex } from "@/types";
 
 import { generateBlake2b224Hash } from "./emulator";
 
-type ValidatorScriptHashRegistry = {
+export type ValidatorScriptHashRegistry = {
   project?: Hex;
   projectDetail?: Hex;
   projectScript?: Hex;
