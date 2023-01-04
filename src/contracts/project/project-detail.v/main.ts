@@ -289,12 +289,10 @@ export default function main({
           check_latest_script_version(own_validator_hash, pparams_datum);
 
           is_project_status_valid
-            && is_new_milestone_reached
             && does_consume_treasury_correctly
             && does_consume_project_utxo
             && does_send_rewards_correctly
             && is_own_output_valid
-
         },
         Update => {
           own_output_txout: TxOutput =

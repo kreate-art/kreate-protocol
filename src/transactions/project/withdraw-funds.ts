@@ -1,127 +1,249 @@
-import { Address, Data, Lucid, Redeemer, UTxO } from "lucid-cardano";
+import { Address, Data, Lucid, RewardAddress, UTxO } from "lucid-cardano";
 
-import { ProjectDatum, ProjectDetailDatum } from "@/schema/teiki/project";
+import { constructTxOutputId, deconstructAddress } from "@/helpers/schema";
+import * as S from "@/schema";
+import {
+  ProjectDatum,
+  ProjectDetailDatum,
+  ProjectDetailRedeemer,
+  ProjectRedeemer,
+} from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
-import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
+import { UserTag } from "@/schema/teiki/tags";
+import {
+  DedicatedTreasuryDatum,
+  DedicatedTreasuryRedeemer,
+  SharedTreasuryDatum,
+} from "@/schema/teiki/treasury";
+import { assert } from "@/utils";
 
 import {
   PROJECT_FUNDS_WITHDRAWAL_DISCOUNT_RATIO,
   PROJECT_NEW_MILESTONE_DISCOUNT_CENTS,
+  RATIO_MULTIPLIER,
   TREASURY_UTXO_MIN_ADA,
 } from "../constants";
 
-type Actor = "project-owner" | "anyone";
+export type Actor = "project-owner" | "anyone";
 
 export type WithdrawFundsParams = {
-  protocolParamsDatum: ProtocolParamsDatum;
   protocolParamsUtxo: UTxO;
-  projectStakingScriptUtxos: UTxO[];
-  projectDetailDatum: ProjectDetailDatum;
-  projectDetailUtxo: UTxO;
-  projectDatum: ProjectDatum;
   projectUtxo: UTxO;
-  projectStakingScriptUtxo: UTxO;
-  dedicatedTreasuryDatum: DedicatedTreasuryDatum;
+  projectDetailUtxo: UTxO;
   dedicatedTreasuryUtxo: UTxO;
-  totalWithdrawal: bigint;
+  projectVScriptUtxo: UTxO;
+  projectDetailVScriptUtxo: UTxO;
+  projectScriptVScriptUtxo: UTxO;
+  dedicatedTreasuryVScriptUtxo: UTxO;
+  projectRewardAddress: RewardAddress;
   sharedTreasuryAddress: Address;
+  totalWithdrawal: bigint;
   actor: Actor;
 };
 
-// TODO: @sk-umiuma: Add the commented params
 export function withdrawFundsTx(
   lucid: Lucid,
   {
-    protocolParamsDatum,
     protocolParamsUtxo,
-    projectStakingScriptUtxos,
-    projectDetailDatum,
-    projectDetailUtxo,
-    projectDatum,
     projectUtxo,
-    projectStakingScriptUtxo,
-    // dedicatedTreasuryDatum,
+    projectDetailUtxo,
     dedicatedTreasuryUtxo,
-    totalWithdrawal,
+    projectVScriptUtxo,
+    projectDetailVScriptUtxo,
+    projectScriptVScriptUtxo,
+    dedicatedTreasuryVScriptUtxo,
+    projectRewardAddress,
     sharedTreasuryAddress,
+    totalWithdrawal,
     actor,
   }: WithdrawFundsParams
 ) {
-  if (!projectStakingScriptUtxo.scriptRef) {
-    throw new Error("Invalid staking validator script reference");
-  }
-
-  const rewardAddress = lucid.utils.credentialToRewardAddress(
-    lucid.utils.scriptHashToCredential(
-      lucid.utils.validatorToScriptHash(projectStakingScriptUtxo.scriptRef)
-    )
+  assert(
+    projectScriptVScriptUtxo.scriptRef,
+    "Invalid project script UTxO: Missing script reference"
   );
 
-  const fees = totalWithdrawal * protocolParamsDatum.protocolFundsShareRatio;
+  assert(
+    protocolParamsUtxo.datum != null,
+    "Invalid protocol params UTxO: Missing inline datum"
+  );
+  const protocolParamsDatum = S.fromData(
+    S.fromCbor(protocolParamsUtxo.datum),
+    ProtocolParamsDatum
+  );
+
+  assert(
+    projectDetailUtxo.datum != null,
+    "Invalid project detail UTxO: Missing inline datum"
+  );
+  const projectDetailDatum = S.fromData(
+    S.fromCbor(projectDetailUtxo.datum),
+    ProjectDetailDatum
+  );
+
+  assert(
+    projectUtxo.datum != null,
+    "Invalid project UTxO: Missing inline datum"
+  );
+  const projectDatum = S.fromData(S.fromCbor(projectUtxo.datum), ProjectDatum);
+
+  assert(
+    dedicatedTreasuryUtxo.datum != null,
+    "Invalid dedicated treasury UTxO: Missing inline datum"
+  );
+  const dedicatedTreasuryDatum = S.fromData(
+    S.fromCbor(dedicatedTreasuryUtxo.datum),
+    DedicatedTreasuryDatum
+  );
+
+  const fees =
+    (totalWithdrawal * protocolParamsDatum.protocolFundsShareRatio) /
+    RATIO_MULTIPLIER;
   const newWithdrawnFunds = projectDetailDatum.withdrawnFunds + totalWithdrawal;
   const milestone =
-    protocolParamsDatum.projectMilestones.length -
-    protocolParamsDatum.projectMilestones
-      .reverse()
-      .findIndex((value) => value <= newWithdrawnFunds);
+    newWithdrawnFunds < protocolParamsDatum.projectMilestones[0]
+      ? 0
+      : protocolParamsDatum.projectMilestones.length -
+        [...protocolParamsDatum.projectMilestones]
+          .reverse()
+          .findIndex((value) => value <= newWithdrawnFunds);
   const isNewMilestoneReached = milestone > projectDatum.milestoneReached;
-
-  // TODO: @sk-umiuma: Implement this
-  const dedicatedTreasuryRedeemer: Redeemer = Data.void();
-  // TODO: @sk-umiuma: Implement this
-  const projectDetailRedeemer: Redeemer = Data.void();
-  // TODO: @sk-umiuma: Implement this
-  const stakingScriptRedeemer: Redeemer = Data.void();
 
   let tx = lucid
     .newTx()
     .readFrom([
       protocolParamsUtxo,
-      projectStakingScriptUtxo,
-      ...projectStakingScriptUtxos,
+      projectVScriptUtxo,
+      projectDetailVScriptUtxo,
+      projectScriptVScriptUtxo,
+      dedicatedTreasuryVScriptUtxo,
     ])
-    .withdraw(rewardAddress, totalWithdrawal, stakingScriptRedeemer)
-    .collectFrom([dedicatedTreasuryUtxo], dedicatedTreasuryRedeemer)
-    .collectFrom([projectDetailUtxo], projectDetailRedeemer)
+    .withdraw(projectRewardAddress, totalWithdrawal, Data.void())
+    .collectFrom(
+      [dedicatedTreasuryUtxo],
+      S.toCbor(
+        S.toData(
+          { case: "CollectFees", split: isNewMilestoneReached, minFees: fees },
+          DedicatedTreasuryRedeemer
+        )
+      )
+    )
+    .collectFrom(
+      [projectDetailUtxo],
+      S.toCbor(S.toData({ case: "WithdrawFunds" }, ProjectDetailRedeemer))
+    )
     .payToContract(
       projectDetailUtxo.address,
-      { inline: Data.void() }, // FIXME:
+      {
+        inline: S.toCbor(
+          S.toData(
+            { ...projectDetailDatum, withdrawnFunds: newWithdrawnFunds },
+            ProjectDetailDatum
+          )
+        ),
+      },
       projectDetailUtxo.assets
     );
 
   if (isNewMilestoneReached) {
-    // TODO: @sk-umiuma: Implement this
-    const projectRedeemer: Redeemer = Data.void();
     tx = tx
-      .collectFrom([projectUtxo], projectRedeemer)
+      .collectFrom(
+        [projectUtxo],
+        S.toCbor(
+          S.toData(
+            { case: "RecordNewMilestone", newMilestone: BigInt(milestone) },
+            ProjectRedeemer
+          )
+        )
+      )
       .payToContract(
         projectUtxo.address,
-        { inline: Data.void() }, // FIXME:
+        {
+          inline: S.toCbor(
+            S.toData(
+              { ...projectDatum, milestoneReached: BigInt(milestone) },
+              ProjectDatum
+            )
+          ),
+        },
         projectUtxo.assets
       )
       .payToContract(
         dedicatedTreasuryUtxo.address,
-        { inline: Data.void() }, // FIXME:
+        {
+          inline: S.toCbor(
+            S.toData(
+              {
+                ...dedicatedTreasuryDatum,
+                governorAda:
+                  dedicatedTreasuryDatum.governorAda +
+                  ((fees +
+                    BigInt(protocolParamsDatum.minTreasuryPerMilestoneEvent) *
+                      TREASURY_UTXO_MIN_ADA) *
+                    protocolParamsDatum.governorShareRatio) /
+                    RATIO_MULTIPLIER,
+                tag: {
+                  kind: "TagContinuation",
+                  former: constructTxOutputId(dedicatedTreasuryUtxo),
+                },
+              },
+              DedicatedTreasuryDatum
+            )
+          ),
+        },
         { lovelace: dedicatedTreasuryUtxo.assets.lovelace + fees }
       );
 
     for (let i = 0; i < protocolParamsDatum.minTreasuryPerMilestoneEvent; ++i) {
+      const sharedTreasuryDatum: SharedTreasuryDatum = {
+        projectId: projectDatum.projectId,
+        governorTeiki: 0n,
+        projectTeiki: { teikiCondition: "TeikiEmpty" },
+        tag: {
+          kind: "TagContinuation",
+          former: constructTxOutputId(dedicatedTreasuryUtxo),
+        },
+      };
+
       tx = tx.payToContract(
         sharedTreasuryAddress,
-        { inline: Data.void() }, // FIXME:
+        {
+          inline: S.toCbor(
+            S.toData({ ...sharedTreasuryDatum }, SharedTreasuryDatum)
+          ),
+        },
         { lovelace: TREASURY_UTXO_MIN_ADA }
       );
     }
   } else {
     tx = tx.readFrom([projectUtxo]).payToContract(
       dedicatedTreasuryUtxo.address,
-      { inline: Data.void() }, // FIXME:
+      {
+        inline: S.toCbor(
+          S.toData(
+            {
+              ...dedicatedTreasuryDatum,
+              governorAda:
+                dedicatedTreasuryDatum.governorAda +
+                (fees * protocolParamsDatum.governorShareRatio) /
+                  RATIO_MULTIPLIER,
+              tag: {
+                kind: "TagContinuation",
+                former: constructTxOutputId(dedicatedTreasuryUtxo),
+              },
+            },
+            DedicatedTreasuryDatum
+          )
+        ),
+      },
       { lovelace: dedicatedTreasuryUtxo.assets.lovelace + fees }
     );
   }
 
   if (actor !== "project-owner") {
-    let discount = PROJECT_FUNDS_WITHDRAWAL_DISCOUNT_RATIO * totalWithdrawal;
+    let discount =
+      (PROJECT_FUNDS_WITHDRAWAL_DISCOUNT_RATIO * totalWithdrawal) /
+      RATIO_MULTIPLIER;
     if (isNewMilestoneReached) {
       discount +=
         protocolParamsDatum.discountCentPrice *
@@ -129,8 +251,18 @@ export function withdrawFundsTx(
     }
 
     tx = tx.payToContract(
-      "", // FIXME:
-      { inline: Data.void() }, // FIXME:
+      deconstructAddress(lucid, projectDatum.ownerAddress),
+      {
+        inline: S.toCbor(
+          S.toData(
+            {
+              kind: "TagProjectFundsWithdrawal",
+              projectId: projectDatum.projectId,
+            },
+            UserTag
+          )
+        ),
+      },
       { lovelace: totalWithdrawal - fees - discount }
     );
   }

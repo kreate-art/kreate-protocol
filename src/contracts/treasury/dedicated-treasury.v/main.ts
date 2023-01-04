@@ -100,7 +100,8 @@ export default function main({
               };
 
           N: Int =
-            if (collect_fees.split) {
+            if (!collect_fees.split) { 0 }
+            else {
               shared_treasury_txouts: []TxOutput =
                 tx.outputs
                   .filter(
@@ -144,8 +145,6 @@ export default function main({
               } else {
                 0
               }
-            } else {
-              0
             };
 
           in_w: Int = own_input_txinput.output.value.get_safe(AssetClass::ADA);
