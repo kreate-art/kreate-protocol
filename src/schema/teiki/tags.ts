@@ -19,7 +19,9 @@ export const TreasuryTag = Enum("kind", {
   TagOriginated: { seed: TxOutputId },
   TagContinuation: { former: TxOutputId },
   TagProtocolStakingRewards: { stakingValidator: StakingValidatorHash },
-  TagProjectDelayedStakingRewards: { stakingValidator: Option(TxOutputId) },
+  TagProjectDelayedStakingRewards: {
+    stakingValidator: Option(StakingValidatorHash),
+  },
   TagProjectDelisted: { projectId: ProjectId },
   TagProjectScriptDelisted: {
     projectId: ProjectId,
