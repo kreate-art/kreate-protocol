@@ -4,7 +4,7 @@ import {
   compileProjectSvScript,
   compileProofOfBackingMpScript,
 } from "@/commands/compile-scripts";
-import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/gen-protocol-params";
+import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
 import {
   PROJECT_AT_TOKEN_NAMES,
   PROTOCOL_NFT_TOKEN_NAMES,

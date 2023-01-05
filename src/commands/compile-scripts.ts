@@ -127,11 +127,11 @@ export function compileDedicatedTreasuryVScript(
   );
 }
 
-export function compileSharedTreasuryVScript(protocolNftMph: Hex): UplcProgram {
+export function compileOpenTreasuryVScript(protocolNftMph: Hex): UplcProgram {
   return compile(getOpenTreasuryV(protocolNftMph));
 }
 
-export function compileOpenTreasuryVScript(
+export function compileSharedTreasuryVScript(
   projectsAuthTokenMph: Hex,
   protocolNftMph: Hex,
   teikiMph: Hex

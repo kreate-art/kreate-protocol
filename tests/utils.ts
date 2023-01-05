@@ -1,6 +1,6 @@
 import { fromText } from "lucid-cardano";
 
-import { getMigratableScript } from "@/commands/gen-protocol-params";
+import { getMigratableScript } from "@/commands/generate-protocol-params";
 import { Registry } from "@/schema/teiki/protocol";
 import { Hex } from "@/types";
 
