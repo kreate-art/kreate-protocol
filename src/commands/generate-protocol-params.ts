@@ -89,16 +89,16 @@ export function getProtocolRegistryScript(
       )
     ),
     sharedTreasuryValidatorHash: lucid.utils.validatorToScriptHash(
-      exportScript(compileSharedTreasuryVScript(protocolNftMph))
-    ),
-    openTreasuryValidatorHash: lucid.utils.validatorToScriptHash(
       exportScript(
-        compileOpenTreasuryVScript(
+        compileSharedTreasuryVScript(
           projectsAuthTokenMph,
           protocolNftMph,
           teikiMph
         )
       )
+    ),
+    openTreasuryValidatorHash: lucid.utils.validatorToScriptHash(
+      exportScript(compileOpenTreasuryVScript(protocolNftMph))
     ),
   };
 }

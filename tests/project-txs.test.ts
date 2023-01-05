@@ -4,7 +4,7 @@ import {
   compileProjectSvScript,
   compileProjectsAtScript,
 } from "@/commands/compile-scripts";
-import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/gen-protocol-params";
+import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
 import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
 import * as S from "@/schema";
