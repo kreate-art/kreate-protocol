@@ -4,7 +4,7 @@ import * as S from "@/schema";
 import {
   BackingDatum,
   ProofOfBackingMintingRedeemer,
-} from "@/schema/teiki/backer";
+} from "@/schema/teiki/backing";
 import { Hex, TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
@@ -32,6 +32,7 @@ export type CreateBackingParams = {
   txTimePadding?: TimeDifference;
 };
 
+// This is a case of plant transaction with minimize information
 export function createBackingTx(
   lucid: Lucid,
   {

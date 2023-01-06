@@ -92,6 +92,8 @@ export default function main({
               && datum.governor_teiki + project_available_teiki
                   <= own_input_txinput.output.value.get_safe(TEIKI_ASSET_CLASS);
 
+          assert(is_spending_corrupted, "error is_spending_corrupted");
+
           burn_amount_condition: Bool =
             if (update_teiki.burn_amount == 0){
               pob_script_purpose: ScriptPurpose =
@@ -143,11 +145,12 @@ export default function main({
                       } else {
                         burn_rate_inv: Int = MULTIPLIER - pparams_datum.project_teiki_burn_rate;
 
-                        remaining: Int = calculate_teiki_remaining (
-                          teiki_burnt_periodically.available,
-                          burn_rate_inv,
-                          epochs
-                        );
+                        remaining: Int =
+                          calculate_teiki_remaining (
+                            teiki_burnt_periodically.available,
+                            burn_rate_inv,
+                            epochs
+                          );
 
                         if(update_teiki.burn_amount == teiki_burnt_periodically.available - remaining) {
                           ProjectTeiki::TeikiBurntPeriodically{
@@ -240,7 +243,6 @@ export default function main({
 
           own_validator_hash
             == pparams_datum.registry.shared_treasury_validator.latest
-            && is_spending_corrupted
             && burn_amount_condition
             && is_output_txout_valid
 

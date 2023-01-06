@@ -17,3 +17,6 @@ export const TREASURY_WITHDRAWAL_DISCOUNT_RATIO = 100n;
 export const TREASURY_REVOKE_DISCOUNT_CENTS = 50n;
 
 export const RATIO_MULTIPLIER = BigInt(1e6);
+
+// TODO: @sk-saru: find the proper number
+export const FRACTION_LIMIT = 2_000_000n;

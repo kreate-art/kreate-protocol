@@ -10,6 +10,7 @@ import {
 } from "lucid-cardano";
 
 import * as S from "@/schema";
+import { Plant } from "@/schema/teiki/backing";
 import { MigratableScript } from "@/schema/teiki/protocol";
 import { Hex } from "@/types";
 import { assert } from "@/utils";
@@ -24,9 +25,14 @@ export function constructTxOutputId({
   };
 }
 
+export function constructPlantHashUsingBlake2b(plant: Plant) {
+  const cbor = S.toCbor(S.toData(plant, Plant));
+  return hashBlake2b256(cbor);
+}
+
 export function constructProjectIdUsingBlake2b(ref: OutRef): Hex {
   const cbor = S.toCbor(S.toData(constructTxOutputId(ref), S.TxOutputId));
-  return toHex(C.hash_blake2b256(fromHex(cbor)));
+  return hashBlake2b256(cbor);
 }
 
 export function constructAssetClass(
@@ -106,4 +112,8 @@ export function deconstructAddress(
     lcPaymentCredential,
     lcStakingCredential
   );
+}
+
+export function hashBlake2b256(cbor: Hex): Hex {
+  return toHex(C.hash_blake2b256(fromHex(cbor)));
 }

@@ -240,7 +240,7 @@ export default function main({
                         is_consumed_backer_address_valid
                           && is_backing_datum_valid
                           && is_unstaked_valid
-                          && unstaked_at >= backing_datum.staked_at + pparams_datum.epoch_length;
+                          && unstaked_at >= backing_datum.staked_at + pparams_datum.epoch_length; // TODO: wrong condition
 
                       if (is_rewardable) {
                         backing_amount: Int = consumed_backing_txinput.output.value.get_safe(AssetClass::ADA);
@@ -477,6 +477,7 @@ export default function main({
                   project_datum.project_id == project_id,
                   "Reference incorrect project UTxO (incorrect project id)"
                 );
+
                 assert(
                   project_script_datum.project_id == project_id,
                   "Reference incorrect project script UTxO (incorrect project id)"

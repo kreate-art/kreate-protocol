@@ -18,7 +18,7 @@ import {
 
 // ==================== Predicates ====================
 
-export const MintingRedeemer = Enum("redeemer", {
+export const MintingRedeemer = Enum("kind", {
   Any: Void,
   ConstrIn: { constrs: List(Int) },
   ConstrNotIn: { constrs: List(Int) },

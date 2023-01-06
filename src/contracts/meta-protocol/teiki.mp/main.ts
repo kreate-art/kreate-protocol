@@ -37,7 +37,6 @@ export default function main({ nftTeikiPlantMph }: Params): HeliosSource {
       own_mph: MintingPolicyHash = ctx.get_current_minting_policy_hash();
 
       redeemer.switch {
-
         Mint => {
           own_minted: Map[ByteArray]Int = tx.minted.get_policy(own_mph);
 
