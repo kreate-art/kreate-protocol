@@ -5,7 +5,7 @@ import { IpfsCid, ProjectId } from "./common";
 
 // ==================== V | Project ====================
 
-export const ProjectStatus = Enum("status", {
+export const ProjectStatus = Enum("type", {
   Active: Void,
   PreClosed: { pendingUntil: Time },
   PreDelisted: { pendingUntil: Time },

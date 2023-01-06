@@ -180,7 +180,7 @@ export const SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS: ProtocolNonScriptParams = {
   projectMilestones: [1_000_000n, 10_000_000n, 100_000_000n],
   teikiCoefficient: 500n,
   projectTeikiBurnRate: 600_000n,
-  epochLength: { milliseconds: 10_000n },
+  epochLength: { milliseconds: 200_000n },
   projectPledge: 50_000_000n,
   projectCreationFee: 20_000_000n,
   projectSponsorshipFee: 10_000_000n,

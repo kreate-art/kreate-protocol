@@ -135,7 +135,7 @@ export function createProjectTx(
     ownerAddress: constructAddress(ownerAddress),
     milestoneReached: 0n,
     isStakingDelegationManagedByProtocol: true,
-    status: { status: "Active" },
+    status: { type: "Active" },
   };
 
   const seedTxOutputId: TxOutputId = constructTxOutputId(seedUtxo);

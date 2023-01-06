@@ -211,6 +211,7 @@ export default helios`
     }
   }
 
+  // Synchronize with the calculateTeikiRemaining in transactions
   func calculate_teiki_remaining(
     available: Int,
     burn_rate_inv: Int,

@@ -48,7 +48,7 @@ describe("project transactions", () => {
 
     const registry = generateProtocolRegistry(protocolStakeValidatorHash);
 
-    const governorAddress = await generateWalletAddress();
+    const governorAddress = generateWalletAddress(lucid);
 
     const protocolParamsDatum: ProtocolParamsDatum = {
       registry,

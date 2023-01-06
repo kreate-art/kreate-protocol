@@ -22,7 +22,7 @@ export type BackingRedeemer = Static<typeof BackingRedeemer>;
 // ==================== NFT | Proof of Backing ====================
 
 export const Plant = Struct({
-  isMature: Bool,
+  isMatured: Bool,
   backingOutputId: TxOutputId,
   backingAmount: Int,
   unstakedAt: Time,
