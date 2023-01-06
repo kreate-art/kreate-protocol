@@ -28,18 +28,7 @@ export default function main(protocolNftMph: string): HeliosSource {
 
           own_staking_credential: StakingCredential = rewarding.credential;
 
-          // TODO: @sk-saru check why this fails
-          // withdraw_amount: Int = tx.withdrawals.get(own_staking_credential);
-          // Note: only withdraw from one stake address when calculating total withdrawals
-          withdraw_amount: Int =
-            tx.withdrawals
-              .fold(
-                (acc: Int, _, amount: Int) -> Int {
-                  acc + amount
-                },
-                0
-              );
-
+          withdraw_amount: Int = tx.withdrawals.get(own_staking_credential);
 
           open_treasury_address: Address = Address::new(
             Credential::new_validator(
