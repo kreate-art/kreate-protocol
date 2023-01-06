@@ -17,6 +17,7 @@
   "author": "Shinka Network",
   "type": "module",
   "exports": {
+    "./commands/": "./dist/commands/",
     "./contracts/": "./dist/contracts/",
     "./schema": "./dist/schema/index",
     "./schema/": "./dist/schema/",
