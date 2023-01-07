@@ -14,13 +14,6 @@ export const PROTOCOL_NFT_TOKEN_NAMES: Record<string, Hex> = Object.fromEntries(
   }).map(([k, v]) => [k, fromText(v)])
 );
 
-export const TREASURY_AT_TOKEN_NAMES: Record<string, Hex> = Object.fromEntries(
-  Object.entries({
-    SHARED: "shared",
-    DEDICATED: "dedicated",
-  }).map(([k, v]) => [k, fromText(v)])
-);
-
 export const PROJECT_AT_TOKEN_NAMES: Record<string, Hex> = Object.fromEntries(
   Object.entries({
     PROJECT: "project",

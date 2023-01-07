@@ -61,11 +61,14 @@ export default function main({
     const TEIKI_ASSET_CLASS: AssetClass =
       AssetClass::new(TEIKI_MPH, TEIKI_TOKEN_NAME)
 
+    // Seed token name is an empty ByteArray
+    const SEED_TOKEN_NAME: ByteArray = #
+
     func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
       own_mph: MintingPolicyHash = ctx.get_current_minting_policy_hash();
 
-      seed_asset_class: AssetClass = AssetClass::new(own_mph, #);
+      seed_asset_class: AssetClass = AssetClass::new(own_mph, SEED_TOKEN_NAME);
 
       redeemer.switch {
         plant: Plant => {
@@ -104,28 +107,22 @@ export default function main({
 
           is_produced_backing_empty: Bool = produced_backing_txouts.length == 0;
 
-          early_case_1: Bool =
-            if (is_consumed_backing_empty && is_produced_backing_empty) {
-              error("Must contain backing in the transaction")
-            } else {
-              true
-            };
+          assert (
+            !(is_consumed_backing_empty && is_produced_backing_empty),
+            "Must consume or produce backing UTxO"
+          );
 
-          early_case_2: Bool =
-            if (is_consumed_backing_empty && cleanup) {
-              error("Must consume backing in cleaning up")
-            } else {
-              true
-            };
+          assert (
+            !(is_consumed_backing_empty && cleanup),
+            "Must consume backing in cleaning up"
+          );
 
-          early_case_3: Bool =
-            if (!is_produced_backing_empty && cleanup) {
-              error("Must not produce backing in cleaning up")
-            } else {
-              true
-            };
+          assert (
+            !(!is_produced_backing_empty && cleanup),
+            "Must not produce backing in cleaning up"
+          );
 
-          early_case_4: Bool =
+          are_backing_credentials_valid: Bool =
             if(!is_consumed_backing_empty && !is_produced_backing_empty) {
               consumed_backing_txinputs.head.output.address.credential
                 == produced_backing_txouts.head.address.credential
@@ -133,8 +130,14 @@ export default function main({
               true
             };
 
+          assert (
+            are_backing_credentials_valid,
+            "Must consume and produce the same credential backings"
+          );
+
           case_consumed_backing_not_empty: Bool =
-            if (!is_consumed_backing_empty) {
+            if (is_consumed_backing_empty) { true }
+            else {
               fisrt_consumed_backing_datum: BackingDatum =
                 consumed_backing_txinputs.head.output.datum.switch {
                   i: Inline => BackingDatum::from_data(i.data),
@@ -170,6 +173,8 @@ export default function main({
                   } else {
                     true
                   };
+
+              assert(is_project_datum_valid, "Invalid project datum");
 
               discount: Int =
                 if(cleanup) {
@@ -370,39 +375,42 @@ export default function main({
                   teiki_minted: Int = tx.minted.get_safe(TEIKI_ASSET_CLASS);
 
                   does_update_teiki_reward_correctly
-                    && ( teiki_minted == teiki_mint
-                    || teiki_minted == 0 - teiki_mint)
+                    && ( teiki_minted == teiki_mint || teiki_minted == 0 - teiki_mint)
                 } else {
-                  tx.outputs.all(
-                    (output: TxOutput) -> Bool {
-                      output.value.get_safe(TEIKI_ASSET_CLASS) == 0
+                  tx.minted.to_map().get_safe(TEIKI_MPH).switch {
+                      None => true,
+                      else => false
                     }
-                  )
-                    && tx.minted.get_safe(TEIKI_ASSET_CLASS) == 0
                 };
 
-              is_project_datum_valid
-                && does_consume_treasury_correctly
+              seed_mint_amount: Int =
+                produced_backing_txouts.length - consumed_backing_txinputs.length;
+
+              does_mint_correctly: Bool =
+                tx.minted.to_map().get(own_mph).all(
+                  (token_name: ByteArray, amount: Int) -> Bool {
+                    if (token_name == SEED_TOKEN_NAME) { amount == seed_mint_amount }
+                    else {
+                      plant_accumulator.plant_map.get_safe(token_name).switch {
+                        None => error("Mint incorrect plant token"),
+                        s: Some => amount == s.some
+                      }
+                    }
+                  }
+                );
+
+              assert(does_mint_correctly, "Proof of backing: Mint incorrectly value");
+
+              does_consume_treasury_correctly
                 && is_tx_authorized_by(tx, consumed_backer_address.credential)
-                && tx.minted
-                    == Value::new(
-                        seed_asset_class,
-                        produced_backing_txouts.length - consumed_backing_txinputs.length
-                      )
-                      + Value::from_map(
-                        Map[MintingPolicyHash]Map[ByteArray]Int{
-                          own_mph: plant_accumulator.plant_map
-                        }
-                      )
-            } else {
-              true
+
             };
 
           case_produced_backing_not_empty: Bool =
-            if(!is_produced_backing_empty) {
-              if (cleanup) {
-                error("Invalid case")
-              } else {
+            if(is_produced_backing_empty) { true }
+            else {
+              if (cleanup) { error("Invalid case")}
+              else {
                 project_txout: TxOutput =
                   tx.ref_inputs.find(
                     (input: TxInput) -> Bool {
@@ -422,6 +430,8 @@ export default function main({
                     Active => true,
                     else => false
                   };
+
+                assert(is_project_datum_status_valid, "Invalid project status");
 
                 project_id: ByteArray = produced_backing_datums.head.project_id;
                 produced_backer_address: Address = produced_backing_datums.head.backer_address;
@@ -447,36 +457,47 @@ export default function main({
                     )
                   };
 
-                produced_backing_datums.all(
-                  (produced_backing_datum: BackingDatum) -> Bool {
-                    produced_backing_datum.backer_address == produced_backer_address
-                      && produced_backing_datum.staked_at == tx.time_range.end
-                      && produced_backing_datum.milestone_backed == project_datum.milestone_reached
+                are_produced_backing_datums_valid: Bool =
+                  produced_backing_datums.all(
+                    (produced_backing_datum: BackingDatum) -> Bool {
+                      produced_backing_datum.backer_address == produced_backer_address
+                        && produced_backing_datum.staked_at == tx.time_range.end
+                        && produced_backing_datum.milestone_backed == project_datum.milestone_reached
+                    }
+                  );
+
+                assert(are_produced_backing_datums_valid, "Invalid produced backing datums");
+
+                assert(
+                  is_tx_authorized_by(tx, produced_backer_address.credential),
+                  "Transaction is not authorized by produced backer address"
+                );
+
+                assert(
+                  project_datum.project_id == project_id,
+                  "Reference incorrect project UTxO (incorrect project id)"
+                );
+                assert(
+                  project_script_datum.project_id == project_id,
+                  "Reference incorrect project script UTxO (incorrect project id)"
+                );
+
+                produced_backing_txouts.all(
+                  (output: TxOutput) -> Bool {
+                    output.address == Address::new (
+                      Credential::new_validator(
+                        pparams_datum.registry
+                          .backing_validator
+                          .latest
+                      ),
+                      ref_option_staking_credential
+                    )
                   }
                 )
-                  && is_tx_authorized_by(tx, produced_backer_address.credential)
-                  && is_project_datum_status_valid
-                  && project_datum.project_id == project_id
-                  && project_script_datum.project_id == project_id
-                  && produced_backing_txouts.all(
-                    (output: TxOutput) -> Bool {
-                      output.address == Address::new (
-                        Credential::new_validator(
-                          pparams_datum.registry
-                            .backing_validator
-                            .latest
-                        ),
-                        ref_option_staking_credential
-                      )
-                    }
-                  )
               }
-            } else {
-              true
             };
 
-          early_case_1 && early_case_2 && early_case_3 && early_case_4
-            && case_consumed_backing_not_empty
+          case_consumed_backing_not_empty
             && case_produced_backing_not_empty
 
         },

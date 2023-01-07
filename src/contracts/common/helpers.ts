@@ -78,33 +78,28 @@ export default helios`
       constr_in: ConstrIn => {
         minting_constr: Int = minting_redeemer_data.switch {
           (idx: Int, dl: []Data) => {
-            if (dl.length > 0 ) {
-              idx
-            } else {
-              error("Invalid minting Constr")
-            }
+            // Helios currently does not allow unused variables here,
+            // hence we need to do this redundant check.
+            if (dl.length >= 0 ) { idx }
+            else { error("Invalid minting Constr") }
           },
           else => error("Minting redeemer must be a Constr value")
         };
 
-        constr_in.constrs.any(
+        constr_in.constrs.any (
           (constr: Int) -> Bool { constr == minting_constr}
         )
-
       },
       constr_not_in: ConstrNotIn => {
         minting_constr: Int = minting_redeemer_data.switch {
           (idx: Int, dl: []Data) => {
-            if (dl.length > 0 ) {
-              idx
-            } else {
-              error("Invalid minting Constr")
-            }
+            if (dl.length >= 0 ) { idx }
+            else { error("Invalid minting Constr") }
           },
           else => error("Minting redeemer must be a Constr value")
         };
 
-        constr_not_in.constrs.all(
+        constr_not_in.constrs.all (
           (constr: Int) -> Bool { constr != minting_constr }
         )
       }

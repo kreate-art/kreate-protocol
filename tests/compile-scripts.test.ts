@@ -73,6 +73,7 @@ const ALL_SCRIPTS = {
       projectsAuthTokenMph: "",
       protocolNftMph: "",
       teikiMph: "",
+      proofOfBackingMph: "",
     }),
     "V | Open Treasury": getOpenTreasuryV(""),
   },
