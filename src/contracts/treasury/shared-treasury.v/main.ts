@@ -1,15 +1,19 @@
+import { Hex } from "@/types";
+
 import { helios } from "../../program";
 
 export type SharedTreasuryParams = {
-  projectsAuthTokenMph: string;
-  protocolNftMph: string;
-  teikiMph: string;
+  projectsAuthTokenMph: Hex;
+  protocolNftMph: Hex;
+  teikiMph: Hex;
+  proofOfBackingMph: Hex;
 };
 
 export default function main({
   projectsAuthTokenMph,
   protocolNftMph,
   teikiMph,
+  proofOfBackingMph,
 }: SharedTreasuryParams) {
   return helios`
     spending v__shared_treasury
@@ -24,6 +28,7 @@ export default function main({
     import { Datum as ProjectDatum } from v__project__types
     import { Redeemer as TeikiRedeemer } from mp__teiki__types
     import { Datum as OpenTreasuryDatum } from v__open_treasury__types
+    import { Redeemer as PoBRedeemer } from proof_of_backing_types
 
     import {
       find_pparams_datum_from_inputs,
@@ -53,6 +58,9 @@ export default function main({
 
     const TEIKI_ASSET_CLASS: AssetClass =
       AssetClass::new(TEIKI_MPH, TEIKI_TOKEN_NAME)
+
+    const PROOF_OF_BACKING_MPH: MintingPolicyHash =
+      MintingPolicyHash::new(#${proofOfBackingMph})
 
     func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
@@ -86,8 +94,19 @@ export default function main({
 
           burn_amount_condition: Bool =
             if (update_teiki.burn_amount == 0){
+              pob_script_purpose: ScriptPurpose =
+                ScriptPurpose::new_minting(PROOF_OF_BACKING_MPH);
+
+              pob_redeemer_data: Data = tx.redeemers.get(pob_script_purpose);
+
+              is_pob_redeemer_valid: Bool =
+                PoBRedeemer::from_data(pob_redeemer_data).switch {
+                  Migrate => false,
+                  else => true
+                };
+
               update_teiki.rewards > 0
-              // TODO: pob
+                && is_pob_redeemer_valid
             } else {
               update_teiki.rewards >= 0
             };

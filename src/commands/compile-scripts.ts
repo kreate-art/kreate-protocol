@@ -18,7 +18,9 @@ import getProtocolNft from "@/contracts/protocol/protocol.nft/main";
 import getProtocolSv from "@/contracts/protocol/protocol.sv/main";
 import getDedicatedTreasuryV from "@/contracts/treasury/dedicated-treasury.v/main";
 import getOpenTreasuryV from "@/contracts/treasury/open-treasury.v/main";
-import getSharedTreasuryV from "@/contracts/treasury/shared-treasury.v/main";
+import getSharedTreasuryV, {
+  SharedTreasuryParams,
+} from "@/contracts/treasury/shared-treasury.v/main";
 import { Hex } from "@/types";
 
 // TODO: @sk-saru, @sk-umiuma: Use Hex for all those script hash params,
@@ -132,11 +134,7 @@ export function compileOpenTreasuryVScript(protocolNftMph: Hex): UplcProgram {
 }
 
 export function compileSharedTreasuryVScript(
-  projectsAuthTokenMph: Hex,
-  protocolNftMph: Hex,
-  teikiMph: Hex
+  params: SharedTreasuryParams
 ): UplcProgram {
-  return compile(
-    getSharedTreasuryV({ projectsAuthTokenMph, protocolNftMph, teikiMph })
-  );
+  return compile(getSharedTreasuryV(params));
 }
