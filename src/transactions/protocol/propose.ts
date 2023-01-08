@@ -9,11 +9,11 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
+import { getCurrentTime } from "../../helpers/lucid";
 import {
   constructTxOutputId,
   extractPaymentPubKeyHash,
-} from "../helpers/constructors";
-import { getCurrentTime } from "../helpers/lucid";
+} from "../../helpers/schema";
 
 export type ProposeProtocolTxParams = {
   protocolParamsUtxo: UTxO;

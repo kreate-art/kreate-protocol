@@ -10,8 +10,8 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { extractPaymentPubKeyHash } from "../helpers/constructors";
-import { getCurrentTime } from "../helpers/lucid";
+import { getCurrentTime } from "../../helpers/lucid";
+import { extractPaymentPubKeyHash } from "../../helpers/schema";
 
 export type ApplyProtocolTxParams = {
   protocolParamsUtxo: UTxO;

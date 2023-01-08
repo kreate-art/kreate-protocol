@@ -6,13 +6,13 @@ import {
 } from "@/commands/compile-scripts";
 import { TEIKI_PLANT_NFT_TOKEN_NAME } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
-import * as S from "@/schema";
-import { RulesProposal, TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
 import {
   getCurrentTime,
   getPaymentKeyHash,
   signAndSubmit,
-} from "@/transactions/helpers/lucid";
+} from "@/helpers/lucid";
+import * as S from "@/schema";
+import { RulesProposal, TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
 import {
   applyMetaProtocolProposalTx,
   ApplyMetaProtocolTxParams,

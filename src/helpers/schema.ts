@@ -1,8 +1,10 @@
 import {
   Address,
   C,
+  Credential,
   fromHex,
   getAddressDetails,
+  Lucid,
   OutRef,
   toHex,
 } from "lucid-cardano";
@@ -57,38 +59,51 @@ export function constructMigratableScript(
 export function constructAddress(address: Address): S.Address {
   const { paymentCredential, stakeCredential } = getAddressDetails(address);
   assert(paymentCredential, "Cannot extract payment credential from address");
-
-  const conPaymentCredential: S.PaymentCredential =
+  const scPaymentCredential: S.PaymentCredential =
     paymentCredential.type === "Key"
-      ? {
-          type: "PubKey",
-          key: { hash: paymentCredential.hash },
-        }
-      : {
-          type: "Validator",
-          script: { hash: paymentCredential.hash },
-        };
-
-  const conStakingCredential: S.StakingCredential | null = stakeCredential
+      ? { type: "PubKey", key: { hash: paymentCredential.hash } }
+      : { type: "Validator", script: { hash: paymentCredential.hash } };
+  const scStakingCredential: S.StakingCredential | null = stakeCredential
     ? {
         kind: "Hash",
         type: "Validator",
         script: { hash: stakeCredential.hash },
       }
     : null;
-
   return {
-    paymentCredential: conPaymentCredential,
-    stakingCredential: conStakingCredential,
+    paymentCredential: scPaymentCredential,
+    stakingCredential: scStakingCredential,
   };
 }
 
 // TODO: We shouldn't rely on this function for transaction building
 // We should support other kinds of credential in the future.
-export function extractPaymentPubKeyHash(address: S.Address): Hex {
+export function extractPaymentPubKeyHash(scAddress: S.Address): Hex {
+  const { paymentCredential } = scAddress;
   assert(
-    address.paymentCredential.type === "PubKey",
+    paymentCredential.type === "PubKey",
     "Address must have a public-key hash payment credential"
   );
-  return address.paymentCredential.key.hash;
+  return paymentCredential.key.hash;
+}
+
+export function deconstructAddress(
+  lucid: Lucid,
+  scAddress: S.Address
+): Address {
+  const { paymentCredential, stakingCredential } = scAddress;
+  const lcPaymentCredential: Credential =
+    paymentCredential.type === "PubKey"
+      ? { type: "Key", hash: paymentCredential.key.hash }
+      : { type: "Script", hash: paymentCredential.script.hash };
+  const lcStakingCredential: Credential | undefined =
+    stakingCredential && stakingCredential.kind === "Hash"
+      ? stakingCredential.type === "StakeKey"
+        ? { type: "Key", hash: stakingCredential.key.hash }
+        : { type: "Script", hash: stakingCredential.script.hash }
+      : undefined;
+  return lucid.utils.credentialToAddress(
+    lcPaymentCredential,
+    lcStakingCredential
+  );
 }

@@ -19,6 +19,7 @@
   "exports": {
     "./commands/": "./dist/commands/",
     "./contracts/": "./dist/contracts/",
+    "./helpers": "./dist/helpers/",
     "./schema": "./dist/schema/index",
     "./schema/": "./dist/schema/",
     "./transactions/": "./dist/transactions/",
@@ -49,8 +50,8 @@
     "typecheck:watch": "tsc --noEmit --strict --watch"
   },
   "dependencies": {
-    "@hyperionbt/helios": "^0.10.8",
-    "@sinclair/typebox": "^0.25.16",
+    "@hyperionbt/helios": "^0.10.9",
+    "@sinclair/typebox": "^0.25.17",
     "eslint-plugin-jest-formatting": "^3.1.0",
     "lucid-cardano": "^0.8.7"
   },
@@ -65,7 +66,7 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jest": "^27.2.1",
     "eslint-plugin-prettier": "^4.2.1",
-    "prettier": "^2.8.1",
+    "prettier": "^2.8.2",
     "sort-package-json": "^2.1.0",
     "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",

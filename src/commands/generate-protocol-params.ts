@@ -8,7 +8,7 @@ import {
 } from "@/schema/teiki/protocol";
 import { Hex } from "@/types";
 
-import { constructMigratableScript } from "../transactions/helpers/constructors";
+import { constructMigratableScript } from "../helpers/schema";
 
 import {
   compileBackingVScript,
@@ -188,7 +188,7 @@ export const SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS: ProtocolNonScriptParams = {
   projectInformationUpdateFee: 10_000_000n,
   projectCommunityUpdateFee: 10_000_000n,
   minTreasuryPerMilestoneEvent: 20_000_000n,
-  stakeKeyDeposit: 30_000_000n,
+  stakeKeyDeposit: 2_000_000n,
   proposalWaitingPeriod: { milliseconds: 10_000n },
   projectDelistWaitingPeriod: { milliseconds: 10_000n },
 };

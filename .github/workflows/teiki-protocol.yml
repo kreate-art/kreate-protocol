@@ -20,6 +20,7 @@ jobs:
           node-version: 18.x
           cache: npm
       - run: npm ci
-      - run: npm run typecheck
+      # NOTE: Because npm `prepare` script is already ran in `npm ci`, we don't need a typecheck step.
+      # - run: npm run typecheck
       - run: npm run lint
       - run: npm test

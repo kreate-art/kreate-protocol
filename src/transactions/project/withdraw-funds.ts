@@ -8,7 +8,7 @@ import {
   PROJECT_FUNDS_WITHDRAWAL_DISCOUNT_RATIO,
   PROJECT_NEW_MILESTONE_DISCOUNT_CENTS,
   TREASURY_UTXO_MIN_ADA,
-} from "../helpers/constants";
+} from "../constants";
 
 type Actor = "project-owner" | "anyone";
 

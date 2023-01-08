@@ -1,6 +1,6 @@
 import { fromText } from "lucid-cardano";
 
-import { PROJECT_SCRIPT_UTXO_ADA } from "@/transactions/constant";
+import { PROJECT_SCRIPT_UTXO_ADA } from "@/transactions/constants";
 import { Hex } from "@/types";
 
 import { helios } from "../program";

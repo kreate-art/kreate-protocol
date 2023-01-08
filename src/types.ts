@@ -4,6 +4,7 @@ import { Constr, type Data, type OutRef } from "lucid-cardano";
 export { type Data, type OutRef };
 
 export type Hex = string;
+export type Cid = string;
 
 export type UnixTime = number;
 export type TimeDifference = number;

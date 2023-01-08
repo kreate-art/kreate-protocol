@@ -9,7 +9,7 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { getCurrentTime } from "../helpers/lucid";
+import { getCurrentTime } from "../../helpers/lucid";
 
 export type ProposeMetaProtocolTxParams = {
   teikiPlantUtxo: UTxO;
