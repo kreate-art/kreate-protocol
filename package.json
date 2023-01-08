@@ -19,7 +19,7 @@
   "exports": {
     "./commands/": "./dist/commands/",
     "./contracts/": "./dist/contracts/",
-    "./helpers": "./dist/helpers/",
+    "./helpers/": "./dist/helpers/",
     "./schema": "./dist/schema/index",
     "./schema/": "./dist/schema/",
     "./transactions/": "./dist/transactions/",
