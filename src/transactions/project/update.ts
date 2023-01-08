@@ -6,7 +6,7 @@ import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
 import { TimeDifference } from "@/types";
 
-import { getCurrentTime } from "../helpers/lucid";
+import { getCurrentTime } from "../../helpers/lucid";
 
 export type UpdateProjectParams = {
   protocolParamsDatum: ProtocolParamsDatum;

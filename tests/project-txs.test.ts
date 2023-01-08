@@ -7,13 +7,13 @@ import {
 import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
 import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
-import * as S from "@/schema";
-import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
+import { signAndSubmit } from "@/helpers/lucid";
 import {
   constructAddress,
   constructProjectIdUsingBlake2b,
-} from "@/transactions/helpers/constructors";
-import { signAndSubmit } from "@/transactions/helpers/lucid";
+} from "@/helpers/schema";
+import * as S from "@/schema";
+import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { createProjectTx } from "@/transactions/project/create";
 
 import {

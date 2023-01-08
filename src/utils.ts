@@ -4,3 +4,7 @@ export function assert(
 ): asserts condition {
   if (!condition) throw new Error(message || "assertion failed");
 }
+
+export function nullIfFalsy<T>(item: T | null | undefined): T | null {
+  return item ? item : null;
+}

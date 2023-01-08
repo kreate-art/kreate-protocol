@@ -8,7 +8,7 @@ import {
 } from "@/schema/teiki/protocol";
 import { assert } from "@/utils";
 
-import { extractPaymentPubKeyHash } from "../helpers/constructors";
+import { extractPaymentPubKeyHash } from "../../helpers/schema";
 
 export type CancelProtocolTxParams = {
   protocolParamsUtxo: UTxO;

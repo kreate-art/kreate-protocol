@@ -5,6 +5,8 @@ import { ProjectDatum } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { assert } from "@/utils";
 
+import { PROJECT_SCRIPT_UTXO_ADA } from "../constants";
+
 type Actor = "protocol-governor" | "project-owner";
 
 type AllocateStakingParams = {
@@ -31,8 +33,6 @@ export function allocateStakingTx(
     projectStakeValidator,
   }: AllocateStakingParams
 ) {
-  // TODO: Move this somewhere else?
-  const PROJECT_SCRIPT_UTXO_ADA = 2_000_000n;
   assert(projectUtxo.datum, "Invalid project UTxO: Missing inline datum");
 
   const projectATUnit: Unit =

@@ -8,8 +8,8 @@ import {
 import { Hex, TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { constructAddress } from "../helpers/constructors";
-import { getCurrentTime } from "../helpers/lucid";
+import { getCurrentTime } from "../../helpers/lucid";
+import { constructAddress } from "../../helpers/schema";
 
 export type ProjectInfo = {
   id: Hex;

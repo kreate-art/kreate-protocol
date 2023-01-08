@@ -5,7 +5,7 @@ import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { OpenTreasuryDatum } from "@/schema/teiki/treasury";
 import { assert } from "@/utils";
 
-import { RATIO_MULTIPLIER } from "../helpers/constants";
+import { RATIO_MULTIPLIER } from "../constants";
 
 export type WithdrawProtocolRewardParams = {
   protocolParamsUtxo: UTxO;

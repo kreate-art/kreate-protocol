@@ -10,15 +10,15 @@ import {
   PROTOCOL_NFT_TOKEN_NAMES,
 } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
+import { signAndSubmit } from "@/helpers/lucid";
+import {
+  constructAddress,
+  constructProjectIdUsingBlake2b,
+} from "@/helpers/schema";
 import * as S from "@/schema";
 import { ProjectDatum, ProjectScriptDatum } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { createBackingTx } from "@/transactions/backing/back";
-import {
-  constructAddress,
-  constructProjectIdUsingBlake2b,
-} from "@/transactions/helpers/constructors";
-import { signAndSubmit } from "@/transactions/helpers/lucid";
 
 import {
   attachUtxos,

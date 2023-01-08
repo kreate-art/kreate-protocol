@@ -9,20 +9,17 @@ import {
 import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
 import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
+import {
+  getCurrentTime,
+  getPaymentKeyHash,
+  signAndSubmit,
+} from "@/helpers/lucid";
+import { constructAddress, constructTxOutputId } from "@/helpers/schema";
 import * as S from "@/schema";
 import {
   ProtocolParamsDatum,
   ProtocolProposalDatum,
 } from "@/schema/teiki/protocol";
-import {
-  constructAddress,
-  constructTxOutputId,
-} from "@/transactions/helpers/constructors";
-import {
-  getCurrentTime,
-  getPaymentKeyHash,
-  signAndSubmit,
-} from "@/transactions/helpers/lucid";
 import {
   applyProtocolProposalTx,
   ApplyProtocolTxParams,

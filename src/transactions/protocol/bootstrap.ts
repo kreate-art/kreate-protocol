@@ -10,15 +10,15 @@ import {
 } from "lucid-cardano";
 
 import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
+import { getPaymentKeyHash } from "@/helpers/lucid";
 import * as S from "@/schema";
 import {
   ProtocolNonScriptParams,
   ProtocolParamsDatum,
   Registry,
 } from "@/schema/teiki/protocol";
-import { getPaymentKeyHash } from "@/transactions/helpers/lucid";
 
-import { constructAddress } from "../helpers/constructors";
+import { constructAddress } from "../../helpers/schema";
 
 export type BootstrapProtocolParams = {
   protocolParams: ProtocolNonScriptParams;
