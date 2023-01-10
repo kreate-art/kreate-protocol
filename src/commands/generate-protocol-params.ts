@@ -174,21 +174,21 @@ export function getProtocolRegistry(
 
 // TODO: sk-saru should read from config file
 export const SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS: ProtocolNonScriptParams = {
-  governorShareRatio: 600_000n,
-  protocolFundsShareRatio: 600_000n,
+  governorShareRatio: 800_000n, // 80%
+  protocolFundsShareRatio: 100_000n, // 10%
   discountCentPrice: 10_000n,
-  projectMilestones: [1_000_000n, 10_000_000n, 100_000_000n],
+  projectMilestones: [1_000_000_000n, 5_000_000_000n, 10_000_000_000n],
   teikiCoefficient: 500n,
-  projectTeikiBurnRate: 600_000n,
-  epochLength: { milliseconds: 200_000n },
-  projectPledge: 50_000_000n,
-  projectCreationFee: 20_000_000n,
-  projectSponsorshipFee: 10_000_000n,
-  projectSponsorshipDuration: { milliseconds: 10_000n },
-  projectInformationUpdateFee: 10_000_000n,
-  projectCommunityUpdateFee: 10_000_000n,
-  minTreasuryPerMilestoneEvent: 20_000_000n,
+  projectTeikiBurnRate: 50_000n, // 5% per epoch
+  epochLength: { milliseconds: 200_000n }, // 10 blocks / epoch
+  projectPledge: 100_000_000n,
+  projectCreationFee: 10_000_000n,
+  projectSponsorshipFee: 50_000_000n,
+  projectSponsorshipDuration: { milliseconds: 86_400_000n }, // 1 day
+  projectInformationUpdateFee: 4_000_000n,
+  projectCommunityUpdateFee: 2_000_000n,
+  minTreasuryPerMilestoneEvent: 10n,
   stakeKeyDeposit: 2_000_000n,
-  proposalWaitingPeriod: { milliseconds: 10_000n },
-  projectDelistWaitingPeriod: { milliseconds: 10_000n },
+  proposalWaitingPeriod: { milliseconds: 20_000n }, // 1 block
+  projectDelistWaitingPeriod: { milliseconds: 20_000n }, // 1 block
 };
