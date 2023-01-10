@@ -22,6 +22,14 @@ export const PROJECT_AT_TOKEN_NAMES: Record<string, Hex> = Object.fromEntries(
   }).map(([k, v]) => [k, fromText(v)])
 );
 
+export const PROOF_OF_BACKING_TOKEN_NAMES: Record<string, Hex> =
+  Object.fromEntries(
+    Object.entries({
+      SEED: "seed",
+      WILTED_FLOWER: "wilted-flower",
+    }).map(([k, v]) => [k, fromText(v)])
+  );
+
 export const TEIKI_TOKEN_NAME: Hex = fromText("teiki");
 
 export const TEIKI_PLANT_NFT_TOKEN_NAME: Hex = fromText("teiki-plant");

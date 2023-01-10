@@ -1,3 +1,5 @@
+import { PROOF_OF_BACKING_TOKEN_NAMES } from "@/contracts/common/constants";
+
 import { helios } from "../../program";
 
 export type Params = {
@@ -61,8 +63,8 @@ export default function main({
     const TEIKI_ASSET_CLASS: AssetClass =
       AssetClass::new(TEIKI_MPH, TEIKI_TOKEN_NAME)
 
-    // Seed token name is an empty ByteArray
-    const SEED_TOKEN_NAME: ByteArray = #
+    const SEED_TOKEN_NAME: ByteArray = #${PROOF_OF_BACKING_TOKEN_NAMES.SEED}
+    const WILTED_FLOWER_TOKEN_NAME: ByteArray = #${PROOF_OF_BACKING_TOKEN_NAMES.WILTED_FLOWER}
 
     func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
@@ -186,7 +188,8 @@ export default function main({
               init_plant_accumulator: PlantAccumulator =
                 PlantAccumulator {
                   plant_map: Map[ByteArray]Int{},
-                  total_teiki_rewards: 0
+                  total_teiki_rewards: 0,
+                  wilted_amount: 0
                 };
 
               plant_accumulator: PlantAccumulator =
@@ -199,50 +202,37 @@ export default function main({
                           else => error("Invalid backing UTxO: missing inline datum")
                         };
 
-                      unstaked_at: Time = tx.time_range.start;
-
                       is_consumed_backer_address_valid: Bool =
                         if (consumed_backing_txinput.output.address.credential
-                              == Credential::new_validator(
-                                  pparams_datum.registry
-                                    .backing_validator
-                                    .latest
-                                )
-                        ){
-                          true
-                        } else {
-                          error("Invalid consumed backing address")
-                        };
+                              == Credential::new_validator(pparams_datum.registry.backing_validator.latest)
+                        ) { true }
+                        else { error("Invalid consumed backing address") };
+                      
+                      assert(is_consumed_backer_address_valid, "Invalid consumed backing address");
 
                       is_backing_datum_valid: Bool =
                         if (backing_datum.project_id == project_id) {
-                          if(cleanup) {
-                            true
-                          } else {
-                            if (backing_datum.backer_address == consumed_backer_address) {
-                              true
-                            } else {
-                              error("Invalid backing datum: wrong backer address")
-                            }
+                          if(cleanup) { true }
+                          else {
+                            if (backing_datum.backer_address == consumed_backer_address) { true }
+                            else { error("Invalid backing datum: wrong backer address") }
                           }
                         } else {
                           error("Invalid consumed backing datum: wrong project id")
                         };
 
+                      assert(is_backing_datum_valid, "Invalid backing datum");
+
+                      unstaked_at: Time = tx.time_range.start;
+                      time_passed: Duration = unstaked_at - backing_datum.staked_at;
+
                       is_unstaked_valid: Bool =
-                        if (unstaked_at >= backing_datum.staked_at) {
-                          true
-                        } else {
-                          error("Invalid unstaked time")
-                        };
+                        if (unstaked_at >= backing_datum.staked_at) { true }
+                        else { error("Invalid unstaked time") };
+                      
+                      assert(is_unstaked_valid, "Invalid unstaked time");
 
-                      is_rewardable: Bool =
-                        is_consumed_backer_address_valid
-                          && is_backing_datum_valid
-                          && is_unstaked_valid
-                          && unstaked_at >= backing_datum.staked_at + pparams_datum.epoch_length; // TODO: wrong condition
-
-                      if (is_rewardable) {
+                      if (time_passed > pparams_datum.epoch_length) {
                         backing_amount: Int = consumed_backing_txinput.output.value.get_safe(AssetClass::ADA);
 
                         is_matured: Bool =
@@ -275,7 +265,7 @@ export default function main({
                             0
                           };
 
-                        are_output_valid: Bool =
+                        are_outputs_valid: Bool =
                           if (cleanup) {
                             tx.outputs.any(
                               (output: TxOutput) -> Bool {
@@ -299,16 +289,45 @@ export default function main({
                             true
                           };
 
-                        if(are_output_valid){
-                          PlantAccumulator {
-                            plant_map: acc.plant_map + Map[ByteArray]Int{plant_hash: 1},
-                            total_teiki_rewards: acc.total_teiki_rewards + teiki_rewards
-                          }
-                        } else {
-                          error("Invalid outputs: missing backer outputs")
+                        assert(are_outputs_valid, "Invalid outputs: missing backer outputs");
+
+                        PlantAccumulator {
+                          plant_map: acc.plant_map + Map[ByteArray]Int{plant_hash: 1},
+                          total_teiki_rewards: acc.total_teiki_rewards + teiki_rewards,
+                          wilted_amount: acc.wilted_amount
                         }
+                        
                       } else {
-                        acc
+                        are_outputs_valid: Bool =
+                          if (cleanup) {
+                            tx.outputs.any(
+                              (output: TxOutput) -> Bool {
+                                output.address == backing_datum.backer_address
+                                  && output.value.get_safe(AssetClass::ADA)
+                                      == consumed_backing_txinput.output.value.get_safe(AssetClass::ADA) - discount
+                                  && output.value.get_safe(AssetClass::new(own_mph, WILTED_FLOWER_TOKEN_NAME)) == 1
+                                  && output.datum.switch {
+                                    i: Inline =>
+                                      UserTag::from_data(i.data).switch {
+                                        tag: TagInactiveBacking =>
+                                          tag.backing_output_id == consumed_backing_txinput.output_id,
+                                          else => false
+                                      },
+                                    else => error("Invalid output UTxO, missing inline datum")
+                                  }
+                              }
+                            )
+                          } else {
+                            true
+                          };
+                        
+                        assert(are_outputs_valid, "Invalid outputs: missing backer outputs");
+
+                        PlantAccumulator {
+                          plant_map: acc.plant_map,
+                          total_teiki_rewards: acc.total_teiki_rewards,
+                          wilted_amount: acc.wilted_amount + 1
+                        }
                       }
                     },
                     init_plant_accumulator
@@ -390,6 +409,7 @@ export default function main({
                 tx.minted.to_map().get(own_mph).all(
                   (token_name: ByteArray, amount: Int) -> Bool {
                     if (token_name == SEED_TOKEN_NAME) { amount == seed_mint_amount }
+                    else if (token_name == WILTED_FLOWER_TOKEN_NAME) { amount == plant_accumulator.wilted_amount }
                     else {
                       plant_accumulator.plant_map.get_safe(token_name).switch {
                         None => error("Mint incorrect plant token"),

@@ -8,6 +8,7 @@ import getTeikiPlantNft from "@/contracts/meta-protocol/teiki-plant.nft/main";
 import getTeikiPlantV from "@/contracts/meta-protocol/teiki-plant.v/main";
 import getTeikiMp from "@/contracts/meta-protocol/teiki.mp/main";
 import getProjectDetailV from "@/contracts/project/project-detail.v/main";
+import getProjectScriptV from "@/contracts/project/project-script.v/main";
 import getProjectAt from "@/contracts/project/project.at/main";
 import getProjectSv from "@/contracts/project/project.sv/main";
 import getProjectV from "@/contracts/project/project.v/main";
@@ -70,7 +71,7 @@ export function compileProjectScriptVScript(
   projectsAuthTokenMph: Hex,
   protocolNftMph: Hex
 ): UplcProgram {
-  return compile(getProjectV({ projectsAuthTokenMph, protocolNftMph }));
+  return compile(getProjectScriptV({ projectsAuthTokenMph, protocolNftMph }));
 }
 
 export function compileProjectSvScript(
