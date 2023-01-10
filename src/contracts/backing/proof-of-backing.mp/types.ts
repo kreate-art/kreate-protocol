@@ -36,5 +36,6 @@ export default helios`
   struct PlantAccumulator {
     plant_map: Map[ByteArray]Int
     total_teiki_rewards: Int
+    wilted_amount: Int
   }
 `;

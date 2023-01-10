@@ -10,6 +10,7 @@ import {
 import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
 import {
   PROJECT_AT_TOKEN_NAMES,
+  PROOF_OF_BACKING_TOKEN_NAMES,
   PROTOCOL_NFT_TOKEN_NAMES,
   TEIKI_PLANT_NFT_TOKEN_NAME,
   TEIKI_TOKEN_NAME,
@@ -240,6 +241,46 @@ describe("backing transactions", () => {
     );
   });
 
+  it("plant tx - TeikiBurntPeriodically - wilted flower", async () => {
+    expect.assertions(1);
+
+    lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
+
+    const projectId = constructProjectIdUsingBlake2b(generateOutRef());
+    const governorTeiki = 1_000_000n;
+    const availableTeiki = 1_000_000_000n;
+
+    const sharedTreasuryDatum: SharedTreasuryDatum = {
+      projectId: { id: projectId },
+      governorTeiki,
+      projectTeiki: {
+        teikiCondition: "TeikiBurntPeriodically",
+        available: availableTeiki,
+        lastBurnAt: { timestamp: BigInt(getCurrentTime(lucid)) },
+      },
+      tag: {
+        kind: "TagContinuation",
+        former: constructTxOutputId(generateOutRef()),
+      },
+    };
+
+    const plantParams = generateUpdateBackingParams(
+      sharedTreasuryDatum,
+      projectId,
+      governorTeiki,
+      availableTeiki,
+      8
+    );
+
+    const tx = plantTx(lucid, plantParams);
+
+    const txComplete = await tx.complete();
+
+    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+      true
+    );
+  });
+
   it("plant tx - TeikiEmpty", async () => {
     expect.assertions(1);
 
@@ -267,6 +308,44 @@ describe("backing transactions", () => {
       governorTeiki,
       availableTeiki,
       20
+    );
+
+    const tx = plantTx(lucid, plantParams);
+
+    const txComplete = await tx.complete();
+
+    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+      true
+    );
+  });
+
+  it("plant tx - TeikiEmpty - wilted flower", async () => {
+    expect.assertions(1);
+
+    lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
+
+    const projectId = constructProjectIdUsingBlake2b(generateOutRef());
+    const governorTeiki = 0n;
+    const availableTeiki = 0n;
+
+    const sharedTreasuryDatum: SharedTreasuryDatum = {
+      projectId: { id: projectId },
+      governorTeiki: 0n,
+      projectTeiki: {
+        teikiCondition: "TeikiEmpty",
+      },
+      tag: {
+        kind: "TagContinuation",
+        former: constructTxOutputId(generateOutRef()),
+      },
+    };
+
+    const plantParams = generateUpdateBackingParams(
+      sharedTreasuryDatum,
+      projectId,
+      governorTeiki,
+      availableTeiki,
+      8
     );
 
     const tx = plantTx(lucid, plantParams);
@@ -449,7 +528,10 @@ function generateUpdateBackingParams(
   const backingUtxo = {
     ...generateOutRef(),
     address: backingScriptAddress,
-    assets: { lovelace: 500_000_000n, [proofOfBackingMph]: 1n },
+    assets: {
+      lovelace: 500_000_000n,
+      [proofOfBackingMph + PROOF_OF_BACKING_TOKEN_NAMES.SEED]: 1n,
+    },
     datum: S.toCbor(S.toData(backingDatum, BackingDatum)),
   };
 

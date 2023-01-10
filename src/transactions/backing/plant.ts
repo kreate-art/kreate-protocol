@@ -1,6 +1,9 @@
 import { Address, Lucid, Tx, UTxO, Unit } from "lucid-cardano";
 
-import { TEIKI_TOKEN_NAME } from "@/contracts/common/constants";
+import {
+  PROOF_OF_BACKING_TOKEN_NAMES,
+  TEIKI_TOKEN_NAME,
+} from "@/contracts/common/constants";
 import { getCurrentTime } from "@/helpers/lucid";
 import {
   constructAddress,
@@ -116,9 +119,12 @@ export function plantTx(
   const seedTokenMintAmount =
     numProducedBackingUtxos - backingInfo.backingUtxos.length;
 
+  const seedUnit =
+    backingInfo.proofOfBackingMph + PROOF_OF_BACKING_TOKEN_NAMES.SEED;
+
   if (seedTokenMintAmount !== 0) {
     tx = tx.mintAssets(
-      { [backingInfo.proofOfBackingMph]: BigInt(seedTokenMintAmount) },
+      { [seedUnit]: BigInt(seedTokenMintAmount) },
       proofOfBackingMintingRedeemer
     );
   }
@@ -160,7 +166,7 @@ export function plantTx(
         {
           inline: S.toCbor(S.toData(backingDatum, BackingDatum)),
         },
-        { [backingInfo.proofOfBackingMph]: 1n, lovelace: remainBackingAmount }
+        { [seedUnit]: 1n, lovelace: remainBackingAmount }
       )
       .validTo(txTimeEnd);
   }
@@ -233,10 +239,10 @@ function addMintingInstruction(
       BackingDatum
     );
 
-    if (
-      BigInt(unstakedAt) >=
-      backingDatum.stakedAt.timestamp + protocolParams.epochLength.milliseconds
-    ) {
+    const timePassed = BigInt(unstakedAt) - backingDatum.stakedAt.timestamp;
+
+    if (timePassed < 0n) throw new Error("Invalid unstake time");
+    if (timePassed >= protocolParams.epochLength.milliseconds) {
       const backingAmount = backingUtxo.assets["lovelace"];
 
       const isMatured =
@@ -266,6 +272,14 @@ function addMintingInstruction(
         : 0n;
 
       totalTeikiRewards += teikiRewards;
+    } else {
+      tx = tx.mintAssets(
+        {
+          [backingInfo.proofOfBackingMph +
+          PROOF_OF_BACKING_TOKEN_NAMES.WILTED_FLOWER]: 1n,
+        },
+        proofOfBackingMintingRedeemer
+      );
     }
   }
 
