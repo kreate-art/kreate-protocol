@@ -30,93 +30,49 @@ const emulator = new Emulator([PROJECT_OWNER_ACCOUNT]);
 const lucid = await Lucid.new(emulator);
 
 describe("project transactions", () => {
-  it("create project tx", async () => {
+  it("create project tx - with sponsor", async () => {
     expect.assertions(2);
 
     lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
+
+    const ownerAddress: Address = await lucid.wallet.address();
 
     const seedUtxo = (await lucid.wallet.getUtxos())[0];
 
     expect(seedUtxo).toBeTruthy();
 
-    const protocolStakeValidatorHash = generateBlake2b224Hash();
+    const createProjectParams = generateCreateProjectParams(lucid, {
+      isSponsored: true,
+      seedUtxo,
+      ownerAddress,
+    });
 
-    const protocolParamsAddress = lucid.utils.credentialToAddress(
-      lucid.utils.scriptHashToCredential(generateBlake2b224Hash()),
-      lucid.utils.scriptHashToCredential(protocolStakeValidatorHash)
+    const tx = createProjectTx(lucid, createProjectParams);
+
+    const txComplete = await tx.complete();
+
+    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+      true
     );
+  });
 
-    const registry = generateProtocolRegistry(protocolStakeValidatorHash);
+  it("create project tx - without sponsor", async () => {
+    expect.assertions(2);
 
-    const governorAddress = generateWalletAddress(lucid);
-
-    const protocolParamsDatum: ProtocolParamsDatum = {
-      registry,
-      governorAddress: constructAddress(governorAddress),
-      ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
-    };
-
-    const protocolNftMph = generateBlake2b224Hash();
-
-    const paramsNftUnit: Unit =
-      protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
-
-    const protocolParamsUtxo: UTxO = {
-      ...generateOutRef(),
-      address: protocolParamsAddress,
-      assets: { lovelace: 2_000_000n, [paramsNftUnit]: 1n },
-      datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
-    };
-
-    const projectAtMintingPolicy = exportScript(
-      compileProjectsAtScript(protocolNftMph)
-    );
-
-    const projectsAuthTokenMph = lucid.utils.validatorToScriptHash(
-      projectAtMintingPolicy
-    );
-
-    const projectStakeValidator = exportScript(
-      compileProjectSvScript(
-        constructProjectIdUsingBlake2b(seedUtxo),
-        "",
-        projectsAuthTokenMph,
-        protocolNftMph
-      )
-    );
-
-    const projectScriptAddress = lucid.utils.credentialToAddress(
-      lucid.utils.scriptHashToCredential(generateBlake2b224Hash()),
-      lucid.utils.scriptHashToCredential(
-        lucid.utils.validatorToScriptHash(projectStakeValidator)
-      )
-    );
-
-    const projectAtScriptRefUtxo: UTxO = {
-      ...generateOutRef(),
-      address: projectScriptAddress,
-      assets: { lovelace: 2_000_000n },
-      scriptRef: projectAtMintingPolicy,
-    };
-
-    attachUtxos(emulator, [protocolParamsUtxo, projectAtScriptRefUtxo]);
+    lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
 
     const ownerAddress: Address = await lucid.wallet.address();
 
-    // NOTE: When building transactions have start_time before the current time,
-    // it is necessary to wait a number of slot
-    emulator.awaitSlot(100);
+    const seedUtxo = (await lucid.wallet.getUtxos())[0];
 
-    const createProjectParams = {
-      informationCid: { cid: "" },
-      isSponsored: true,
-      ownerAddress,
-      projectAtScriptRefUtxo,
-      projectATPolicyId: projectsAuthTokenMph,
-      projectStakeValidator,
-      protocolParamsUtxo,
+    expect(seedUtxo).toBeTruthy();
+
+    const createProjectParams = generateCreateProjectParams(lucid, {
+      isSponsored: false,
       seedUtxo,
-    };
+      ownerAddress,
+    });
+
     const tx = createProjectTx(lucid, createProjectParams);
 
     const txComplete = await tx.complete();
@@ -126,3 +82,90 @@ describe("project transactions", () => {
     );
   });
 });
+
+type GenerateParams = {
+  isSponsored: boolean;
+  seedUtxo: UTxO;
+  ownerAddress: Address;
+};
+
+function generateCreateProjectParams(
+  lucid: Lucid,
+  { isSponsored, seedUtxo, ownerAddress }: GenerateParams
+) {
+  const protocolStakeValidatorHash = generateBlake2b224Hash();
+
+  const protocolParamsAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(generateBlake2b224Hash()),
+    lucid.utils.scriptHashToCredential(protocolStakeValidatorHash)
+  );
+
+  const registry = generateProtocolRegistry(protocolStakeValidatorHash);
+
+  const governorAddress = generateWalletAddress(lucid);
+
+  const protocolParamsDatum: ProtocolParamsDatum = {
+    registry,
+    governorAddress: constructAddress(governorAddress),
+    ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+  };
+
+  const protocolNftMph = generateBlake2b224Hash();
+
+  const paramsNftUnit: Unit = protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
+
+  const protocolParamsUtxo: UTxO = {
+    ...generateOutRef(),
+    address: protocolParamsAddress,
+    assets: { lovelace: 2_000_000n, [paramsNftUnit]: 1n },
+    datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
+  };
+
+  const projectAtMintingPolicy = exportScript(
+    compileProjectsAtScript(protocolNftMph)
+  );
+
+  const projectsAuthTokenMph = lucid.utils.validatorToScriptHash(
+    projectAtMintingPolicy
+  );
+
+  const projectStakeValidator = exportScript(
+    compileProjectSvScript(
+      constructProjectIdUsingBlake2b(seedUtxo),
+      "",
+      projectsAuthTokenMph,
+      protocolNftMph
+    )
+  );
+
+  const projectScriptAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(generateBlake2b224Hash()),
+    lucid.utils.scriptHashToCredential(
+      lucid.utils.validatorToScriptHash(projectStakeValidator)
+    )
+  );
+
+  const projectAtScriptRefUtxo: UTxO = {
+    ...generateOutRef(),
+    address: projectScriptAddress,
+    assets: { lovelace: 2_000_000n },
+    scriptRef: projectAtMintingPolicy,
+  };
+
+  attachUtxos(emulator, [protocolParamsUtxo, projectAtScriptRefUtxo]);
+
+  // NOTE: When building transactions have start_time before the current time,
+  // it is necessary to wait a number of slot
+  emulator.awaitSlot(100);
+
+  return {
+    informationCid: { cid: "QmaMS3jikf7ZACHaGpUVD2wn3jFv1SaeVBChhkNDit5XQy" },
+    isSponsored,
+    ownerAddress,
+    projectAtScriptRefUtxo,
+    projectATPolicyId: projectsAuthTokenMph,
+    projectStakeValidator,
+    protocolParamsUtxo,
+    seedUtxo,
+  };
+}

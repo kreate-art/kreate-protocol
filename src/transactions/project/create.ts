@@ -111,10 +111,13 @@ export function createProjectTx(
     protocolParams.projectCreationFee +
     (isSponsored ? protocolParams.projectSponsorshipFee : 0n);
 
-  const txTimeStart = getCurrentTime(lucid);
+  const txTimeStart = getCurrentTime(lucid) - txTimePadding;
   const sponsoredUntil = isSponsored
-    ? protocolParams.projectSponsorshipDuration.milliseconds +
-      BigInt(txTimeStart)
+    ? {
+        timestamp:
+          protocolParams.projectSponsorshipDuration.milliseconds +
+          BigInt(txTimeStart),
+      }
     : null;
 
   const projectScriptDatum: ProjectScriptDatum = {
@@ -125,7 +128,7 @@ export function createProjectTx(
   const projectDetailDatum: ProjectDetailDatum = {
     projectId: { id: projectId },
     withdrawnFunds: 0n,
-    sponsoredUntil: null,
+    sponsoredUntil,
     informationCid: informationCid,
     lastCommunityUpdateCid: null,
   };
@@ -209,8 +212,8 @@ export function createProjectTx(
       { lovelace: minTotalFees }
     )
     .registerStake(projectStakeAddress);
-  if (sponsoredUntil) {
-    tx = tx.validFrom(txTimeStart - txTimePadding);
+  if (isSponsored) {
+    tx = tx.validFrom(txTimeStart);
   }
 
   return tx;
