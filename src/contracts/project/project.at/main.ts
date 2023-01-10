@@ -140,11 +140,12 @@ export default function main(protocolNftMph: string) {
               && project_detail_txout.value.get_safe(AssetClass::ADA) == PROJECT_DETAIL_UTXO_ADA
               && project_detail_datum.project_id == project_id
               && project_detail_datum.withdrawn_funds == 0
-              && project_detail_datum.information_cid.serialize().length > 0 // TODO: check this by tx
+              && project_detail_datum.information_cid != ""
               && project_detail_datum.last_community_update_cid == Option[String]::None
-              && (project_detail_datum.sponsored_until
-                    == Option[Time]::Some{tx.time_range.start + pparams_datum.project_sponsorship_duration}
-                    || project_detail_datum.sponsored_until == Option[Time]::None);
+              && project_detail_datum.sponsored_until.switch {
+                None => true,
+                s: Some => s.some == tx.time_range.start + pparams_datum.project_sponsorship_duration
+              };
 
           does_produce_exactly_one_project: Bool =
             tx.outputs.any(
