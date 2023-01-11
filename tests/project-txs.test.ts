@@ -4,9 +4,9 @@ import {
   compileProjectSvScript,
   compileProjectVScript,
   compileProjectDetailVScript,
-  compileDedicatedTreasuryVScript,
   compileSharedTreasuryVScript,
   compileProjectsAtScript,
+  compileDedicatedTreasuryVScript,
 } from "@/commands/compile-scripts";
 import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
 import {
@@ -30,6 +30,10 @@ import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
 import { createProjectTx } from "@/transactions/project/create";
 import {
+  UpdateProjectParams,
+  updateProjectTx,
+} from "@/transactions/project/update";
+import {
   Actor,
   WithdrawFundsParams,
   withdrawFundsTx,
@@ -40,6 +44,7 @@ import {
   generateAccount,
   generateBlake2b224Hash,
   generateOutRef,
+  generateScriptAddress,
   generateWalletAddress,
 } from "./emulator";
 import { generateProtocolRegistry, ValidatorScriptHashRegistry } from "./utils";
@@ -340,6 +345,32 @@ describe("project transactions", () => {
 
     await testWithdrawFunds(9_000_000n, "project-owner");
   });
+
+  it("update project tx", async () => {
+    expect.assertions(2);
+
+    lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
+
+    const ownerAddress: Address = await lucid.wallet.address();
+
+    const seedUtxo = (await lucid.wallet.getUtxos())[0];
+
+    expect(seedUtxo).toBeTruthy();
+
+    const updateProjectParams = generateUpdateProjectParams(lucid, {
+      isSponsored: true,
+      seedUtxo,
+      ownerAddress,
+    });
+
+    const tx = updateProjectTx(lucid, updateProjectParams);
+
+    const txComplete = await tx.complete();
+
+    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+      true
+    );
+  });
 });
 
 type GenerateParams = {
@@ -384,7 +415,7 @@ function generateCreateProjectParams(
     compileProjectsAtScript(protocolNftMph)
   );
 
-  const projectsAuthTokenMph = lucid.utils.validatorToScriptHash(
+  const projectAtMph = lucid.utils.validatorToScriptHash(
     projectAtMintingPolicy
   );
 
@@ -392,7 +423,7 @@ function generateCreateProjectParams(
     compileProjectSvScript(
       constructProjectIdUsingBlake2b(seedUtxo),
       "",
-      projectsAuthTokenMph,
+      projectAtMph,
       protocolNftMph
     )
   );
@@ -422,9 +453,172 @@ function generateCreateProjectParams(
     isSponsored,
     ownerAddress,
     projectAtScriptRefUtxo,
-    projectATPolicyId: projectsAuthTokenMph,
+    projectATPolicyId: projectAtMph,
     projectStakeValidator,
     protocolParamsUtxo,
     seedUtxo,
+  };
+}
+
+function generateUpdateProjectParams(
+  lucid: Lucid,
+  { seedUtxo, ownerAddress }: GenerateParams
+): UpdateProjectParams {
+  const protocolStakeValidatorHash = generateBlake2b224Hash();
+
+  const protocolParamsAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(generateBlake2b224Hash()),
+    lucid.utils.scriptHashToCredential(protocolStakeValidatorHash)
+  );
+
+  const governorAddress = generateWalletAddress(lucid);
+
+  const projectId = constructProjectIdUsingBlake2b(seedUtxo);
+
+  const projectDatum: ProjectDatum = {
+    projectId: { id: projectId },
+    ownerAddress: constructAddress(ownerAddress),
+    status: { type: "Active" },
+    milestoneReached: 0n,
+    isStakingDelegationManagedByProtocol: true,
+  };
+
+  const projectDetailDatum: ProjectDetailDatum = {
+    projectId: { id: projectId },
+    withdrawnFunds: 0n,
+    sponsoredUntil: null,
+    informationCid: { cid: "QmaMS3jikf86AC1aGpUVD2wn3jFv1SaeVBChhkNDit5XQy" },
+    lastCommunityUpdateCid: null,
+  };
+
+  const dedicatedTreasuryDatum: DedicatedTreasuryDatum = {
+    projectId: { id: projectId },
+    governorAda: 0n,
+    tag: { kind: "TagContinuation", former: constructTxOutputId(seedUtxo) },
+  };
+
+  const protocolNftMph = generateBlake2b224Hash();
+
+  const paramsNftUnit: Unit = protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
+
+  const projectAtMintingPolicy = exportScript(
+    compileProjectsAtScript(protocolNftMph)
+  );
+  const projectAtMph = lucid.utils.validatorToScriptHash(
+    projectAtMintingPolicy
+  );
+  const projectAtUnit: Unit = projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
+  const projectDetailAtUnit: Unit =
+    projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_DETAIL;
+  const projectScriptAtUnit: Unit =
+    projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
+
+  const projectVScript = exportScript(
+    compileProjectVScript(projectAtMph, protocolNftMph)
+  );
+  const projectDetailVScript = exportScript(
+    compileProjectDetailVScript(projectAtMph, protocolNftMph)
+  );
+  const dedicatedTreasuryVScript = exportScript(
+    compileDedicatedTreasuryVScript(projectAtMph, protocolNftMph)
+  );
+
+  const projectVScriptHash = lucid.utils.validatorToScriptHash(projectVScript);
+  const projectDetailVScriptHash =
+    lucid.utils.validatorToScriptHash(projectDetailVScript);
+  const dedicatedTreasuryVScriptHash = lucid.utils.validatorToScriptHash(
+    dedicatedTreasuryVScript
+  );
+
+  const projectAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(projectVScriptHash)
+  );
+  const projectDetailAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(projectDetailVScriptHash)
+  );
+  const dedicatedTreasuryAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(dedicatedTreasuryVScriptHash)
+  );
+
+  const registry = generateProtocolRegistry(protocolStakeValidatorHash, {
+    projectDetail: projectDetailVScriptHash,
+    dedicatedTreasury: dedicatedTreasuryVScriptHash,
+  });
+
+  const protocolParamsDatum: ProtocolParamsDatum = {
+    registry,
+    governorAddress: constructAddress(governorAddress),
+    ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+  };
+
+  const protocolParamsUtxo: UTxO = {
+    ...generateOutRef(),
+    address: protocolParamsAddress,
+    assets: { lovelace: 2_000_000n, [paramsNftUnit]: 1n },
+    datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
+  };
+
+  const projectDetailScriptUtxo: UTxO = {
+    ...generateOutRef(),
+    address: generateScriptAddress(lucid),
+    assets: { lovelace: 2_000_000n },
+    scriptRef: projectDetailVScript,
+  };
+
+  const dedicatedTreasuryScriptUtxo: UTxO = {
+    ...generateOutRef(),
+    address: generateScriptAddress(lucid),
+    assets: { lovelace: 2_000_000n },
+    scriptRef: dedicatedTreasuryVScript,
+  };
+
+  const projectUtxo: UTxO = {
+    ...generateOutRef(),
+    address: projectAddress,
+    assets: { lovelace: 2_000_000n, [projectAtUnit]: 1n },
+    datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
+  };
+
+  const projectDetailUtxo: UTxO = {
+    ...generateOutRef(),
+    address: projectDetailAddress,
+    assets: { lovelace: 2_000_000n, [projectDetailAtUnit]: 1n },
+    datum: S.toCbor(S.toData(projectDetailDatum, ProjectDetailDatum)),
+  };
+
+  const dedicatedTreasuryUtxo: UTxO = {
+    ...generateOutRef(),
+    address: dedicatedTreasuryAddress,
+    assets: { lovelace: 2_000_00n, [projectScriptAtUnit]: 1n },
+    datum: S.toCbor(S.toData(dedicatedTreasuryDatum, DedicatedTreasuryDatum)),
+  };
+
+  attachUtxos(emulator, [
+    protocolParamsUtxo,
+    projectUtxo,
+    projectDetailUtxo,
+    dedicatedTreasuryUtxo,
+    projectDetailScriptUtxo,
+    dedicatedTreasuryScriptUtxo,
+  ]);
+
+  // NOTE: When building transactions have start_time before the current time,
+  // it is necessary to wait a number of slot
+  emulator.awaitSlot(100);
+
+  return {
+    protocolParamsUtxo,
+    projectUtxo,
+    projectDetailUtxo,
+    projectDetailScriptUtxo,
+    dedicatedTreasuryScriptUtxo,
+    extendsSponsorship: true,
+    newInformationCid: {
+      cid: "QmaMS3jikf86AC1aGpUVD2wn3jFv1SaeVBChhkNDit5XQy",
+    },
+    newCommunityUpdateCid: {
+      cid: "QmaMS3jikf86AN1aGpUVD2wn3jFv1SaeVBChhkNDit5XQy",
+    },
+    dedicatedTreasuryUtxo,
   };
 }
