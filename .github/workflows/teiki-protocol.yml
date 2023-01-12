@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18.x
+          node-version-file: '.nvmrc'
           cache: npm
       - run: npm ci
       # NOTE: Because npm `prepare` script is already ran in `npm ci`, we don't need a typecheck step.
