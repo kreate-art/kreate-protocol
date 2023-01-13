@@ -95,7 +95,7 @@ export function plantTx(
   const txTimeEnd = now + txTimeEndPadding;
 
   const totalBackingAmount = backingInfo.backingUtxos.reduce(
-    (acc, backingUtxo) => acc + backingUtxo.assets["lovelace"],
+    (acc, backingUtxo) => acc + BigInt(backingUtxo.assets.lovelace),
     0n
   );
 
@@ -136,12 +136,6 @@ export function plantTx(
 
   // Check whether the backer unstake or not
   if (backingInfo.amount < 0n) {
-    assert(teikiMintingInfo, "Missing teiki minting information");
-    assert(
-      teikiMintingInfo.teikiMpRefUtxo.scriptRef,
-      "Invalid teiki reference script UTxO: Missing inline datum"
-    );
-
     tx = addCollectBackingInstruction(tx, backingInfo);
 
     tx = addMintingInstruction(tx, {
@@ -188,7 +182,7 @@ type MintingInstructionParams = {
   backingInfo: BackingInfo;
   protocolParamsUtxo: UTxO;
   projectUtxo: UTxO;
-  teikiMintingInfo: TeikiMintingInfo;
+  teikiMintingInfo?: TeikiMintingInfo;
   txTimeStart: number;
   proofOfBackingMintingRedeemer: Hex;
 };
@@ -244,7 +238,7 @@ function addMintingInstruction(
 
     if (timePassed < 0n) throw new Error("Invalid unstake time");
     if (timePassed >= protocolParams.epochLength.milliseconds) {
-      const backingAmount = backingUtxo.assets["lovelace"];
+      const backingAmount = BigInt(backingUtxo.assets.lovelace);
 
       const isMatured =
         backingDatum.milestoneBacked < projectDatum.milestoneReached &&
@@ -285,6 +279,13 @@ function addMintingInstruction(
   }
 
   if (totalTeikiRewards > 0) {
+    assert(teikiMintingInfo, "Missing teiki minting information");
+
+    assert(
+      teikiMintingInfo.teikiMpRefUtxo.scriptRef,
+      "Invalid teiki reference script UTxO: Missing inline datum"
+    );
+
     tx = mintTeiki(
       tx,
       teikiMintingInfo,
