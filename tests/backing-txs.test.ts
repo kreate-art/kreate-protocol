@@ -173,6 +173,8 @@ describe("backing transactions", () => {
       protocolParamsUtxo,
     ]);
 
+    emulator.awaitBlock(10);
+
     const plantParams: PlantParams = {
       protocolParamsUtxo,
       projectInfo: {
