@@ -203,6 +203,180 @@ describe("backing transactions", () => {
     );
   });
 
+  it("plant tx - wilted flower only", async () => {
+    expect.assertions(1);
+
+    lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
+
+    const refScriptAddress = generateScriptAddress(lucid);
+    const projectAddress = generateScriptAddress(lucid);
+    const ownerAddress = generateWalletAddress(lucid);
+    const projectScriptAddress = generateScriptAddress(lucid);
+    const governorAddress = generateWalletAddress(lucid);
+    const protocolParamsAddress = generateScriptAddress(lucid);
+
+    const projectsAuthTokenMph = generateBlake2b224Hash();
+    const protocolNftMph = generateBlake2b224Hash();
+    const teikiMph = generateBlake2b224Hash();
+    const projectId = constructProjectIdUsingBlake2b(generateOutRef());
+    const protocolStakeValidatorHash = generateBlake2b224Hash();
+
+    const proofOfBackingMintingPolicy = exportScript(
+      compileProofOfBackingMpScript(
+        projectsAuthTokenMph,
+        protocolNftMph,
+        teikiMph
+      )
+    );
+    const proofOfBackingMph = lucid.utils.validatorToScriptHash(
+      proofOfBackingMintingPolicy
+    );
+
+    const projectStakeValidator = exportScript(
+      compileProjectSvScript(
+        projectId,
+        "",
+        projectsAuthTokenMph,
+        protocolNftMph
+      )
+    );
+
+    const backingValidator = exportScript(
+      compileBackingVScript(proofOfBackingMph, protocolNftMph)
+    );
+    const backingValidatorHash =
+      lucid.utils.validatorToScriptHash(backingValidator);
+
+    const backingScriptAddress = scriptHashToAddress(
+      lucid,
+      backingValidatorHash,
+      lucid.utils.validatorToScriptHash(projectStakeValidator)
+    );
+
+    const proofOfBackingMpRefUtxo: UTxO = {
+      ...generateOutRef(),
+      address: refScriptAddress,
+      assets: { lovelace: 2_000_000n },
+      scriptRef: proofOfBackingMintingPolicy,
+    };
+
+    const projectATUnit: Unit =
+      projectsAuthTokenMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
+    const projectScriptATUnit: Unit =
+      projectsAuthTokenMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
+
+    const current_project_milestone = 0n;
+
+    const projectDatum: ProjectDatum = {
+      projectId: { id: projectId },
+      ownerAddress: constructAddress(ownerAddress),
+      milestoneReached: current_project_milestone,
+      isStakingDelegationManagedByProtocol: true,
+      status: { type: "Active" },
+    };
+
+    const projectUtxo: UTxO = {
+      ...generateOutRef(),
+      address: projectAddress,
+      assets: { lovelace: 2_000_000n, [projectATUnit]: 1n },
+      datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
+    };
+
+    const projectScriptDatum: ProjectScriptDatum = {
+      projectId: { id: projectId },
+      stakingKeyDeposit: 1n,
+    };
+    const projectScriptUtxo: UTxO = {
+      ...generateOutRef(),
+      address: projectScriptAddress,
+      assets: { lovelace: 2_000_000n, [projectScriptATUnit]: 1n },
+      datum: S.toCbor(S.toData(projectScriptDatum, ProjectScriptDatum)),
+      scriptRef: projectStakeValidator,
+    };
+
+    const registry = generateProtocolRegistry(protocolStakeValidatorHash, {
+      backing: backingValidatorHash,
+    });
+
+    const protocolParamsDatum: ProtocolParamsDatum = {
+      registry,
+      governorAddress: constructAddress(governorAddress),
+      ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+    };
+
+    const protocolParamsNftUnit: Unit =
+      protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
+
+    const protocolParamsUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolParamsAddress,
+      assets: { lovelace: 2_000_000n, [protocolParamsNftUnit]: 1n },
+      datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
+    };
+
+    const backingScriptRefUtxo: UTxO = {
+      ...generateOutRef(),
+      address: refScriptAddress,
+      assets: { lovelace: 2_000_000n },
+      scriptRef: backingValidator,
+    };
+
+    const backingDatum: BackingDatum = {
+      projectId: { id: projectId },
+      backerAddress: constructAddress(BACKER_ACCOUNT.address),
+      stakedAt: { timestamp: BigInt(getCurrentTime(lucid)) },
+      milestoneBacked: current_project_milestone,
+    };
+
+    const backingUtxo = {
+      ...generateOutRef(),
+      address: backingScriptAddress,
+      assets: {
+        lovelace: 500_000_000n,
+        [proofOfBackingMph + PROOF_OF_BACKING_TOKEN_NAMES.SEED]: 1n,
+      },
+      datum: S.toCbor(S.toData(backingDatum, BackingDatum)),
+    };
+
+    attachUtxos(emulator, [
+      proofOfBackingMpRefUtxo,
+      projectUtxo,
+      projectScriptUtxo,
+      protocolParamsUtxo,
+      backingUtxo,
+      backingScriptRefUtxo,
+    ]);
+
+    emulator.awaitSlot(20);
+
+    const plantParams: PlantParams = {
+      protocolParamsUtxo,
+      projectInfo: {
+        id: projectId,
+        currentMilestone: current_project_milestone,
+        projectUtxo,
+        projectScriptUtxo,
+      },
+      backingInfo: {
+        amount: -400_000_000n,
+        backerAddress: BACKER_ACCOUNT.address,
+        backingUtxos: [backingUtxo],
+        backingScriptAddress,
+        backingScriptRefUtxo,
+        proofOfBackingMpRefUtxo,
+        proofOfBackingMph,
+      },
+    };
+
+    const tx = plantTx(lucid, plantParams);
+
+    const txComplete = await tx.complete();
+
+    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+      true
+    );
+  });
+
   it("plant tx - TeikiBurntPeriodically", async () => {
     expect.assertions(1);
 
