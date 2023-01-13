@@ -63,7 +63,8 @@ export type PlantParams = {
   projectInfo: ProjectInfo;
   backingInfo: BackingInfo;
   teikiMintingInfo?: TeikiMintingInfo;
-  txTimePadding?: TimeDifference;
+  txTimeStartPadding?: TimeDifference;
+  txTimeEndPadding?: TimeDifference;
 };
 
 // clean up is splitted to another transaction
@@ -74,7 +75,8 @@ export function plantTx(
     projectInfo,
     backingInfo,
     teikiMintingInfo,
-    txTimePadding = 200000,
+    txTimeStartPadding = 20_000,
+    txTimeEndPadding = 60_000,
   }: PlantParams
 ) {
   const proofOfBackingMpRefUtxo = backingInfo.proofOfBackingMpRefUtxo;
@@ -88,7 +90,9 @@ export function plantTx(
     S.toData({ case: "Plant", cleanup: false }, ProofOfBackingMintingRedeemer)
   );
 
-  const txTimeStart = getCurrentTime(lucid);
+  const now = getCurrentTime(lucid);
+  const txTimeStart = now - txTimeStartPadding;
+  const txTimeEnd = now + txTimeEndPadding;
 
   const totalBackingAmount = backingInfo.backingUtxos.reduce(
     (acc, backingUtxo) => acc + backingUtxo.assets["lovelace"],
@@ -111,7 +115,8 @@ export function plantTx(
       protocolParamsUtxo,
       projectInfo.projectScriptUtxo,
     ])
-    .validFrom(txTimeStart);
+    .validFrom(txTimeStart)
+    .validTo(txTimeEnd);
 
   // NOTE: We may only need to produce multiple backing UTxOs in case of cleanup
   const numProducedBackingUtxos = remainBackingAmount === 0n ? 0 : 1;
@@ -151,8 +156,6 @@ export function plantTx(
 
   // Check whether a new backing UTxO should be produced
   if (remainBackingAmount > 0n) {
-    const txTimeEnd = txTimeStart + txTimePadding;
-
     const backingDatum: BackingDatum = {
       projectId: { id: projectInfo.id },
       backerAddress: constructAddress(backingInfo.backerAddress),
@@ -160,15 +163,13 @@ export function plantTx(
       milestoneBacked: projectInfo.currentMilestone,
     };
 
-    tx = tx
-      .payToContract(
-        backingInfo.backingScriptAddress,
-        {
-          inline: S.toCbor(S.toData(backingDatum, BackingDatum)),
-        },
-        { [seedUnit]: 1n, lovelace: remainBackingAmount }
-      )
-      .validTo(txTimeEnd);
+    tx = tx.payToContract(
+      backingInfo.backingScriptAddress,
+      {
+        inline: S.toCbor(S.toData(backingDatum, BackingDatum)),
+      },
+      { [seedUnit]: 1n, lovelace: remainBackingAmount }
+    );
   }
 
   return tx;
@@ -323,6 +324,7 @@ function mintTeiki(
   let sharedTreasuryRedeemer: SharedTreasuryRedeemer;
   let remainingTeikiAmount: bigint;
   let projectRewards: bigint;
+  let outputLastBurnAtTimestamp: bigint;
   switch (inputSharedTreasuryDatum.projectTeiki.teikiCondition) {
     case "TeikiEmpty":
       sharedTreasuryRedeemer = {
@@ -333,12 +335,14 @@ function mintTeiki(
       };
       remainingTeikiAmount = 0n;
       projectRewards = sharedTreasuryRedeemer.rewards;
+      outputLastBurnAtTimestamp = BigInt(txTimeStart);
       break;
     case "TeikiBurntPeriodically": {
-      const epochs =
+      const epochs = Math.floor(
         (txTimeStart -
           Number(inputSharedTreasuryDatum.projectTeiki.lastBurnAt.timestamp)) /
-        Number(protocolParams.epochLength.milliseconds);
+          Number(protocolParams.epochLength.milliseconds)
+      );
 
       remainingTeikiAmount = calculateTeikiRemaining(
         inputSharedTreasuryDatum.projectTeiki.available,
@@ -357,6 +361,10 @@ function mintTeiki(
       };
 
       projectRewards = sharedTreasuryRedeemer.rewards;
+
+      outputLastBurnAtTimestamp =
+        inputSharedTreasuryDatum.projectTeiki.lastBurnAt.timestamp +
+        BigInt(epochs * Number(protocolParams.epochLength.milliseconds));
       break;
     }
     case "TeikiBurntEntirely":
@@ -381,7 +389,7 @@ function mintTeiki(
     projectTeiki: {
       teikiCondition: "TeikiBurntPeriodically",
       available: remainingTeikiAmount + sharedTreasuryRedeemer.rewards,
-      lastBurnAt: { timestamp: BigInt(txTimeStart) },
+      lastBurnAt: { timestamp: outputLastBurnAtTimestamp },
     },
     tag: {
       kind: "TagContinuation",
