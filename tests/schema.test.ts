@@ -1,5 +1,7 @@
 import * as helios from "@hyperionbt/helios";
+import { Lucid } from "lucid-cardano";
 
+import { constructAddress, deconstructAddress } from "@/helpers/schema";
 import * as S from "@/schema";
 import { OutRef, Hex } from "@/types";
 
@@ -123,5 +125,17 @@ describe("complex schema", () => {
     ]);
     expect(result).toBeInstanceOf(helios.UplcBool);
     expect((result as helios.UplcBool).bool).toBe(true);
+  });
+
+  it("address", async () => {
+    expect.assertions(1);
+    const addresses = [
+      "addr_test1qpgjllcnfw42z6ckd2hv2uffs78jac2ky2zyxqvazesgstrdhps0t48pq9ez20jj52p45g7kcz3qegusd9sj6va3px2qnv9r8h",
+    ];
+    const lucid = await Lucid.new(undefined, "Custom");
+    for (const address of addresses) {
+      const reconAddress = deconstructAddress(lucid, constructAddress(address));
+      expect(reconAddress).toStrictEqual(address);
+    }
   });
 });

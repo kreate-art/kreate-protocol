@@ -70,11 +70,17 @@ export function constructAddress(address: Address): S.Address {
       ? { type: "PubKey", key: { hash: paymentCredential.hash } }
       : { type: "Validator", script: { hash: paymentCredential.hash } };
   const scStakingCredential: S.StakingCredential | null = stakeCredential
-    ? {
-        kind: "Hash",
-        type: "Validator",
-        script: { hash: stakeCredential.hash },
-      }
+    ? stakeCredential.type === "Key"
+      ? {
+          kind: "Hash",
+          type: "StakeKey",
+          key: { hash: stakeCredential.hash },
+        }
+      : {
+          kind: "Hash",
+          type: "Validator",
+          script: { hash: stakeCredential.hash },
+        }
     : null;
   return {
     paymentCredential: scPaymentCredential,
