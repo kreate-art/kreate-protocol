@@ -1,7 +1,7 @@
 import { helios } from "../../program";
 
 export function getSampleMigrateTokenPolicySource() {
-  return helios`
+  return helios("sample_migrate_token_policy", ["helpers"])`
     minting sample_migrate_token_policy
 
     import { is_tx_authorized_by } from helpers

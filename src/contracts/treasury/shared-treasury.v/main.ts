@@ -15,7 +15,17 @@ export default function main({
   teikiMph,
   proofOfBackingMph,
 }: SharedTreasuryParams) {
-  return helios`
+  return helios("v__shared_treasury", [
+    "v__shared_treasury__types",
+    "v__protocol_params__types",
+    "v__project__types",
+    "mp__teiki__types",
+    "v__open_treasury__types",
+    "mp__proof_of_backing__types",
+    "fraction",
+    "helpers",
+    "constants",
+  ])`
     spending v__shared_treasury
 
     import {
@@ -28,14 +38,15 @@ export default function main({
     import { Datum as ProjectDatum } from v__project__types
     import { Redeemer as TeikiRedeemer } from mp__teiki__types
     import { Datum as OpenTreasuryDatum } from v__open_treasury__types
-    import { Redeemer as PoBRedeemer } from proof_of_backing_types
+    import { Redeemer as PoBRedeemer } from mp__proof_of_backing__types
+
+    import { Fraction } from fraction
 
     import {
       find_pparams_datum_from_inputs,
       max,
       is_tx_authorized_by,
-      scriptHashToStakingCredential,
-      calculate_teiki_remaining
+      scriptHashToStakingCredential
     } from helpers
 
     import {
@@ -61,6 +72,19 @@ export default function main({
 
     const PROOF_OF_BACKING_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${proofOfBackingMph})
+
+    // Synchronize with the calculateTeikiRemaining in transactions
+    func calculate_teiki_remaining(
+      available: Int,
+      burn_rate_inv: Int,
+      epochs: Int
+    ) -> Int {
+      r: Fraction =
+        Fraction { numerator: burn_rate_inv, denominator: MULTIPLIER }
+          .exponential(epochs);
+
+      (r.denominator - r.numerator) * available / r.denominator
+    }
 
     func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;

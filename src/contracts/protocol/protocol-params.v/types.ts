@@ -1,6 +1,6 @@
 import { helios } from "../../program";
 
-export const hlPParamsTypesSource = helios`
+export default helios("v__protocol_params__types")`
   module v__protocol_params__types
 
   enum Redeemer {

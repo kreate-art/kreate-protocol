@@ -1,7 +1,12 @@
 import { helios, HeliosSource } from "../../program";
 
 export default function main(protocolNftMph: string): HeliosSource {
-  return helios`
+  return helios("sv_protocol", [
+    "constants",
+    "helpers",
+    "v__open_treasury__types",
+    "v__protocol_params__types",
+  ])`
     staking sv__protocol
 
     import { MULTIPLIER } from constants

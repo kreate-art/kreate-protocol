@@ -13,7 +13,17 @@ export default function main({
   protocolNftMph,
   teikiMph,
 }: Params) {
-  return helios`
+  return helios("mp__proof_of_backing", [
+    "mp__proof_of_backing__types",
+    "v__backing__types",
+    "v__project__types",
+    "v__project_script__types",
+    "v__protocol_params__types",
+    "v__shared_treasury__types",
+    "common__types",
+    "helpers",
+    "constants",
+  ])`
     minting mp__proof_of_backing
 
     import {
@@ -21,7 +31,7 @@ export default function main({
       Plant,
       PlantAccumulator,
       to_fruit
-    } from proof_of_backing_types
+    } from mp__proof_of_backing__types
     import { Datum as BackingDatum } from v__backing__types
     import { Datum as ProjectDatum } from v__project__types
     import { Datum as ProjectScriptDatum } from v__project_script__types

@@ -24,6 +24,14 @@ overrides:
     extends:
       - plugin:jest/all
       - plugin:jest-formatting/recommended
+    rules:
+      jest/prefer-expect-assertions:
+        - error
+        - onlyFunctionsWithAsyncKeyword: true
+          onlyFunctionsWithExpectInLoop: true
+          onlyFunctionsWithExpectInCallback: true
+      jest/require-top-level-describe:
+        - "off"
 settings:
   import/parsers:
     "@typescript-eslint/parser":
@@ -59,8 +67,3 @@ rules:
         order: asc
         caseInsensitive: true
         # orderImportKind: asc
-  jest/prefer-expect-assertions:
-    - error
-    - onlyFunctionsWithAsyncKeyword: true
-      onlyFunctionsWithExpectInLoop: true
-      onlyFunctionsWithExpectInCallback: true

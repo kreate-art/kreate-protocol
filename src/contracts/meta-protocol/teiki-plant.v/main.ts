@@ -3,7 +3,11 @@ import { Hex } from "@/types";
 import { HeliosSource, helios } from "../../program";
 
 export default function main(teikiPlantNftMph: Hex): HeliosSource {
-  return helios`
+  return helios("v__teiki_plant", [
+    "constants",
+    "helpers",
+    "v__teiki_plant__types",
+  ])`
     spending v__teiki_plant
 
     import {

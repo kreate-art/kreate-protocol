@@ -9,7 +9,17 @@ export default function main({
   projectsAuthTokenMph,
   protocolNftMph,
 }: ProjectParams) {
-  return helios`
+  return helios("v__project", [
+    "v__project__types",
+    "constants",
+    "v__project_script__types",
+    "v__protocol_params__types",
+    "v__project_detail__types",
+    "v__open_treasury__types",
+    "common__types",
+    "helpers",
+    "constants",
+  ])`
     spending  v__project
 
     import { Redeemer, Datum, ProjectStatus } from v__project__types
@@ -28,7 +38,6 @@ export default function main({
     import {
       find_pparams_datum_from_inputs,
       is_tx_authorized_by,
-      stakeValidatorHashToStakingCredential,
       scriptHashToStakingCredential
     } from helpers
 
@@ -140,7 +149,7 @@ export default function main({
             },
             allocate: AllocateStakingValidator => {
               new_staking_credential: StakingCredential =
-                stakeValidatorHashToStakingCredential(allocate.new_staking_validator);
+                StakingCredential::new_hash(StakingHash::new_validator(allocate.new_staking_validator));
 
               assert (
                 is_tx_authorized_by(tx, datum.owner_address.credential)

@@ -7,7 +7,12 @@ export type Params = {
 };
 
 export default function main({ nftTeikiPlantMph }: Params): HeliosSource {
-  return helios`
+  return helios("mp__teiki", [
+    "constants",
+    "helpers",
+    "v__teiki_plant__types",
+    "mp__teiki__types",
+  ])`
     minting mp__teiki
 
     import {

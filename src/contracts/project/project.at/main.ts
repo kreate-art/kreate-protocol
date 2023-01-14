@@ -1,7 +1,17 @@
 import { helios } from "../../program";
 
 export default function main(protocolNftMph: string) {
-  return helios`
+  return helios("at__project", [
+    "at__project__types",
+    "v__project__types",
+    "v__project_detail__types",
+    "v__project_script__types",
+    "v__project__types",
+    "v__protocol_params__types",
+    "v__dedicated_treasury__types",
+    "helpers",
+    "constants",
+  ])`
     minting at__project
 
     import { Redeemer } from at__project__types
