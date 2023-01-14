@@ -5,7 +5,7 @@ import { compileAndLog } from "../base";
 test("compile: V | Dedicated Treasury", () => {
   const size = compileAndLog(
     getDedicatedTreasuryV({
-      projectsAuthTokenMph: "",
+      projectAtMph: "",
       protocolNftMph: "",
     })
   );

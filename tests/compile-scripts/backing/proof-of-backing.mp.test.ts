@@ -5,7 +5,7 @@ import { compileAndLog } from "../base";
 test("compile: MP | Proof of Backing", () => {
   const size = compileAndLog(
     getProofOfBackingMp({
-      projectsAuthTokenMph: "",
+      projectAtMph: "",
       protocolNftMph: "",
       teikiMph: "",
     })

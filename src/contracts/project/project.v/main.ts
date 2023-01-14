@@ -1,14 +1,11 @@
 import { helios } from "../../program";
 
 export type ProjectParams = {
-  projectsAuthTokenMph: string;
+  projectAtMph: string;
   protocolNftMph: string;
 };
 
-export default function main({
-  projectsAuthTokenMph,
-  protocolNftMph,
-}: ProjectParams) {
+export default function main({ projectAtMph, protocolNftMph }: ProjectParams) {
   return helios("v__project", [
     "v__project__types",
     "constants",
@@ -52,7 +49,7 @@ export default function main({
     } from constants
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${projectsAuthTokenMph})
+      MintingPolicyHash::new(#${projectAtMph})
 
     const PROJECT_AT_ASSET_CLASS: AssetClass =
       AssetClass::new(PROJECTS_AT_MPH, PROJECT_AT_TOKEN_NAME)

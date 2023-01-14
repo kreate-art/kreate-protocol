@@ -3,14 +3,14 @@ import { Hex } from "@/types";
 import { helios } from "../../program";
 
 export type SharedTreasuryParams = {
-  projectsAuthTokenMph: Hex;
+  projectAtMph: Hex;
   protocolNftMph: Hex;
   teikiMph: Hex;
   proofOfBackingMph: Hex;
 };
 
 export default function main({
-  projectsAuthTokenMph,
+  projectAtMph,
   protocolNftMph,
   teikiMph,
   proofOfBackingMph,
@@ -56,7 +56,7 @@ export default function main({
     } from constants
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${projectsAuthTokenMph})
+      MintingPolicyHash::new(#${projectAtMph})
 
     const PROJECT_AT_ASSET_CLASS: AssetClass =
       AssetClass::new(PROJECTS_AT_MPH, PROJECT_AT_TOKEN_NAME)

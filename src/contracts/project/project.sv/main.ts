@@ -5,7 +5,7 @@ import { helios } from "../../program";
 export type ProjectStakeParams = {
   projectId: Hex;
   _stakingSeed: string;
-  projectsAuthTokenMph: Hex;
+  projectAtMph: Hex;
   protocolNftMph: Hex;
 };
 
@@ -13,7 +13,7 @@ export type ProjectStakeParams = {
 export default function main({
   projectId,
   _stakingSeed,
-  projectsAuthTokenMph,
+  projectAtMph,
   protocolNftMph,
 }: ProjectStakeParams) {
   return helios("sv__project", [
@@ -51,7 +51,7 @@ export default function main({
     const project_id: ByteArray = #${projectId}
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${projectsAuthTokenMph})
+      MintingPolicyHash::new(#${projectAtMph})
 
     const PROJECT_AT_ASSET_CLASS: AssetClass =
       AssetClass::new(PROJECTS_AT_MPH, PROJECT_AT_TOKEN_NAME)
