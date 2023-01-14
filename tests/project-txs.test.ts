@@ -84,7 +84,7 @@ async function testWithdrawFunds(rewardAmount: bigint, actor: Actor) {
   );
   const sharedTreasuryVScript = exportScript(
     compileSharedTreasuryVScript({
-      projectsAuthTokenMph: projectAtMph,
+      projectAtMph: projectAtMph,
       protocolNftMph,
       teikiMph,
       proofOfBackingMph,

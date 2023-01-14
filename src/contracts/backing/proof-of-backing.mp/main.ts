@@ -3,13 +3,13 @@ import { PROOF_OF_BACKING_TOKEN_NAMES } from "@/contracts/common/constants";
 import { helios } from "../../program";
 
 export type Params = {
-  projectsAuthTokenMph: string;
+  projectAtMph: string;
   protocolNftMph: string;
   teikiMph: string;
 };
 
 export default function main({
-  projectsAuthTokenMph,
+  projectAtMph,
   protocolNftMph,
   teikiMph,
 }: Params) {
@@ -59,7 +59,7 @@ export default function main({
       MintingPolicyHash::new(#${protocolNftMph})
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${projectsAuthTokenMph})
+      MintingPolicyHash::new(#${projectAtMph})
 
     const PROJECT_AT_ASSET_CLASS: AssetClass =
       AssetClass::new(PROJECTS_AT_MPH, PROJECT_AT_TOKEN_NAME)

@@ -5,7 +5,7 @@ import { compileAndLog } from "../base";
 test("compile: V | Project Script", () => {
   const size = compileAndLog(
     getProjectScriptV({
-      projectsAuthTokenMph: "",
+      projectAtMph: "",
       protocolNftMph: "",
     })
   );

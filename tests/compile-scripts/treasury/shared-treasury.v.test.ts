@@ -5,7 +5,7 @@ import { compileAndLog } from "../base";
 test("compile: V | Shared Treasury", () => {
   const size = compileAndLog(
     getSharedTreasuryV({
-      projectsAuthTokenMph: "",
+      projectAtMph: "",
       protocolNftMph: "",
       teikiMph: "",
       proofOfBackingMph: "",

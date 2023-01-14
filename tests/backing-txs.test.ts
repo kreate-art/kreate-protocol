@@ -60,30 +60,21 @@ describe("backing transactions", () => {
     const governorAddress = generateWalletAddress(lucid);
     const protocolParamsAddress = generateScriptAddress(lucid);
 
-    const projectsAuthTokenMph = generateBlake2b224Hash();
+    const projectAtMph = generateBlake2b224Hash();
     const protocolNftMph = generateBlake2b224Hash();
     const teikiMph = generateBlake2b224Hash();
     const projectId = constructProjectIdUsingBlake2b(generateOutRef());
     const protocolStakeValidatorHash = generateBlake2b224Hash();
 
     const proofOfBackingMintingPolicy = exportScript(
-      compileProofOfBackingMpScript(
-        projectsAuthTokenMph,
-        protocolNftMph,
-        teikiMph
-      )
+      compileProofOfBackingMpScript(projectAtMph, protocolNftMph, teikiMph)
     );
     const proofOfBackingMph = lucid.utils.validatorToScriptHash(
       proofOfBackingMintingPolicy
     );
 
     const projectStakeValidator = exportScript(
-      compileProjectSvScript(
-        projectId,
-        "",
-        projectsAuthTokenMph,
-        protocolNftMph
-      )
+      compileProjectSvScript(projectId, "", projectAtMph, protocolNftMph)
     );
 
     const backingValidator = exportScript(
@@ -105,10 +96,9 @@ describe("backing transactions", () => {
       scriptRef: proofOfBackingMintingPolicy,
     };
 
-    const projectATUnit: Unit =
-      projectsAuthTokenMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
+    const projectATUnit: Unit = projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
     const projectScriptATUnit: Unit =
-      projectsAuthTokenMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
+      projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
 
     const current_project_milestone = 0n;
 
@@ -215,30 +205,21 @@ describe("backing transactions", () => {
     const governorAddress = generateWalletAddress(lucid);
     const protocolParamsAddress = generateScriptAddress(lucid);
 
-    const projectsAuthTokenMph = generateBlake2b224Hash();
+    const projectAtMph = generateBlake2b224Hash();
     const protocolNftMph = generateBlake2b224Hash();
     const teikiMph = generateBlake2b224Hash();
     const projectId = constructProjectIdUsingBlake2b(generateOutRef());
     const protocolStakeValidatorHash = generateBlake2b224Hash();
 
     const proofOfBackingMintingPolicy = exportScript(
-      compileProofOfBackingMpScript(
-        projectsAuthTokenMph,
-        protocolNftMph,
-        teikiMph
-      )
+      compileProofOfBackingMpScript(projectAtMph, protocolNftMph, teikiMph)
     );
     const proofOfBackingMph = lucid.utils.validatorToScriptHash(
       proofOfBackingMintingPolicy
     );
 
     const projectStakeValidator = exportScript(
-      compileProjectSvScript(
-        projectId,
-        "",
-        projectsAuthTokenMph,
-        protocolNftMph
-      )
+      compileProjectSvScript(projectId, "", projectAtMph, protocolNftMph)
     );
 
     const backingValidator = exportScript(
@@ -260,10 +241,9 @@ describe("backing transactions", () => {
       scriptRef: proofOfBackingMintingPolicy,
     };
 
-    const projectATUnit: Unit =
-      projectsAuthTokenMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
+    const projectATUnit: Unit = projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
     const projectScriptATUnit: Unit =
-      projectsAuthTokenMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
+      projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
 
     const current_project_milestone = 0n;
 
@@ -551,7 +531,7 @@ function generateUpdateBackingParams(
   const governorAddress = generateScriptAddress(lucid);
   const protocolParamsAddress = generateScriptAddress(lucid);
 
-  const projectsAuthTokenMph = generateBlake2b224Hash();
+  const projectAtMph = generateBlake2b224Hash();
   const protocolNftMph = generateBlake2b224Hash();
   const protocolStakeValidatorHash = generateBlake2b224Hash();
   const nftTeikiPlantMph = generateBlake2b224Hash();
@@ -562,11 +542,7 @@ function generateUpdateBackingParams(
   const teikiMph = lucid.utils.validatorToScriptHash(teikiMintingPolicy);
 
   const proofOfBackingMintingPolicy = exportScript(
-    compileProofOfBackingMpScript(
-      projectsAuthTokenMph,
-      protocolNftMph,
-      teikiMph
-    )
+    compileProofOfBackingMpScript(projectAtMph, protocolNftMph, teikiMph)
   );
   const proofOfBackingMph = lucid.utils.validatorToScriptHash(
     proofOfBackingMintingPolicy
@@ -579,7 +555,7 @@ function generateUpdateBackingParams(
     lucid.utils.validatorToScriptHash(backingValidator);
 
   const projectStakeValidator = exportScript(
-    compileProjectSvScript(projectId, "", projectsAuthTokenMph, protocolNftMph)
+    compileProjectSvScript(projectId, "", projectAtMph, protocolNftMph)
   );
 
   const proofOfBackingMpRefUtxo: UTxO = {
@@ -589,10 +565,9 @@ function generateUpdateBackingParams(
     scriptRef: proofOfBackingMintingPolicy,
   };
 
-  const projectATUnit: Unit =
-    projectsAuthTokenMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
+  const projectATUnit: Unit = projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
   const projectScriptATUnit: Unit =
-    projectsAuthTokenMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
+    projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
 
   const current_project_milestone = 0n;
 
@@ -632,7 +607,7 @@ function generateUpdateBackingParams(
 
   const sharedTreasuryValidator = exportScript(
     compileSharedTreasuryVScript({
-      projectsAuthTokenMph,
+      projectAtMph,
       protocolNftMph,
       teikiMph,
       proofOfBackingMph,

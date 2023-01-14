@@ -45,7 +45,7 @@ export function getProtocolRegistryScript(
 
   const protocolNftMph = lucid.utils.validatorToScriptHash(protocolNftPolicy);
 
-  const projectsAuthTokenMph = lucid.utils.validatorToScriptHash(
+  const projectAtMph = lucid.utils.validatorToScriptHash(
     exportScript(compileProjectsAtScript(protocolNftMph))
   );
 
@@ -55,11 +55,7 @@ export function getProtocolRegistryScript(
 
   const proofOfBackingMph = lucid.utils.validatorToScriptHash(
     exportScript(
-      compileProofOfBackingMpScript(
-        projectsAuthTokenMph,
-        protocolNftMph,
-        teikiMph
-      )
+      compileProofOfBackingMpScript(projectAtMph, protocolNftMph, teikiMph)
     )
   );
 
@@ -68,30 +64,26 @@ export function getProtocolRegistryScript(
       exportScript(compileProtocolSvScript(protocolNftMph))
     ),
     projectValidatorHash: lucid.utils.validatorToScriptHash(
-      exportScript(compileProjectVScript(projectsAuthTokenMph, protocolNftMph))
+      exportScript(compileProjectVScript(projectAtMph, protocolNftMph))
     ),
     projectDetailValidatorHash: lucid.utils.validatorToScriptHash(
-      exportScript(
-        compileProjectDetailVScript(projectsAuthTokenMph, protocolNftMph)
-      )
+      exportScript(compileProjectDetailVScript(projectAtMph, protocolNftMph))
     ),
     projectScriptValidatorHash: lucid.utils.validatorToScriptHash(
-      exportScript(
-        compileProjectScriptVScript(projectsAuthTokenMph, protocolNftMph)
-      )
+      exportScript(compileProjectScriptVScript(projectAtMph, protocolNftMph))
     ),
     backingValidatorHash: lucid.utils.validatorToScriptHash(
       exportScript(compileBackingVScript(proofOfBackingMph, protocolNftMph))
     ),
     dedicatedTreasuryValidatorHash: lucid.utils.validatorToScriptHash(
       exportScript(
-        compileDedicatedTreasuryVScript(projectsAuthTokenMph, protocolNftMph)
+        compileDedicatedTreasuryVScript(projectAtMph, protocolNftMph)
       )
     ),
     sharedTreasuryValidatorHash: lucid.utils.validatorToScriptHash(
       exportScript(
         compileSharedTreasuryVScript({
-          projectsAuthTokenMph,
+          projectAtMph,
           protocolNftMph,
           teikiMph,
           proofOfBackingMph,

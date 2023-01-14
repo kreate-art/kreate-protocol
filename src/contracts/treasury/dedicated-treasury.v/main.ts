@@ -1,12 +1,12 @@
 import { helios } from "../../program";
 
 export type DedicatedTreasuryParams = {
-  projectsAuthTokenMph: string;
+  projectAtMph: string;
   protocolNftMph: string;
 };
 
 export default function main({
-  projectsAuthTokenMph,
+  projectAtMph,
   protocolNftMph,
 }: DedicatedTreasuryParams) {
   return helios("v__dedicated_treasury", [
@@ -53,7 +53,7 @@ export default function main({
     } from constants
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${projectsAuthTokenMph})
+      MintingPolicyHash::new(#${projectAtMph})
 
     const PROJECT_AT_ASSET_CLASS: AssetClass =
       AssetClass::new(PROJECTS_AT_MPH, PROJECT_AT_TOKEN_NAME)

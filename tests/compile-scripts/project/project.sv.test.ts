@@ -7,7 +7,7 @@ test("compile: SV | Project", () => {
     getProjectSv({
       projectId: "",
       _stakingSeed: "",
-      projectsAuthTokenMph: "",
+      projectAtMph: "",
       protocolNftMph: "",
     })
   );
