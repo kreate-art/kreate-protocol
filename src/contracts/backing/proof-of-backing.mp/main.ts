@@ -207,7 +207,7 @@ export default function main({
                               == Credential::new_validator(pparams_datum.registry.backing_validator.latest)
                         ) { true }
                         else { error("Invalid consumed backing address") };
-                      
+
                       assert(is_consumed_backer_address_valid, "Invalid consumed backing address");
 
                       is_backing_datum_valid: Bool =
@@ -229,7 +229,7 @@ export default function main({
                       is_unstaked_valid: Bool =
                         if (unstaked_at >= backing_datum.staked_at) { true }
                         else { error("Invalid unstaked time") };
-                      
+
                       assert(is_unstaked_valid, "Invalid unstaked time");
 
                       if (time_passed > pparams_datum.epoch_length) {
@@ -296,7 +296,7 @@ export default function main({
                           total_teiki_rewards: acc.total_teiki_rewards + teiki_rewards,
                           wilted_amount: acc.wilted_amount
                         }
-                        
+
                       } else {
                         are_outputs_valid: Bool =
                           if (cleanup) {
@@ -320,7 +320,7 @@ export default function main({
                           } else {
                             true
                           };
-                        
+
                         assert(are_outputs_valid, "Invalid outputs: missing backer outputs");
 
                         PlantAccumulator {
@@ -552,6 +552,8 @@ export default function main({
                 else => true
               };
 
+          assert(is_project_datum_valid, "Invalid project datum");
+
           are_flowers_valid: Bool =
             flowers.all(
               (flower: Plant) -> Bool {
@@ -559,6 +561,8 @@ export default function main({
                   && flower.milestone_backed < project_datum.milestone_reached
               }
             );
+
+          assert(are_flowers_valid, "Invalid flowers");
 
           are_flowers_sorted: Bool =
             flowers.fold(
@@ -576,6 +580,8 @@ export default function main({
               []Plant{}
             )
             .length == flowers.length;
+
+          assert(are_flowers_sorted, "Flowers are not sorted");
 
           plant_minting_map: Map[ByteArray]Int =
             flowers.fold(
@@ -621,6 +627,11 @@ export default function main({
               else => error("Invalid shared treasury UTxO: missing inline datum")
             };
 
+          assert (
+            shared_treasury_datum.project_id == project_id,
+            "Incorrect project id shared treasury input"
+          );
+
           shared_treasury_script_purpose: ScriptPurpose =
             ScriptPurpose::new_spending(shared_treasury_txinput.output_id);
 
@@ -652,12 +663,17 @@ export default function main({
           does_mint_teiki_reward_correctly: Bool =
             teiki_minted == teiki_mint || teiki_minted == 0 - teiki_mint;
 
-          is_project_datum_valid
-            && shared_treasury_datum.project_id == project_id
-            && are_flowers_valid
-            && are_flowers_sorted
-            && does_mint_teiki_reward_correctly
-            && tx.minted.to_map().get(own_mph) == plant_minting_map // TODO: check this
+          assert(does_mint_teiki_reward_correctly, "Mint incorrect Teiki amount");
+
+          tx.minted.to_map().get(own_mph).all(
+            (token_name: ByteArray, amount: Int) -> Bool {
+              plant_minting_map.get_safe(token_name).switch {
+                None => error("Mint incorrect plant token"),
+                s: Some => amount == s.some
+              }
+            }
+          )
+
         },
         Migrate => {
           tx.outputs.all(
