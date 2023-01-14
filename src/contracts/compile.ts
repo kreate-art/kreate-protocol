@@ -13,17 +13,17 @@ import modCommonTypes from "./common/types";
 import modTeikiPlantNftTypes from "./meta-protocol/teiki-plant.nft/types";
 import modTeikiPlantVTypes from "./meta-protocol/teiki-plant.v/types";
 import modTeikiMpTypes from "./meta-protocol/teiki.mp/types";
-import { HeliosSource, newProgram } from "./program";
-import { hlProjectDetailTypesSource } from "./project/project-detail.v/types";
-import { hlProjectScriptTypesSource } from "./project/project-script.v/types";
-import { hlProjectATTypesSource } from "./project/project.at/types";
-import { hlProjectValidatorTypesSource } from "./project/project.v/types";
-import { hlPParamsTypesSource } from "./protocol/protocol-params.v/types";
-import { hlPProposalTypesSource } from "./protocol/protocol-proposal.v/types";
-import { hlPNftTypesSource } from "./protocol/protocol.nft/types";
-import { hlDedicatedTreasuryTypesSource } from "./treasury/dedicated-treasury.v/types";
-import { hlOpenTreasuryTypesSource } from "./treasury/open-treasury.v/types";
-import { hlSharedTreasuryTypesSource } from "./treasury/shared-treasury.v/types";
+import { heliosModules, HeliosSource, newProgram } from "./program";
+import modProjectDetailVTypes from "./project/project-detail.v/types";
+import modProjectScriptVTypes from "./project/project-script.v/types";
+import modProjectAtTypes from "./project/project.at/types";
+import modProjectVTypes from "./project/project.v/types";
+import modProtocolParamsVTypes from "./protocol/protocol-params.v/types";
+import modProtocolProposalVTypes from "./protocol/protocol-proposal.v/types";
+import modProtocolNftTypes from "./protocol/protocol.nft/types";
+import modDedicatedTreasuryVTypes from "./treasury/dedicated-treasury.v/types";
+import modOpenTreasuryVTypes from "./treasury/open-treasury.v/types";
+import modSharedTreasuryVTypes from "./treasury/shared-treasury.v/types";
 
 type CompileOptions = {
   simplify?: boolean;
@@ -42,7 +42,7 @@ export function setDefaultOptions(
 
 setDefaultOptions({ simplify: false });
 
-const COMMON_HELIOS_MODULES = [
+const HELIOS_MODULES = heliosModules([
   modConstants,
   modCommonTypes,
   modFraction,
@@ -50,19 +50,19 @@ const COMMON_HELIOS_MODULES = [
   modTeikiMpTypes,
   modTeikiPlantNftTypes,
   modTeikiPlantVTypes,
-  hlPParamsTypesSource,
-  hlPProposalTypesSource,
-  hlPNftTypesSource,
-  hlProjectATTypesSource,
-  hlProjectValidatorTypesSource,
-  hlProjectDetailTypesSource,
-  hlProjectScriptTypesSource,
+  modProtocolParamsVTypes,
+  modProtocolProposalVTypes,
+  modProtocolNftTypes,
+  modProjectAtTypes,
+  modProjectVTypes,
+  modProjectDetailVTypes,
+  modProjectScriptVTypes,
   modBackingVTypes,
   modProofOfBackingMpTypes,
-  hlDedicatedTreasuryTypesSource,
-  hlOpenTreasuryTypesSource,
-  hlSharedTreasuryTypesSource,
-];
+  modDedicatedTreasuryVTypes,
+  modSharedTreasuryVTypes,
+  modOpenTreasuryVTypes,
+]);
 
 // TODO: Optimize compilation time by loading only needed modules
 export function compile(
@@ -70,7 +70,7 @@ export function compile(
   options?: CompileOptions
 ): UplcProgram {
   const opts = { ...defaultOptions, ...options };
-  const program = newProgram(main, COMMON_HELIOS_MODULES);
+  const program = newProgram(main, HELIOS_MODULES);
   if (opts.parameters)
     Object.entries(opts.parameters).forEach(([name, value]) =>
       program.changeParam(name, toJson(value))

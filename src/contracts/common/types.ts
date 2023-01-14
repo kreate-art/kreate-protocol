@@ -1,6 +1,6 @@
 import { helios } from "../program";
 
-export default helios`
+export default helios("common__types")`
   module common__types
 
   enum UserTag {
@@ -25,5 +25,4 @@ export default helios`
       staking_validator: StakingValidatorHash
     }
   }
-
 `;

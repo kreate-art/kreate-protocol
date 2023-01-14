@@ -1,6 +1,6 @@
 import { helios } from "../../program";
 
-export const hlProjectDetailTypesSource = helios`
+export default helios("v__project_detail__types")`
   module v__project_detail__types
 
   enum Redeemer {

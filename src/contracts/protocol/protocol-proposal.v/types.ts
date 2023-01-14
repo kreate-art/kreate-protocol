@@ -1,6 +1,8 @@
 import { helios } from "../../program";
 
-export const hlPProposalTypesSource = helios`
+export default helios("v__protocol_proposal__types", [
+  "v__protocol_params__types",
+])`
   module v__protocol_proposal__types
 
   import { Datum as PParamsDatum } from v__protocol_params__types

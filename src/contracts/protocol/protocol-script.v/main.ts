@@ -1,7 +1,7 @@
 import { helios, HeliosSource } from "../../program";
 
 export default function main(protocolNftMph: string): HeliosSource {
-  return helios`
+  return helios("v__protocol_script", ["v__protocol_params__types", "helpers"])`
     spending v__protocol_script
 
     import { Datum as PParamsDatum } from v__protocol_params__types

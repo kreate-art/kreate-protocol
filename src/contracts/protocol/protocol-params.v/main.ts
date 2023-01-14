@@ -1,13 +1,15 @@
 import { helios, HeliosSource } from "../../program";
 
 export default function main(protocolNftMph: string): HeliosSource {
-  return helios`
+  return helios("v__protocol_params", [
+    "v__protocol_params__types",
+    "v__protocol_proposal__types",
+    "constants",
+  ])`
     spending v__protocol_params
 
     import { Redeemer } from v__protocol_params__types
     import { Redeemer as ProposalRedeemer } from v__protocol_proposal__types
-
-    import { find_tx_input_containing_exactly_one_token } from helpers
 
     import { PROTOCOL_PROPOSAL_NFT_TOKEN_NAME } from constants
 
@@ -21,9 +23,10 @@ export default function main(protocolNftMph: string): HeliosSource {
     // another way is that find the input contaims nft then check the redeemer
     func does_apply_proposal_utxo_correctly(tx: Tx) -> Bool {
       proposal_txinput: TxInput =
-        find_tx_input_containing_exactly_one_token(
-          tx.inputs,
-          PROTOCOL_PROPOSAL_NFT_ASSET_CLASS
+        tx.inputs.find(
+          (input: TxInput) -> Bool {
+            input.output.value.get_safe(PROTOCOL_PROPOSAL_NFT_ASSET_CLASS) == 1
+          }
         );
 
       proposal_script_purpose: ScriptPurpose =

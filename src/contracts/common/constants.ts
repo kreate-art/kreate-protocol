@@ -34,7 +34,7 @@ export const TEIKI_TOKEN_NAME: Hex = fromText("teiki");
 
 export const TEIKI_PLANT_NFT_TOKEN_NAME: Hex = fromText("teiki-plant");
 
-export default helios`
+export default helios("constants")`
   module constants
 
   const ADA_MINTING_POLICY_HASH: MintingPolicyHash = MintingPolicyHash::new(#)

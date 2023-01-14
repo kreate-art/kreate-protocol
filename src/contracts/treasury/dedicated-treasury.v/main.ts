@@ -9,7 +9,17 @@ export default function main({
   projectsAuthTokenMph,
   protocolNftMph,
 }: DedicatedTreasuryParams) {
-  return helios`
+  return helios("v__dedicated_treasury", [
+    "v__dedicated_treasury__types",
+    "v__protocol_params__types",
+    "v__project_detail__types",
+    "v__project__types",
+    "v__shared_treasury__types",
+    "common__types",
+    "v__open_treasury__types",
+    "helpers",
+    "constants",
+  ])`
     spending v__dedicated_treasury
 
     import { Datum, Redeemer } from v__dedicated_treasury__types

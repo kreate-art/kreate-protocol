@@ -1,6 +1,6 @@
 import { helios } from "../../program";
 
-export default helios`
+export default helios("v__backing__types")`
   module v__backing__types
 
   struct Datum {

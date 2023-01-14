@@ -1,6 +1,10 @@
 import { helios } from "../program";
 
-export default helios`
+export default helios("helpers", [
+  "v__protocol_params__types",
+  "v__teiki_plant__types",
+  "constants",
+])`
   module helpers
 
   import { Datum as PParamsDatum } from v__protocol_params__types
@@ -9,8 +13,6 @@ export default helios`
     MintingPredicate,
     MintingRedeemer
   } from v__teiki_plant__types
-
-  import { Fraction } from fraction
 
   import {
     MULTIPLIER,
@@ -32,35 +34,24 @@ export default helios`
     }
   }
 
-  func does_tx_consume_input_containing_mph(tx: Tx, mph: MintingPolicyHash) -> Bool {
-    tx.inputs.any(
-      (input: TxInput) -> Bool {
-        input.output.value.contains_policy(mph)
-      }
-    )
-  }
-
-  func does_tx_consume_input_containing_asset_class (tx: Tx, asset_class: AssetClass) -> Bool {
-    tx.inputs.any(
-      (input: TxInput) -> Bool {
-        input.output.value.get_safe(asset_class) > 0
-      }
-    )
-  }
-
   func does_tx_pass_token_preciate_check(tx: Tx, predicate: TokenPredicate) -> Bool {
     mph: MintingPolicyHash = predicate.minting_policy_hash;
 
     predicate.token_names.switch {
-      None => does_tx_consume_input_containing_mph(tx, mph),
+      None => tx.inputs.any(
+        (input: TxInput) -> Bool {
+          input.output.value.contains_policy(mph)
+        }
+      ),
       else => {
         token_names: []ByteArray = predicate.token_names.unwrap();
 
         token_names.all(
           (token_name: ByteArray) -> Bool {
-            does_tx_consume_input_containing_asset_class(
-              tx,
-              AssetClass::new(mph, token_name)
+            tx.inputs.any(
+              (input: TxInput) -> Bool {
+                input.output.value.get_safe(AssetClass::new(mph, token_name)) > 0
+              }
             )
           }
         )
@@ -104,15 +95,6 @@ export default helios`
         )
       }
     }
-  }
-
-  func find_tx_input_containing_exactly_one_token (
-    inputs: []TxInput,
-    asset_class: AssetClass
-  ) -> TxInput {
-    inputs.find(
-      (input: TxInput) -> Bool { input.output.value.get_safe(asset_class) == 1 }
-    )
   }
 
   func find_tx_input_with_value(inputs: []TxInput, value: Value) -> TxInput {
@@ -189,12 +171,6 @@ export default helios`
     )
   }
 
-  func stakeValidatorHashToStakingCredential(svh: StakingValidatorHash) -> StakingCredential {
-    StakingCredential::new_hash(
-      StakingHash::new_validator(svh)
-    )
-  }
-
   func min(a: Int, b: Int) -> Int {
     if (a < b) {
       a
@@ -209,18 +185,5 @@ export default helios`
     } else {
       b
     }
-  }
-
-  // Synchronize with the calculateTeikiRemaining in transactions
-  func calculate_teiki_remaining(
-    available: Int,
-    burn_rate_inv: Int,
-    epochs: Int
-  ) -> Int {
-    r: Fraction =
-      Fraction { numerator: burn_rate_inv, denominator: MULTIPLIER }
-        .exponential(epochs);
-
-    (r.denominator - r.numerator) * available / r.denominator
   }
 `;

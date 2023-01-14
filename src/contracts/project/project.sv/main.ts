@@ -16,7 +16,15 @@ export default function main({
   projectsAuthTokenMph,
   protocolNftMph,
 }: ProjectStakeParams) {
-  return helios`
+  return helios("sv__project", [
+    "v__project_detail__types",
+    "v__project__types",
+    "v__protocol_params__types",
+    "v__project_detail__types",
+    "v__project_script__types",
+    "helpers",
+    "constants",
+  ])`
     staking sv__project
 
     import { Datum as ProjectDetailDatum } from v__project_detail__types
@@ -103,7 +111,7 @@ export default function main({
               }
             };
 
-          case_in_active: Bool =
+          case_inactive: Bool =
             project_script_option_input.switch {
               None => false,
               else => {
@@ -123,7 +131,7 @@ export default function main({
               }
             };
 
-          case_active || case_in_active
+          case_active || case_inactive
         },
         certifying: Certifying => {
           certifying.dcert

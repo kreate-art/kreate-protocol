@@ -1,7 +1,13 @@
 import { helios } from "../../program";
 
 export default function main(protocolNftMph: string) {
-  return helios`
+  return helios("v__open_treasury", [
+    "v__open_treasury__types",
+    "v__protocol_params__types",
+    "common__types",
+    "helpers",
+    "constants",
+  ])`
     spending v__open_treasury
 
     import { Datum, Redeemer } from v__open_treasury__types

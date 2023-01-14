@@ -7,7 +7,11 @@ export type Params = {
 };
 
 export default function main({ protocolSeed }: Params): HeliosSource {
-  return helios`
+  return helios("nft__protocol", [
+    "nft__protocol__types",
+    "helpers",
+    "constants",
+  ])`
     minting nft__protocol
 
     import { Redeemer } from nft__protocol__types

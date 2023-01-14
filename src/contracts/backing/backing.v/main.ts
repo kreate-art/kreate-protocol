@@ -6,14 +6,20 @@ export type Params = {
 };
 
 export default function main({ proofOfBackingMph, protocolNftMph }: Params) {
-  return helios`
+  return helios("v__backing", [
+    "helpers",
+    "v__backing__types",
+    "v__protocol_params__types",
+    "mp__proof_of_backing__types",
+  ])`
     spending v__backing
 
+    import { find_pparams_datum_from_inputs } from helpers
+
     import { Redeemer } from v__backing__types
-    import { Redeemer as PoBRedeemer } from proof_of_backing_types
     import { Datum as PParamsDatum } from v__protocol_params__types
 
-    import { find_pparams_datum_from_inputs } from helpers
+    import { Redeemer as PoBRedeemer } from mp__proof_of_backing__types
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})

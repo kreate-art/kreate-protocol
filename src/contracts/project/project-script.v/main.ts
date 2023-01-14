@@ -9,7 +9,15 @@ export default function main({
   projectsAuthTokenMph,
   protocolNftMph,
 }: ProjectScriptParams) {
-  return helios`
+  return helios("v__project_script", [
+    "v__project_script__types",
+    "v__project__types",
+    "v__protocol_params__types",
+    "v__open_treasury__types",
+    "common__types",
+    "helpers",
+    "constants",
+  ])`
     spending v__project_script
 
     import { Datum, Redeemer } from v__project_script__types

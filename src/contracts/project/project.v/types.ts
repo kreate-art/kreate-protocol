@@ -1,6 +1,6 @@
 import { helios } from "../../program";
 
-export const hlProjectValidatorTypesSource = helios`
+export default helios("v__project__types")`
   module v__project__types
 
   enum ProjectStatus {

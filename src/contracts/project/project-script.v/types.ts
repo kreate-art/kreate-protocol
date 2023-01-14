@@ -1,6 +1,6 @@
 import { helios } from "../../program";
 
-export const hlProjectScriptTypesSource = helios`
+export default helios("v__project_script__types")`
   module v__project_script__types
 
   struct Datum {

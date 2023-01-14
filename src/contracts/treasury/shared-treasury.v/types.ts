@@ -1,6 +1,6 @@
 import { helios } from "../../program";
 
-export const hlSharedTreasuryTypesSource = helios`
+export default helios("v__shared_treasury__types", ["common__types"])`
   module v__shared_treasury__types
 
   import { TreasuryTag } from common__types

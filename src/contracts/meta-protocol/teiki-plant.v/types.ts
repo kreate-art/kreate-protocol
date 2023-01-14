@@ -1,6 +1,6 @@
 import { helios } from "../../program";
 
-export default helios`
+export default helios("v__teiki_plant__types")`
   module v__teiki_plant__types
 
   enum MintingAmount {

@@ -3,7 +3,7 @@ import { FRACTION_LIMIT } from "@/transactions/constants";
 
 import { helios } from "../program";
 
-export default helios`
+export default helios("fraction")`
   module fraction
 
   const FRACTION_LIMIT: Int = ${FRACTION_LIMIT.toString()}
