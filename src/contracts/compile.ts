@@ -25,7 +25,22 @@ import { hlDedicatedTreasuryTypesSource } from "./treasury/dedicated-treasury.v/
 import { hlOpenTreasuryTypesSource } from "./treasury/open-treasury.v/types";
 import { hlSharedTreasuryTypesSource } from "./treasury/shared-treasury.v/types";
 
-const SIMPLIFY = false; // Development
+type CompileOptions = {
+  simplify?: boolean;
+  parameters?: Record<string, Data>;
+};
+
+let defaultOptions: Omit<CompileOptions, "parameters"> = {};
+
+export function setDefaultOptions(
+  options: Omit<CompileOptions, "parameters">,
+  replace = false
+) {
+  if (replace) defaultOptions = options;
+  else defaultOptions = { ...defaultOptions, ...options };
+}
+
+setDefaultOptions({ simplify: false });
 
 const COMMON_HELIOS_MODULES = [
   modConstants,
@@ -52,14 +67,15 @@ const COMMON_HELIOS_MODULES = [
 // TODO: Optimize compilation time by loading only needed modules
 export function compile(
   main: HeliosSource,
-  parameters?: Record<string, Data>
+  options?: CompileOptions
 ): UplcProgram {
+  const opts = { ...defaultOptions, ...options };
   const program = newProgram(main, COMMON_HELIOS_MODULES);
-  if (parameters)
-    Object.entries(parameters).forEach(([name, value]) =>
+  if (opts.parameters)
+    Object.entries(opts.parameters).forEach(([name, value]) =>
       program.changeParam(name, toJson(value))
     );
-  return program.compile(SIMPLIFY);
+  return program.compile(opts.simplify);
 }
 
 export function exportScript(uplcProgram: UplcProgram): Script {
