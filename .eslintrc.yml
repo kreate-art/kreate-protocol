@@ -17,7 +17,7 @@ parserOptions:
   sourceType: module
 overrides:
   - files:
-      - "tests/**"
+      - "tests/**/*.test.+(js|ts)"
     plugins:
       - jest
       - jest-formatting
