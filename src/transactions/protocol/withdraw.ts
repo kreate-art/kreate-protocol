@@ -49,9 +49,7 @@ export function withdrawProtocolRewardTx(
     .withdraw(stakeAddress, rewards, Data.void())
     .payToContract(
       openTreasuryAddress,
-      {
-        inline: S.toCbor(S.toData(openTreasuryDatum, OpenTreasuryDatum)),
-      },
+      { inline: S.toCbor(S.toData(openTreasuryDatum, OpenTreasuryDatum)) },
       { lovelace: rewards }
     );
 }

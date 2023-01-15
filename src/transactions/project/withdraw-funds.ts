@@ -191,7 +191,7 @@ export function withdrawFundsTx(
             )
           ),
         },
-        { lovelace: dedicatedTreasuryUtxo.assets.lovelace + fees }
+        { lovelace: BigInt(dedicatedTreasuryUtxo.assets.lovelace) + fees }
       );
 
     for (let i = 0; i < protocolParamsDatum.minTreasuryPerMilestoneEvent; ++i) {
@@ -236,7 +236,7 @@ export function withdrawFundsTx(
           )
         ),
       },
-      { lovelace: dedicatedTreasuryUtxo.assets.lovelace + fees }
+      { lovelace: BigInt(dedicatedTreasuryUtxo.assets.lovelace) + fees }
     );
   }
 

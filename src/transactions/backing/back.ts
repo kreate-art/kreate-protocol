@@ -84,9 +84,7 @@ export function createBackingTx(
     )
     .payToContract(
       backingScriptAddress,
-      {
-        inline: S.toCbor(S.toData(backingDatum, BackingDatum)),
-      },
+      { inline: S.toCbor(S.toData(backingDatum, BackingDatum)) },
       { [proofOfBackingMph]: 1n, lovelace: backingInfo.amount }
     )
     .validTo(txTimeEnd);
