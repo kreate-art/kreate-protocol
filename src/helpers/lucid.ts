@@ -11,7 +11,12 @@ import { Hex, UnixTime } from "@/types";
 import { assert } from "@/utils";
 
 export function getCurrentTime(lucid: Lucid): UnixTime {
-  return lucid.provider instanceof Emulator ? lucid.provider.now() : Date.now();
+  if (lucid.provider instanceof Emulator) return lucid.provider.now();
+  else {
+    // Truncate to the beginning of a second, due to how ouroboros works.
+    const now = Date.now();
+    return now - (now % 1000);
+  }
 }
 
 export async function signAndSubmit(tx: TxComplete): Promise<Hex> {
