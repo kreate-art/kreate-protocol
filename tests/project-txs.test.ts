@@ -1,4 +1,4 @@
-import { Emulator, Lucid, UTxO, Unit, Data, Address } from "lucid-cardano";
+import { Emulator, Lucid, UTxO, Unit, Data, Address, PoolId, ScriptHash } from "lucid-cardano";
 
 import {
   compileProjectSvScript,
@@ -48,6 +48,7 @@ import {
   generateWalletAddress,
 } from "./emulator";
 import { generateProtocolRegistry, ValidatorScriptHashRegistry } from "./utils";
+import { DelegateProjectParams, delegateProjectTx } from "@/transactions/project/delegate";
 
 const PROJECT_OWNER_ACCOUNT = await generateAccount();
 const GOVERNOR_ACCOUNT = await generateAccount();
@@ -283,6 +284,165 @@ async function testWithdrawFunds(rewardAmount: bigint, actor: Actor) {
   await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
 }
 
+async function testDelegateProject(poolId: PoolId) {
+  lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
+  const ownerAddress = await lucid.wallet.address();
+
+  lucid.selectWalletFromSeed(GOVERNOR_ACCOUNT.seedPhrase);
+  const governorAddress = await lucid.wallet.address();
+
+  const protocolSvScriptHash = generateBlake2b224Hash();
+  const projectAtMph = generateBlake2b224Hash();
+  const teikiMph = generateBlake2b224Hash();
+  const proofOfBackingMph = generateBlake2b224Hash();
+  const projectSeedOutRef = generateOutRef();
+  const projectId = constructProjectIdUsingBlake2b(projectSeedOutRef);
+
+  const protocolParamsAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(generateBlake2b224Hash())
+  );
+
+  const protocolNftMph = generateBlake2b224Hash();
+  const paramsNftUnit: Unit = protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
+
+  const projectVScript = exportScript(
+    compileProjectVScript(projectAtMph, protocolNftMph)
+  );
+  const projectVScriptHash = lucid.utils.validatorToScriptHash(projectVScript);
+
+  const projectDetailVScript = exportScript(
+    compileProjectDetailVScript(projectAtMph, protocolNftMph)
+  );
+  const projectDetailVScriptHash =
+    lucid.utils.validatorToScriptHash(projectDetailVScript);
+
+  const dedicatedTreasuryVScript = exportScript(
+    compileDedicatedTreasuryVScript(projectAtMph, protocolNftMph)
+  );
+  const dedicatedTreasuryVScriptHash = lucid.utils.validatorToScriptHash(
+    dedicatedTreasuryVScript
+  );
+
+  const sharedTreasuryVScript = exportScript(
+    compileSharedTreasuryVScript({
+      projectsAuthTokenMph: projectAtMph,
+      protocolNftMph,
+      teikiMph,
+      proofOfBackingMph,
+    })
+  );
+  const sharedTreasuryVScriptHash = lucid.utils.validatorToScriptHash(
+    sharedTreasuryVScript
+  );
+
+  const validatorScriptHashRegistry: ValidatorScriptHashRegistry = {
+    project: projectVScriptHash,
+    projectDetail: projectDetailVScriptHash,
+    dedicatedTreasury: dedicatedTreasuryVScriptHash,
+    sharedTreasury: sharedTreasuryVScriptHash,
+  };
+
+  const registry = generateProtocolRegistry(
+    protocolSvScriptHash,
+    validatorScriptHashRegistry
+  );
+
+  const protocolParamsDatum: ProtocolParamsDatum = {
+    registry,
+    governorAddress: constructAddress(governorAddress),
+    ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+  };
+
+  const protocolParamsUtxo: UTxO = {
+    ...generateOutRef(),
+    address: protocolParamsAddress,
+    assets: { lovelace: 2_000_000n, [paramsNftUnit]: 1n },
+    datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
+  };
+
+  const seedUtxo = (await lucid.wallet.getUtxos())[0];
+  expect(seedUtxo).toBeTruthy();
+
+  const projectAtMintingPolicy = exportScript(
+    compileProjectsAtScript(protocolNftMph)
+  );
+  const projectsAuthTokenMph = lucid.utils.validatorToScriptHash(
+    projectAtMintingPolicy
+  );
+
+  const projectStakeValidator = exportScript(
+    compileProjectSvScript(
+      constructProjectIdUsingBlake2b(seedUtxo),
+      "",
+      projectsAuthTokenMph,
+      protocolNftMph
+    )
+  );
+  const projectScriptAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(generateBlake2b224Hash()),
+    lucid.utils.scriptHashToCredential(
+      lucid.utils.validatorToScriptHash(projectStakeValidator)
+    )
+  );
+  const projectScriptAtUnit: Unit =
+    projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
+  const projectSvScript = exportScript(
+    compileProjectSvScript(projectId, "", projectAtMph, protocolNftMph)
+  );
+
+  const projectScriptDatum: ProjectScriptDatum = {
+    projectId: { id: projectId },
+    stakingKeyDeposit: 0n,
+  };
+
+  const projectScriptVScriptUtxo: UTxO = {
+    ...generateOutRef(),
+    address: projectScriptAddress,
+    assets: { lovelace: 2_000_000n, [projectScriptAtUnit]: 1n },
+    scriptRef: projectSvScript,
+    datum: S.toCbor(S.toData(projectScriptDatum, ProjectScriptDatum)),
+  };
+
+  const projectAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(projectVScriptHash)
+  );
+  const projectAtUnit: Unit = projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
+  const projectDatum: ProjectDatum = {
+    projectId: { id: projectId },
+    ownerAddress: constructAddress(ownerAddress),
+    milestoneReached: 0n,
+    isStakingDelegationManagedByProtocol: true,
+    status: { type: "Active" },
+  };
+
+  const projectUtxo: UTxO = {
+    ...generateOutRef(),
+    address: projectAddress,
+    assets: { lovelace: 2_000_000n, [projectAtUnit]: 1n },
+    datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
+  };
+  const projectSvScriptHash =
+    lucid.utils.validatorToScriptHash(projectSvScript);
+
+  const params: DelegateProjectParams = {
+    protocolParamsUtxo,
+    allReferencedInputs: [protocolParamsUtxo, projectScriptVScriptUtxo, projectUtxo],
+    allProjectStakingValidatorHashes: [projectSvScriptHash],
+    poolId,
+  };
+
+  attachUtxos(emulator, [
+    protocolParamsUtxo,
+    projectScriptVScriptUtxo,
+    projectUtxo
+  ]);
+
+  const tx = delegateProjectTx(lucid, params);
+  const txComplete = await tx.complete();
+  const txHash = await signAndSubmit(txComplete);
+  await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+}
+
 describe("project transactions", () => {
   it("create project tx - with sponsor", async () => {
     expect.assertions(2);
@@ -372,6 +532,13 @@ describe("project transactions", () => {
     await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
       true
     );
+  });
+
+  it("delegate project tx", async () => {
+    expect.assertions(2);
+
+    // EUSKL pool
+    await testDelegateProject("pool1l5u4zh84na80xr56d342d32rsdw62qycwaw97hy9wwsc6axdwla");
   });
 });
 
