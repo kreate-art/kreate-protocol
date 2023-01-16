@@ -1,4 +1,12 @@
-import { Emulator, Lucid, UTxO, Unit, Data, Address, PoolId, ScriptHash } from "lucid-cardano";
+import {
+  Emulator,
+  Lucid,
+  UTxO,
+  Unit,
+  Data,
+  Address,
+  PoolId,
+} from "lucid-cardano";
 
 import {
   compileProjectSvScript,
@@ -30,6 +38,10 @@ import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
 import { createProjectTx } from "@/transactions/project/create";
 import {
+  DelegateProjectParams,
+  delegateProjectTx,
+} from "@/transactions/project/delegate";
+import {
   UpdateProjectParams,
   updateProjectTx,
 } from "@/transactions/project/update";
@@ -48,7 +60,6 @@ import {
   generateWalletAddress,
 } from "./emulator";
 import { generateProtocolRegistry, ValidatorScriptHashRegistry } from "./utils";
-import { DelegateProjectParams, delegateProjectTx } from "@/transactions/project/delegate";
 
 const PROJECT_OWNER_ACCOUNT = await generateAccount();
 const GOVERNOR_ACCOUNT = await generateAccount();
@@ -426,7 +437,11 @@ async function testDelegateProject(poolId: PoolId) {
 
   const params: DelegateProjectParams = {
     protocolParamsUtxo,
-    allReferencedInputs: [protocolParamsUtxo, projectScriptVScriptUtxo, projectUtxo],
+    allReferencedInputs: [
+      protocolParamsUtxo,
+      projectScriptVScriptUtxo,
+      projectUtxo,
+    ],
     allProjectStakingValidatorHashes: [projectSvScriptHash],
     poolId,
   };
@@ -434,7 +449,7 @@ async function testDelegateProject(poolId: PoolId) {
   attachUtxos(emulator, [
     protocolParamsUtxo,
     projectScriptVScriptUtxo,
-    projectUtxo
+    projectUtxo,
   ]);
 
   const tx = delegateProjectTx(lucid, params);
@@ -538,7 +553,9 @@ describe("project transactions", () => {
     expect.assertions(2);
 
     // EUSKL pool
-    await testDelegateProject("pool1l5u4zh84na80xr56d342d32rsdw62qycwaw97hy9wwsc6axdwla");
+    await testDelegateProject(
+      "pool1l5u4zh84na80xr56d342d32rsdw62qycwaw97hy9wwsc6axdwla"
+    );
   });
 });
 

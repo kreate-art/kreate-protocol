@@ -1,16 +1,16 @@
-import { Data, Lucid, PoolId, ScriptHash, UTxO } from "lucid-cardano"
+import { Data, Lucid, PoolId, ScriptHash, UTxO } from "lucid-cardano";
 
+import { deconstructAddress } from "@/helpers/schema";
 import * as S from "@/schema";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { assert } from "@/utils";
-import { deconstructAddress } from "@/helpers/schema";
 
 export type DelegateProjectParams = {
   protocolParamsUtxo: UTxO;
   allReferencedInputs: UTxO[];
   allProjectStakingValidatorHashes: ScriptHash[];
   poolId: PoolId;
-}
+};
 
 export function delegateProjectTx(
   lucid: Lucid,
@@ -28,12 +28,17 @@ export function delegateProjectTx(
     ProtocolParamsDatum
   );
 
-  const governorAddress = deconstructAddress(lucid, protocolParams.governorAddress);
+  const governorAddress = deconstructAddress(
+    lucid,
+    protocolParams.governorAddress
+  );
 
-  const allProjectRewardAddresses = allProjectStakingValidatorHashes.map((svh: ScriptHash) => {
-    const stakeCredential = lucid.utils.scriptHashToCredential(svh);
-    return lucid.utils.credentialToRewardAddress(stakeCredential);
-  });
+  const allProjectRewardAddresses = allProjectStakingValidatorHashes.map(
+    (svh: ScriptHash) => {
+      const stakeCredential = lucid.utils.scriptHashToCredential(svh);
+      return lucid.utils.credentialToRewardAddress(stakeCredential);
+    }
+  );
 
   let tx = lucid
     .newTx()
