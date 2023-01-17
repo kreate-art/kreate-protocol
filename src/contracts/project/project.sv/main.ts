@@ -178,7 +178,10 @@ export default function main({
 
                 project_datum.project_id == project_id
                   && if (project_datum.is_staking_delegation_managed_by_protocol){
-                    if (is_tx_authorized_by(tx, pparams_datum.governor_address.credential)) {
+                    if (
+                      is_tx_authorized_by(tx, pparams_datum.governor_address.credential)
+                        || is_tx_authorized_by(tx, pparams_datum.staking_manager)
+                    ) {
                       true
                     } else {
                       project_purpose: ScriptPurpose =

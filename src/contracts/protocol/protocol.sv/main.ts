@@ -77,7 +77,9 @@ export default function main(protocolNftMph: string): HeliosSource {
               PROTOCOL_NFT_MPH
             );
 
-          is_authorized: Bool = is_tx_authorized_by(tx, pparams_datum.governor_address.credential);
+          is_authorized: Bool =
+            is_tx_authorized_by(tx, pparams_datum.governor_address.credential)
+              || is_tx_authorized_by(tx, pparams_datum.staking_manager);
 
           certifying.dcert.switch {
             Register => error("unreachable"),

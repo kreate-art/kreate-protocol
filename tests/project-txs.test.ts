@@ -60,6 +60,7 @@ async function testWithdrawFunds(rewardAmount: bigint, actor: Actor) {
 
   lucid.selectWalletFromSeed(GOVERNOR_ACCOUNT.seedPhrase);
   const governorAddress = await lucid.wallet.address();
+  const stakingManagerAddress = await lucid.wallet.address();
 
   const projectSeedOutRef = generateOutRef();
   const projectSeedTxOutputId = constructTxOutputId(projectSeedOutRef);
@@ -153,6 +154,7 @@ async function testWithdrawFunds(rewardAmount: bigint, actor: Actor) {
   const protocolParamsDatum: ProtocolParamsDatum = {
     registry,
     governorAddress: constructAddress(governorAddress),
+    stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
     ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
   };
   const projectDatum: ProjectDatum = {
@@ -393,10 +395,12 @@ function generateCreateProjectParams(
   const registry = generateProtocolRegistry(protocolStakeValidatorHash);
 
   const governorAddress = generateWalletAddress(lucid);
+  const stakingManagerAddress = generateWalletAddress(lucid);
 
   const protocolParamsDatum: ProtocolParamsDatum = {
     registry,
     governorAddress: constructAddress(governorAddress),
+    stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
     ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
   };
 
@@ -472,6 +476,7 @@ function generateUpdateProjectParams(
   );
 
   const governorAddress = generateWalletAddress(lucid);
+  const stakingManagerAddress = generateWalletAddress(lucid);
 
   const projectId = constructProjectIdUsingBlake2b(seedUtxo);
 
@@ -548,6 +553,7 @@ function generateUpdateProjectParams(
   const protocolParamsDatum: ProtocolParamsDatum = {
     registry,
     governorAddress: constructAddress(governorAddress),
+    stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
     ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
   };
 

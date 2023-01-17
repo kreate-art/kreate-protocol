@@ -57,6 +57,7 @@ describe("protocol transactions", () => {
     lucid.selectWalletFromSeed(BOOTSTRAP_ACCOUNT.seedPhrase);
 
     const governorAddress = await lucid.wallet.address();
+    const stakingManagerAddress = await lucid.wallet.address();
 
     const poolId = "pool1ve7vhcyde2d342wmqcwcudd906jk749t37y7fmz5e6mvgghrwh3";
 
@@ -100,6 +101,7 @@ describe("protocol transactions", () => {
       protocolParams: SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
       seedUtxo,
       governorAddress,
+      stakingManagerAddress,
       poolId,
       registry,
       protocolNftScript,
@@ -121,6 +123,7 @@ describe("protocol transactions", () => {
     expect.assertions(1);
 
     const governorAddress = await lucid.wallet.address();
+    const stakingManagerAddress = await lucid.wallet.address();
 
     const protocolNftMph = generateBlake2b224Hash();
 
@@ -152,6 +155,7 @@ describe("protocol transactions", () => {
     const protocolParamsDatum: ProtocolParamsDatum = {
       registry,
       governorAddress: constructAddress(governorAddress),
+      stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
       ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
     };
     const proposedProtocolParamsDatum: ProtocolParamsDatum = {
@@ -204,6 +208,7 @@ describe("protocol transactions", () => {
     expect.assertions(1);
 
     const governorAddress = await lucid.wallet.address();
+    const stakingManagerAddress = await lucid.wallet.address();
 
     const protocolNftMph = generateBlake2b224Hash();
 
@@ -235,6 +240,7 @@ describe("protocol transactions", () => {
     const protocolParamsDatum: ProtocolParamsDatum = {
       registry,
       governorAddress: constructAddress(governorAddress),
+      stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
       ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
     };
 
@@ -290,6 +296,7 @@ describe("protocol transactions", () => {
     expect.assertions(1);
 
     const governorAddress = await lucid.wallet.address();
+    const stakingManagerAddress = await lucid.wallet.address();
 
     const protocolNftMph = generateBlake2b224Hash();
 
@@ -327,6 +334,7 @@ describe("protocol transactions", () => {
     const protocolParamsDatum: ProtocolParamsDatum = {
       registry,
       governorAddress: constructAddress(governorAddress),
+      stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
       ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
     };
 
@@ -397,6 +405,7 @@ describe("protocol transactions", () => {
     const rewardAmount = 1_000_000_000n;
     lucid.selectWalletFromSeed(BOOTSTRAP_ACCOUNT.seedPhrase);
     const governorAddress = await lucid.wallet.address();
+    const stakingManagerAddress = await lucid.wallet.address();
 
     const protocolNftMph = generateBlake2b224Hash();
 
@@ -434,6 +443,7 @@ describe("protocol transactions", () => {
     const protocolParamsDatum: ProtocolParamsDatum = {
       registry,
       governorAddress: constructAddress(governorAddress),
+      stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
       ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
     };
 
