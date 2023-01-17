@@ -222,6 +222,7 @@ function addMintingInstruction(
 
   const unstakedAt = txTimeStart;
   let totalTeikiRewards = 0n;
+  let wiltedFlowerMintAmount = 0n;
 
   for (const backingUtxo of backingInfo.backingUtxos) {
     assert(
@@ -268,14 +269,18 @@ function addMintingInstruction(
 
       totalTeikiRewards += teikiRewards;
     } else {
-      tx = tx.mintAssets(
-        {
-          [backingInfo.proofOfBackingMph +
-          PROOF_OF_BACKING_TOKEN_NAMES.WILTED_FLOWER]: 1n,
-        },
-        proofOfBackingMintingRedeemer
-      );
+      wiltedFlowerMintAmount += 1n;
     }
+  }
+
+  if (wiltedFlowerMintAmount > 0n) {
+    tx = tx.mintAssets(
+      {
+        [backingInfo.proofOfBackingMph +
+        PROOF_OF_BACKING_TOKEN_NAMES.WILTED_FLOWER]: wiltedFlowerMintAmount,
+      },
+      proofOfBackingMintingRedeemer
+    );
   }
 
   if (totalTeikiRewards > 0) {
