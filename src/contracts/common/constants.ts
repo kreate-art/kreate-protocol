@@ -34,6 +34,8 @@ export const TEIKI_TOKEN_NAME: Hex = fromText("teiki");
 
 export const TEIKI_PLANT_NFT_TOKEN_NAME: Hex = fromText("teiki-plant");
 
+export const MIGRATE_TOKEN_NAME: Hex = fromText("migration");
+
 export default helios("constants")`
   module constants
 
