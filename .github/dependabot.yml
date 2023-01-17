@@ -8,4 +8,4 @@ updates:
       prefix: "build"
       include: "scope"
     # This strategy is fine in this early stage
-    versioning-strategy: increase
+    versioning-strategy: increase-if-necessary
