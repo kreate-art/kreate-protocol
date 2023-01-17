@@ -318,16 +318,34 @@ describe("backing transactions", () => {
       datum: S.toCbor(S.toData(backingDatum, BackingDatum)),
     };
 
+    const backingDatum1: BackingDatum = {
+      projectId: { id: projectId },
+      backerAddress: constructAddress(BACKER_ACCOUNT.address),
+      stakedAt: { timestamp: BigInt(getCurrentTime(lucid)) + 100_000n },
+      milestoneBacked: current_project_milestone,
+    };
+
+    const backingUtxo1 = {
+      ...generateOutRef(),
+      address: backingScriptAddress,
+      assets: {
+        lovelace: 600_000_000n,
+        [proofOfBackingMph + PROOF_OF_BACKING_TOKEN_NAMES.SEED]: 1n,
+      },
+      datum: S.toCbor(S.toData(backingDatum1, BackingDatum)),
+    };
+
     attachUtxos(emulator, [
       proofOfBackingMpRefUtxo,
       projectUtxo,
       projectScriptUtxo,
       protocolParamsUtxo,
       backingUtxo,
+      backingUtxo1,
       backingScriptRefUtxo,
     ]);
 
-    emulator.awaitSlot(20);
+    emulator.awaitSlot(200);
 
     const plantParams: PlantParams = {
       protocolParamsUtxo,
@@ -340,7 +358,7 @@ describe("backing transactions", () => {
       backingInfo: {
         amount: -400_000_000n,
         backerAddress: BACKER_ACCOUNT.address,
-        backingUtxos: [backingUtxo],
+        backingUtxos: [backingUtxo, backingUtxo1],
         backingScriptAddress,
         backingScriptRefUtxo,
         proofOfBackingMpRefUtxo,
