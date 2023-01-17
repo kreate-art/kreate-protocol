@@ -34,6 +34,7 @@ export default helios("v__protocol_params__types")`
     project_teiki_burn_rate: Int
     epoch_length: Duration
     project_pledge: Int
+    staking_manager: Credential
     project_creation_fee: Int
     project_sponsorship_fee: Int
     project_sponsorship_duration: Duration

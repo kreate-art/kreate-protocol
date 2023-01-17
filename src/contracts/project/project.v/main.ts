@@ -150,6 +150,7 @@ export default function main({ projectAtMph, protocolNftMph }: ProjectParams) {
 
               assert (
                 is_tx_authorized_by(tx, datum.owner_address.credential)
+                  || is_tx_authorized_by(tx, pparams_datum.staking_manager)
                   || is_tx_authorized_by(tx, pparams_datum.governor_address.credential),
                 "Transaction is not authorized"
               );
