@@ -1,4 +1,4 @@
-import { Lucid, UTxO } from "lucid-cardano";
+import { Lucid } from "lucid-cardano";
 
 import { exportScript } from "@/contracts/compile";
 import {
@@ -19,7 +19,6 @@ import {
   compileProjectScriptVScript,
   compileProjectVScript,
   compileProofOfBackingMpScript,
-  compileProtocolNftScript,
   compileProtocolSvScript,
   compileSharedTreasuryVScript,
   compileTeikiMpScript,
@@ -38,13 +37,9 @@ export type RegistryScript = {
 
 export function getProtocolRegistryScript(
   lucid: Lucid,
-  seedUtxo: UTxO,
+  protocolNftMph: Hex,
   teikiPlantNftMph: Hex
 ): RegistryScript {
-  const protocolNftPolicy = exportScript(compileProtocolNftScript(seedUtxo));
-
-  const protocolNftMph = lucid.utils.validatorToScriptHash(protocolNftPolicy);
-
   const projectAtMph = lucid.utils.validatorToScriptHash(
     exportScript(compileProjectsAtScript(protocolNftMph))
   );
@@ -111,14 +106,14 @@ export function getMigratableScript(
 
 export function getProtocolRegistry(
   lucid: Lucid,
-  seedUtxo: UTxO,
+  protocolNftMph: Hex,
   teikiPlantNftMph: Hex,
   migrateTokenMph: Hex,
   migrateTokenName: string
 ): Registry {
   const registryScript: RegistryScript = getProtocolRegistryScript(
     lucid,
-    seedUtxo,
+    protocolNftMph,
     teikiPlantNftMph
   );
 
