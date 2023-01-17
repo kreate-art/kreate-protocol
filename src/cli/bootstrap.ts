@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Address, Lucid, Script, fromText } from "lucid-cardano";
+import { Address, Lucid, Script } from "lucid-cardano";
 
 import { MIGRATE_TOKEN_NAME } from "@/contracts/common/constants";
 import { compile, exportScript } from "@/contracts/compile";
