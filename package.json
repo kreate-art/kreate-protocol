@@ -45,6 +45,7 @@
     "build": "tsc -p tsconfig.build.json && tsc-alias && ts-add-js-extension add --dir dist",
     "deploy": "node --loader=./loader.js src/cli/bootstrap.ts",
     "protocol:propose": "node --loader=./loader.js src/cli/protocol/propose",
+    "protocol:apply": "node --loader=./loader.js src/cli/protocol/apply",
     "lint": "eslint src tests",
     "lint:fix": "eslint --fix src tests",
     "prepare": "npm run build",
