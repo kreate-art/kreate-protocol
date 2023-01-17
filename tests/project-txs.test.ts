@@ -336,7 +336,7 @@ async function testDelegateProject(poolId: PoolId) {
 
   const sharedTreasuryVScript = exportScript(
     compileSharedTreasuryVScript({
-      projectsAuthTokenMph: projectAtMph,
+      projectAtMph,
       protocolNftMph,
       teikiMph,
       proofOfBackingMph,
@@ -358,9 +358,11 @@ async function testDelegateProject(poolId: PoolId) {
     validatorScriptHashRegistry
   );
 
+  const stakingManagerAddress = generateWalletAddress(lucid);
   const protocolParamsDatum: ProtocolParamsDatum = {
     registry,
     governorAddress: constructAddress(governorAddress),
+    stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
     ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
   };
 
@@ -432,17 +434,16 @@ async function testDelegateProject(poolId: PoolId) {
     assets: { lovelace: 2_000_000n, [projectAtUnit]: 1n },
     datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
   };
-  const projectSvScriptHash =
-    lucid.utils.validatorToScriptHash(projectSvScript);
 
   const params: DelegateProjectParams = {
     protocolParamsUtxo,
-    allReferencedInputs: [
-      protocolParamsUtxo,
-      projectScriptVScriptUtxo,
-      projectUtxo,
+    allGenericSomething: [
+      {
+        projectUtxo,
+        projectScriptVScriptUtxo,
+        authorizedAddress: governorAddress,
+      },
     ],
-    allProjectStakingValidatorHashes: [projectSvScriptHash],
     poolId,
   };
 
