@@ -50,6 +50,9 @@ import { getLucid } from "../commands/utils";
 // Protocol staking
 const POOL_ID = "pool1kgyazdg4n0vvdkznuud3ktm0wmwvd2gr932k6mt346d2u4l9tt2";
 
+// Staking manager address - only use payment credential
+const STAKING_MANAGER_ADDRESS = "addr1xxxxxxxxxxxxxxxxxxxxxx";
+
 const lucid = await getLucid();
 
 const teikiPlantNftPolicy = await runBootstrapMetaProtocol(lucid);
@@ -351,6 +354,7 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
     protocolParams: SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
     seedUtxo: seedUtxo,
     governorAddress,
+    stakingManagerAddress: STAKING_MANAGER_ADDRESS,
     poolId: POOL_ID,
     registry,
     protocolNftScript,

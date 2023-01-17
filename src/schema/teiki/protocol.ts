@@ -2,6 +2,7 @@ import {
   Address,
   AssetClass,
   Duration,
+  PaymentCredential,
   ScriptHash,
   Time,
   TxOutputId,
@@ -40,6 +41,7 @@ export const ProtocolParamsDatum = Struct({
   projectTeikiBurnRate: Int,
   epochLength: Duration,
   projectPledge: Int,
+  stakingManager: PaymentCredential,
   projectCreationFee: Int,
   projectSponsorshipFee: Int,
   projectSponsorshipDuration: Duration,
@@ -53,7 +55,7 @@ export const ProtocolParamsDatum = Struct({
 export type ProtocolParamsDatum = Static<typeof ProtocolParamsDatum>;
 export type ProtocolNonScriptParams = Omit<
   ProtocolParamsDatum,
-  "registry" | "governorAddress"
+  "registry" | "governorAddress" | "stakingManager"
 >;
 
 export const ProtocolParamsRedeemer = Enum("case", {

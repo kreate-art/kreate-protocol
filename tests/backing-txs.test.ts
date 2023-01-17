@@ -58,6 +58,7 @@ describe("backing transactions", () => {
     const ownerAddress = generateWalletAddress(lucid);
     const projectScriptAddress = generateScriptAddress(lucid);
     const governorAddress = generateWalletAddress(lucid);
+    const stakingManagerAddress = generateWalletAddress(lucid);
     const protocolParamsAddress = generateScriptAddress(lucid);
 
     const projectAtMph = generateBlake2b224Hash();
@@ -136,6 +137,7 @@ describe("backing transactions", () => {
     const protocolParamsDatum: ProtocolParamsDatum = {
       registry,
       governorAddress: constructAddress(governorAddress),
+      stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
       ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
     };
 
@@ -203,6 +205,7 @@ describe("backing transactions", () => {
     const ownerAddress = generateWalletAddress(lucid);
     const projectScriptAddress = generateScriptAddress(lucid);
     const governorAddress = generateWalletAddress(lucid);
+    const stakingManagerAddress = generateWalletAddress(lucid);
     const protocolParamsAddress = generateScriptAddress(lucid);
 
     const projectAtMph = generateBlake2b224Hash();
@@ -281,6 +284,7 @@ describe("backing transactions", () => {
     const protocolParamsDatum: ProtocolParamsDatum = {
       registry,
       governorAddress: constructAddress(governorAddress),
+      stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
       ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
     };
 
@@ -547,6 +551,7 @@ function generateUpdateBackingParams(
   const projectOwnerAddress = generateWalletAddress(lucid);
   const projectScriptAddress = generateScriptAddress(lucid);
   const governorAddress = generateScriptAddress(lucid);
+  const stakingManagerAddress = generateScriptAddress(lucid);
   const protocolParamsAddress = generateScriptAddress(lucid);
 
   const projectAtMph = generateBlake2b224Hash();
@@ -668,6 +673,7 @@ function generateUpdateBackingParams(
   const protocolParamsDatum: ProtocolParamsDatum = {
     registry,
     governorAddress: constructAddress(governorAddress),
+    stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
     ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
   };
 

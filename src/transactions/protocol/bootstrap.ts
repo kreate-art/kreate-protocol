@@ -24,6 +24,7 @@ export type BootstrapProtocolParams = {
   protocolParams: ProtocolNonScriptParams;
   seedUtxo: UTxO;
   governorAddress: Address;
+  stakingManagerAddress: Address;
   poolId: PoolId;
   registry: Registry;
   protocolNftScript: Script;
@@ -39,6 +40,7 @@ export function bootstrapProtocolTx(
     protocolParams,
     seedUtxo,
     governorAddress,
+    stakingManagerAddress,
     poolId,
     registry,
     protocolNftScript,
@@ -51,6 +53,7 @@ export function bootstrapProtocolTx(
   const protocolParamsDatum: ProtocolParamsDatum = {
     registry,
     governorAddress: constructAddress(governorAddress),
+    stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
     ...protocolParams,
   };
 
