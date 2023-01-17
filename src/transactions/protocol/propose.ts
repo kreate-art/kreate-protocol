@@ -19,7 +19,7 @@ export type ProposeProtocolTxParams = {
   protocolParamsUtxo: UTxO;
   proposedProtocolParamsDatum: ProtocolParamsDatum;
   protocolProposalUtxo: UTxO;
-  protocolProposalScriptUtxo: UTxO;
+  protocolProposalRefScriptUtxo: UTxO;
   txTimePadding?: TimeDifference;
 };
 
@@ -29,7 +29,7 @@ export function proposeProtocolProposalTx(
     protocolParamsUtxo,
     proposedProtocolParamsDatum,
     protocolProposalUtxo,
-    protocolProposalScriptUtxo,
+    protocolProposalRefScriptUtxo,
     txTimePadding = 200000,
   }: ProposeProtocolTxParams
 ) {
@@ -61,7 +61,7 @@ export function proposeProtocolProposalTx(
   return lucid
     .newTx()
     .addSignerKey(protocolGovernorPkh)
-    .readFrom([protocolParamsUtxo, protocolProposalScriptUtxo])
+    .readFrom([protocolParamsUtxo, protocolProposalRefScriptUtxo])
     .collectFrom(
       [protocolProposalUtxo],
       S.toCbor(S.toData({ case: "Propose" }, ProtocolProposalRedeemer))
