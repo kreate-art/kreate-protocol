@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Address, Lucid, Script, fromText } from "lucid-cardano";
 
+import { MIGRATE_TOKEN_NAME } from "@/contracts/common/constants";
 import { compile, exportScript } from "@/contracts/compile";
 import { HeliosSource, helios } from "@/contracts/program";
 import { getPaymentKeyHash, signAndSubmit } from "@/helpers/lucid";
@@ -42,7 +43,7 @@ import {
 } from "../commands/compile-scripts";
 import {
   SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
-  getMigratableScript,
+  getProtocolRegistry,
 } from "../commands/generate-protocol-params";
 import { getLucid } from "../commands/utils";
 
@@ -271,20 +272,6 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
   const protocolProposalVHash = lucid.utils.validatorToScriptHash(
     protocolProposalVScript
   );
-  const projectVHash = lucid.utils.validatorToScriptHash(projectVScript);
-  const projectDetailVHash =
-    lucid.utils.validatorToScriptHash(projectDetailVScript);
-  const projectScriptVHash =
-    lucid.utils.validatorToScriptHash(projectScriptVScript);
-  const backingVHash = lucid.utils.validatorToScriptHash(backingVScript);
-  const dedicatedTreasusryVHash = lucid.utils.validatorToScriptHash(
-    dedicatedTreasuryVScript
-  );
-  const sharedTreasusryVHash = lucid.utils.validatorToScriptHash(
-    sharedTreasuryVScript
-  );
-  const openTreasuryVHash =
-    lucid.utils.validatorToScriptHash(openTreasuryVScript);
 
   const protocolStakeCredential =
     lucid.utils.scriptHashToCredential(protocolSvHash);
@@ -310,45 +297,13 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
     sampleMigrateTokenPolicy
   );
 
-  const migrateTokenName = fromText("migration");
-  const registry: Registry = {
-    protocolStakingValidator: { script: { hash: protocolSvHash } },
-    projectValidator: getMigratableScript(
-      projectVHash,
-      sampleMigrateTokenMph,
-      migrateTokenName
-    ),
-    projectDetailValidator: getMigratableScript(
-      projectDetailVHash,
-      sampleMigrateTokenMph,
-      migrateTokenName
-    ),
-    projectScriptValidator: getMigratableScript(
-      projectScriptVHash,
-      sampleMigrateTokenMph,
-      migrateTokenName
-    ),
-    backingValidator: getMigratableScript(
-      backingVHash,
-      sampleMigrateTokenMph,
-      migrateTokenName
-    ),
-    dedicatedTreasuryValidator: getMigratableScript(
-      dedicatedTreasusryVHash,
-      sampleMigrateTokenMph,
-      migrateTokenName
-    ),
-    sharedTreasuryValidator: getMigratableScript(
-      sharedTreasusryVHash,
-      sampleMigrateTokenMph,
-      migrateTokenName
-    ),
-    openTreasuryValidator: getMigratableScript(
-      openTreasuryVHash,
-      sampleMigrateTokenMph,
-      migrateTokenName
-    ),
-  };
+  const registry: Registry = getProtocolRegistry(
+    lucid,
+    protocolNftMph,
+    teikiPlantNftMph,
+    sampleMigrateTokenMph,
+    MIGRATE_TOKEN_NAME
+  );
 
   const params: BootstrapProtocolParams = {
     protocolParams: SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
