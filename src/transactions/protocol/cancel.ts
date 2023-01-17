@@ -13,7 +13,7 @@ import { extractPaymentPubKeyHash } from "../../helpers/schema";
 export type CancelProtocolTxParams = {
   protocolParamsUtxo: UTxO;
   protocolProposalUtxo: UTxO;
-  protocolProposalScriptUtxo: UTxO;
+  protocolProposalRefScriptUtxo: UTxO;
 };
 
 export function cancelProtocolProposalTx(
@@ -21,7 +21,7 @@ export function cancelProtocolProposalTx(
   {
     protocolParamsUtxo,
     protocolProposalUtxo,
-    protocolProposalScriptUtxo,
+    protocolProposalRefScriptUtxo,
   }: CancelProtocolTxParams
 ) {
   assert(protocolParamsUtxo.datum, "Protocol params utxo must have datum");
@@ -37,7 +37,7 @@ export function cancelProtocolProposalTx(
   return lucid
     .newTx()
     .addSignerKey(protocolGovernorPkh)
-    .readFrom([protocolParamsUtxo, protocolProposalScriptUtxo])
+    .readFrom([protocolParamsUtxo, protocolProposalRefScriptUtxo])
     .collectFrom(
       [protocolProposalUtxo],
       S.toCbor(S.toData({ case: "Cancel" }, ProtocolProposalRedeemer))

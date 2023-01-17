@@ -176,7 +176,7 @@ describe("protocol transactions", () => {
       assets: { lovelace: 2_000_000n, [protocolProposalNftUnit]: 1n },
       datum: Data.void(),
     };
-    const protocolProposalScriptUtxo: UTxO = {
+    const protocolProposalRefScriptUtxo: UTxO = {
       ...generateOutRef(),
       address: protocolProposalScriptAddress,
       assets: { lovelace: 2_000_000n },
@@ -186,14 +186,14 @@ describe("protocol transactions", () => {
     attachUtxos(emulator, [
       protocolParamsUtxo,
       protocolProposalUtxo,
-      protocolProposalScriptUtxo,
+      protocolProposalRefScriptUtxo,
     ]);
 
     const params: ProposeProtocolTxParams = {
       protocolParamsUtxo,
       proposedProtocolParamsDatum,
       protocolProposalUtxo,
-      protocolProposalScriptUtxo,
+      protocolProposalRefScriptUtxo,
     };
 
     const tx = proposeProtocolProposalTx(lucid, params);
@@ -265,7 +265,7 @@ describe("protocol transactions", () => {
       assets: { lovelace: 2_000_000n, [protocolProposalNftUnit]: 1n },
       datum: S.toCbor(S.toData(protocolProposalDatum, ProtocolProposalDatum)),
     };
-    const protocolProposalScriptUtxo: UTxO = {
+    const protocolProposalRefScriptUtxo: UTxO = {
       ...generateOutRef(),
       address: protocolProposalScriptAddress,
       assets: { lovelace: 2_000_000n },
@@ -275,13 +275,13 @@ describe("protocol transactions", () => {
     attachUtxos(emulator, [
       protocolParamsUtxo,
       protocolProposalUtxo,
-      protocolProposalScriptUtxo,
+      protocolProposalRefScriptUtxo,
     ]);
 
     const params: CancelProtocolTxParams = {
       protocolParamsUtxo,
       protocolProposalUtxo,
-      protocolProposalScriptUtxo,
+      protocolProposalRefScriptUtxo,
     };
 
     const tx = cancelProtocolProposalTx(lucid, params);
@@ -365,7 +365,7 @@ describe("protocol transactions", () => {
       assets: { lovelace: 2_000_000n },
       scriptRef: protocolParamsValidator,
     };
-    const protocolProposalScriptUtxo: UTxO = {
+    const protocolProposalRefScriptUtxo: UTxO = {
       ...generateOutRef(),
       address: protocolScriptAddress,
       assets: { lovelace: 2_000_000n },
@@ -376,7 +376,7 @@ describe("protocol transactions", () => {
       protocolParamsUtxo,
       protocolProposalUtxo,
       protocolParamsScriptUtxo,
-      protocolProposalScriptUtxo,
+      protocolProposalRefScriptUtxo,
     ]);
 
     const params: ApplyProtocolTxParams = {
@@ -384,7 +384,7 @@ describe("protocol transactions", () => {
       protocolProposalUtxo,
       protocolScriptUtxos: [
         protocolParamsScriptUtxo,
-        protocolProposalScriptUtxo,
+        protocolProposalRefScriptUtxo,
       ],
     };
 
