@@ -39,10 +39,13 @@ const proposedRegistry: Registry = getProtocolRegistry(
 const proposedNonScriptParams = SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS;
 
 const proposedGovernorAddress = governorAddress;
+const proposedStakingManagerAddress = governorAddress;
 
 const proposedProtocolParamsDatum: ProtocolParamsDatum = {
   registry: proposedRegistry,
   governorAddress: constructAddress(proposedGovernorAddress),
+  stakingManager: constructAddress(proposedStakingManagerAddress)
+    .paymentCredential,
   ...proposedNonScriptParams,
 };
 
@@ -57,3 +60,5 @@ const txComplete = await tx.complete();
 const txHash = await signAndSubmit(txComplete);
 
 await lucid.awaitTx(txHash);
+
+console.log("txHash :>> ", txHash);
