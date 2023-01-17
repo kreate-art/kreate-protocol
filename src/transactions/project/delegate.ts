@@ -5,6 +5,7 @@ import * as S from "@/schema";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { assert } from "@/utils";
 
+// TODO: @sk-yagi: Batching
 export type DelegateProjectParams = {
   protocolParamsUtxo: UTxO;
   allReferencedInputs: UTxO[];
