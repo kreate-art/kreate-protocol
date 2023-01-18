@@ -247,7 +247,7 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
     proofOfBackingMpScript
   );
   const backingVScript = exportScript(
-    compileBackingVScript(proofOfBackingMph, projectAtMph)
+    compileBackingVScript(proofOfBackingMph, protocolNftMph)
   );
   const dedicatedTreasuryVScript = exportScript(
     compileDedicatedTreasuryVScript(projectAtMph, protocolNftMph)
