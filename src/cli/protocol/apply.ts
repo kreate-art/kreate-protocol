@@ -1,4 +1,7 @@
+import { Unit } from "lucid-cardano";
+
 import { getLucid } from "@/commands/utils";
+import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { signAndSubmit } from "@/helpers/lucid";
 import { applyProtocolProposalTx } from "@/transactions/protocol/apply";
 
@@ -8,10 +11,16 @@ const protocolParamsUtxo = (
   await lucid.utxosByOutRef([{ txHash: "", outputIndex: 1 }])
 )[0];
 
-const protocolProposalUtxo = (
-  await lucid.utxosByOutRef([{ txHash: "", outputIndex: 1 }])
-)[0];
+const currentProtocolNftMph =
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
+const proposalNftUnit: Unit =
+  currentProtocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PROPOSAL;
+const protocolProposalVAddress = "addr_xxxxx";
+
+const protocolProposalUtxo = (
+  await lucid.utxosAtWithUnit(protocolProposalVAddress, proposalNftUnit)
+)[0];
 const protocolProposalRefScriptUtxo = (
   await lucid.utxosByOutRef([{ txHash: "", outputIndex: 1 }])
 )[0];
