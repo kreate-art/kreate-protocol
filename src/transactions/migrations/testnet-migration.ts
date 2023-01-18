@@ -27,7 +27,7 @@ export function migrateBackingTx(
     newValidatorAddress,
   }: MigrateParams
 ) {
-  const tx = lucid
+  let tx = lucid
     .newTx()
     .readFrom([
       currentValidatorRefUtxo,
@@ -42,11 +42,13 @@ export function migrateBackingTx(
       "Invalid validator UTxO: Missing inline datum"
     );
 
-    tx.collectFrom([validatorUtxo], validatorRedeemer).payToContract(
-      newValidatorAddress,
-      { inline: validatorUtxo.datum },
-      { ...validatorUtxo.assets }
-    );
+    tx = tx
+      .collectFrom([validatorUtxo], validatorRedeemer)
+      .payToContract(
+        newValidatorAddress,
+        { inline: validatorUtxo.datum },
+        { ...validatorUtxo.assets }
+      );
   }
 
   return tx;

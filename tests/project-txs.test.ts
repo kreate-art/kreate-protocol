@@ -435,13 +435,26 @@ async function testDelegateProject(poolId: PoolId) {
     datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
   };
 
+  // Formally, the project's staking credential is registered when creating project
+  const projectSvScriptHash =
+    lucid.utils.validatorToScriptHash(projectSvScript);
+  const projectRewardAddress = lucid.utils.credentialToRewardAddress(
+    lucid.utils.scriptHashToCredential(projectSvScriptHash)
+  );
+  const registerTx = await lucid
+    .newTx()
+    .registerStake(projectRewardAddress)
+    .complete();
+  const registerTxHash = await signAndSubmit(registerTx);
+  await expect(lucid.awaitTx(registerTxHash)).resolves.toBe(true);
+
   const params: DelegateProjectParams = {
     protocolParamsUtxo,
-    allGenericSomething: [
+    authorizedAddress: governorAddress,
+    allDelegatedProjects: [
       {
         projectUtxo,
         projectScriptVScriptUtxo,
-        authorizedAddress: governorAddress,
       },
     ],
     poolId,
@@ -551,7 +564,7 @@ describe("project transactions", () => {
   });
 
   it("delegate project tx", async () => {
-    expect.assertions(2);
+    expect.assertions(3);
 
     // EUSKL pool
     await testDelegateProject(
