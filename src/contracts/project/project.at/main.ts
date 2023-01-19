@@ -63,12 +63,8 @@ export default function main(protocolNftMph: string) {
 
       project_at_asset_class: AssetClass =
         AssetClass::new(own_mph, PROJECT_AT_TOKEN_NAME);
-      project_detail_at_asset_class: AssetClass =
-        AssetClass::new(own_mph, PROJECT_DETAIL_AT_TOKEN_NAME);
       project_script_at_asset_class: AssetClass =
         AssetClass::new(own_mph, PROJECT_SCRIPT_AT_TOKEN_NAME);
-      project_at: Value = Value::new(project_at_asset_class, 1);
-      project_detail_at: Value = Value::new(project_detail_at_asset_class, 1);
       project_script_at: Value = Value::new(project_script_at_asset_class, 1);
 
       redeemer.switch {
@@ -80,7 +76,16 @@ export default function main(protocolNftMph: string) {
           project_id: ByteArray = project_seed.serialize().blake2b();
 
           does_mint_at_correctly: Bool =
-            tx.minted == project_at + project_detail_at + project_script_at;
+            tx.minted.to_map().get(own_mph).all(
+              (token_name: ByteArray, amount: Int) -> Bool {
+                if (token_name == PROJECT_AT_TOKEN_NAME) { amount == 1 }
+                else if (token_name == PROJECT_DETAIL_AT_TOKEN_NAME) { amount == 1 }
+                else if (token_name == PROJECT_SCRIPT_AT_TOKEN_NAME) { amount == 1 }
+                else {
+                  false
+                }
+              }
+            );
 
           project_script_txout: TxOutput =
             tx.outputs.find (
@@ -288,7 +293,12 @@ export default function main(protocolNftMph: string) {
               )
               .length;
 
-          tx.minted == Value::new(project_script_at_asset_class, num_consumed_satisfied_project_output)
+          tx.minted.to_map().get(own_mph).all(
+            (token_name: ByteArray, amount: Int) -> Bool {
+              if (token_name == PROJECT_SCRIPT_AT_TOKEN_NAME) { amount == num_consumed_satisfied_project_output }
+              else { false }
+            }
+          )
             && tx.inputs.all(
               (input: TxInput) -> Bool {
                 input.output.value.get_safe(project_script_at_asset_class) == 0
