@@ -186,7 +186,8 @@ describe("backing transactions", () => {
       },
     };
 
-    const tx = plantTx(lucid, plantParams);
+    let tx = plantTx(lucid, plantParams);
+    tx = tx.addSigner(plantParams.backingInfo.backerAddress);
 
     const txComplete = await tx.complete();
 
@@ -370,7 +371,8 @@ describe("backing transactions", () => {
       },
     };
 
-    const tx = plantTx(lucid, plantParams);
+    let tx = plantTx(lucid, plantParams);
+    tx = tx.addSigner(plantParams.backingInfo.backerAddress);
 
     const txComplete = await tx.complete();
 
@@ -410,7 +412,8 @@ describe("backing transactions", () => {
       20
     );
 
-    const tx = plantTx(lucid, plantParams);
+    let tx = plantTx(lucid, plantParams);
+    tx = tx.addSigner(plantParams.backingInfo.backerAddress);
 
     const txComplete = await tx.complete();
 
@@ -450,7 +453,8 @@ describe("backing transactions", () => {
       8
     );
 
-    const tx = plantTx(lucid, plantParams);
+    let tx = plantTx(lucid, plantParams);
+    tx = tx.addSigner(plantParams.backingInfo.backerAddress);
 
     const txComplete = await tx.complete();
 
@@ -488,7 +492,8 @@ describe("backing transactions", () => {
       20
     );
 
-    const tx = plantTx(lucid, plantParams);
+    let tx = plantTx(lucid, plantParams);
+    tx = tx.addSigner(plantParams.backingInfo.backerAddress);
 
     const txComplete = await tx.complete();
 
@@ -526,7 +531,8 @@ describe("backing transactions", () => {
       8
     );
 
-    const tx = plantTx(lucid, plantParams);
+    let tx = plantTx(lucid, plantParams);
+    tx = tx.addSigner(plantParams.backingInfo.backerAddress);
 
     const txComplete = await tx.complete();
 
