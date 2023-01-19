@@ -499,7 +499,8 @@ export default function main({
                 assert(are_produced_backing_datums_valid, "Invalid produced backing datums");
 
                 assert(
-                  is_tx_authorized_by(tx, produced_backer_address.credential),
+                  is_tx_authorized_by(tx, produced_backer_address.credential)
+                    || is_tx_authorized_by(tx, pparams_datum.governor_address.credential),
                   "Transaction is not authorized by produced backer address"
                 );
 

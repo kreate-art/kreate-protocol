@@ -490,7 +490,8 @@ describe("project transactions", () => {
       ownerAddress,
     });
 
-    const tx = createProjectTx(lucid, createProjectParams);
+    let tx = createProjectTx(lucid, createProjectParams);
+    tx = tx.addSigner(ownerAddress);
 
     const txComplete = await tx.complete();
 
@@ -516,7 +517,9 @@ describe("project transactions", () => {
       ownerAddress,
     });
 
-    const tx = createProjectTx(lucid, createProjectParams);
+    let tx = createProjectTx(lucid, createProjectParams);
+
+    tx = tx.addSigner(ownerAddress);
 
     const txComplete = await tx.complete();
 

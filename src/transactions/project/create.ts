@@ -157,7 +157,6 @@ export function createProjectTx(
 
   let tx = lucid
     .newTx()
-    .addSigner(ownerAddress)
     .readFrom([protocolParamsUtxo, projectAtScriptRefUtxo])
     .collectFrom([seedUtxo])
     .mintAssets(
