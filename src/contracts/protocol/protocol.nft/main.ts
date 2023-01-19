@@ -35,13 +35,14 @@ export default function main({ protocolSeed }: Params): HeliosSource {
 
       redeemer.switch {
         Bootstrap => {
-          protocol_params_nft: Value =
-            Value::new(AssetClass::new(own_mph, PROTOCOL_PARAMS_NFT_TOKEN_NAME), 1);
-          protocol_proposal_nft: Value =
-            Value::new(AssetClass::new(own_mph, PROTOCOL_PROPOSAL_NFT_TOKEN_NAME), 1);
-
           assert (
-            tx.minted == protocol_params_nft + protocol_proposal_nft,
+            tx.minted.to_map().get(own_mph).all(
+              (token_name: ByteArray, amount: Int) -> Bool {
+                if (token_name == PROTOCOL_PARAMS_NFT_TOKEN_NAME) { amount == 1 }
+                else if (token_name == PROTOCOL_PROPOSAL_NFT_TOKEN_NAME) { amount == 1 }
+                else { false }
+              }
+            ),
             "Transaction must mint only two protocol params nft and protocol proposal nft"
           );
 
