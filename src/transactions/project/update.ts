@@ -23,12 +23,12 @@ export type UpdateProjectParams = {
   protocolParamsUtxo: UTxO;
   projectUtxo: UTxO;
   projectDetailUtxo: UTxO;
-  projectDetailScriptUtxo: UTxO;
-  dedicatedTreasuryScriptUtxo: UTxO;
-  extendsSponsorship: boolean;
+  dedicatedTreasuryUtxo: UTxO;
+  projectDetailVScriptUtxo: UTxO;
+  dedicatedTreasuryVScriptUtxo: UTxO;
+  shouldExtendSponsorship: boolean;
   newInformationCid?: IpfsCid;
   newCommunityUpdateCid?: IpfsCid;
-  dedicatedTreasuryUtxo: UTxO;
   txTimePadding?: TimeDifference;
 };
 
@@ -39,22 +39,22 @@ export function updateProjectTx(
     protocolParamsUtxo,
     projectUtxo,
     projectDetailUtxo,
-    projectDetailScriptUtxo,
-    dedicatedTreasuryScriptUtxo,
-    extendsSponsorship,
+    dedicatedTreasuryUtxo,
+    projectDetailVScriptUtxo,
+    dedicatedTreasuryVScriptUtxo,
+    shouldExtendSponsorship,
     newInformationCid,
     newCommunityUpdateCid,
-    dedicatedTreasuryUtxo,
     txTimePadding = 20000,
   }: UpdateProjectParams
 ) {
   assert(
-    projectDetailScriptUtxo.scriptRef != null,
+    projectDetailVScriptUtxo.scriptRef != null,
     "Invalid project detail script UTxO: Missing script reference"
   );
 
   assert(
-    dedicatedTreasuryScriptUtxo.scriptRef != null,
+    dedicatedTreasuryVScriptUtxo.scriptRef != null,
     "Invalid dedicated treasury script UTxO: Missing script reference"
   );
 
@@ -93,16 +93,20 @@ export function updateProjectTx(
 
   let minTotalFees = 0n;
 
-  if (extendsSponsorship) {
+  if (shouldExtendSponsorship) {
     minTotalFees += protocolParams.projectSponsorshipFee;
   }
 
-  if (newInformationCid?.cid !== projectDetail.informationCid.cid) {
+  if (
+    newInformationCid?.cid &&
+    newInformationCid.cid !== projectDetail.informationCid.cid
+  ) {
     minTotalFees += protocolParams.projectInformationUpdateFee;
   }
 
   if (
-    newCommunityUpdateCid?.cid !== projectDetail.lastCommunityUpdateCid?.cid
+    newCommunityUpdateCid?.cid &&
+    newCommunityUpdateCid.cid !== projectDetail.lastCommunityUpdateCid?.cid
   ) {
     minTotalFees += protocolParams.projectCommunityUpdateFee;
   }
@@ -111,7 +115,7 @@ export function updateProjectTx(
 
   const newProjectDetail: ProjectDetailDatum = {
     ...projectDetail,
-    sponsoredUntil: extendsSponsorship
+    sponsoredUntil: shouldExtendSponsorship
       ? {
           timestamp:
             BigInt(
@@ -143,8 +147,8 @@ export function updateProjectTx(
     .readFrom([
       protocolParamsUtxo,
       projectUtxo,
-      dedicatedTreasuryScriptUtxo,
-      projectDetailScriptUtxo,
+      dedicatedTreasuryVScriptUtxo,
+      projectDetailVScriptUtxo,
     ])
     .addSigner(deconstructAddress(lucid, project.ownerAddress))
     .collectFrom(
@@ -175,7 +179,7 @@ export function updateProjectTx(
       { lovelace: BigInt(dedicatedTreasuryUtxo.assets.lovelace) + minTotalFees }
     );
 
-  if (extendsSponsorship) {
+  if (shouldExtendSponsorship) {
     tx = tx.validFrom(txTime);
   }
 

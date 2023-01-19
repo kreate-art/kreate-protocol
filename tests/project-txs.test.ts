@@ -765,14 +765,14 @@ function generateUpdateProjectParams(
     datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
   };
 
-  const projectDetailScriptUtxo: UTxO = {
+  const projectDetailVScriptUtxo: UTxO = {
     ...generateOutRef(),
     address: generateScriptAddress(lucid),
     assets: { lovelace: 2_000_000n },
     scriptRef: projectDetailVScript,
   };
 
-  const dedicatedTreasuryScriptUtxo: UTxO = {
+  const dedicatedTreasuryVScriptUtxo: UTxO = {
     ...generateOutRef(),
     address: generateScriptAddress(lucid),
     assets: { lovelace: 2_000_000n },
@@ -805,8 +805,8 @@ function generateUpdateProjectParams(
     projectUtxo,
     projectDetailUtxo,
     dedicatedTreasuryUtxo,
-    projectDetailScriptUtxo,
-    dedicatedTreasuryScriptUtxo,
+    projectDetailVScriptUtxo,
+    dedicatedTreasuryVScriptUtxo,
   ]);
 
   // NOTE: When building transactions have start_time before the current time,
@@ -817,9 +817,9 @@ function generateUpdateProjectParams(
     protocolParamsUtxo,
     projectUtxo,
     projectDetailUtxo,
-    projectDetailScriptUtxo,
-    dedicatedTreasuryScriptUtxo,
-    extendsSponsorship: true,
+    projectDetailVScriptUtxo,
+    dedicatedTreasuryVScriptUtxo,
+    shouldExtendSponsorship: true,
     newInformationCid: {
       cid: "QmaMS3jikf86AC1aGpUVD2wn3jFv1SaeVBChhkNDit5XQy",
     },
