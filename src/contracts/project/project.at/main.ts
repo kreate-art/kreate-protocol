@@ -182,7 +182,10 @@ export default function main(protocolNftMph: string) {
                       project_datum: ProjectDatum = ProjectDatum::from_data(i.data);
 
                       project_datum.project_id == project_id
-                        && is_tx_authorized_by(tx, project_datum.owner_address.credential)
+                        && (
+                          is_tx_authorized_by(tx, project_datum.owner_address.credential)
+                            || is_tx_authorized_by(tx, pparams_datum.governor_address.credential)
+                          )
                         && project_datum.milestone_reached == 0
                         && project_datum.is_staking_delegation_managed_by_protocol
                     },

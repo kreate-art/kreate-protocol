@@ -108,7 +108,6 @@ export function plantTx(
 
   let tx = lucid
     .newTx()
-    .addSigner(backingInfo.backerAddress)
     .readFrom([
       proofOfBackingMpRefUtxo,
       projectInfo.projectUtxo,
