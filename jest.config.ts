@@ -15,8 +15,9 @@ const jestConfig: JestConfigWithTsJest = {
   testPathIgnorePatterns: ["/node_modules/", "<rootDir>/dist/"],
   modulePaths: [compilerOptions.baseUrl],
   moduleNameMapper: {
+    "(bignumber\\.js)": "$1",
     "(.+)\\.[jt]sx?": "$1",
-    ...pathsToModuleNameMapper(compilerOptions.paths),
+    ...pathsToModuleNameMapper(compilerOptions.paths, { useESM: true }),
   },
   transformIgnorePatterns: [`node_modules/(?!${esModules})`],
   transform: {
@@ -29,9 +30,7 @@ const jestConfig: JestConfigWithTsJest = {
       },
     ],
   },
-  setupFiles: [
-    "<rootDir>/tests/setup.ts"
-  ],
+  setupFiles: ["<rootDir>/tests/setup.ts"],
 };
 
 export default jestConfig;
