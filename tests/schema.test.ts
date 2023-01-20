@@ -2,6 +2,7 @@ import * as helios from "@hyperionbt/helios";
 import { Lucid } from "lucid-cardano";
 
 import { constructAddress, deconstructAddress } from "@/helpers/schema";
+import { fromJson, toJson } from "@/json";
 import * as S from "@/schema";
 import { OutRef, Hex } from "@/types";
 
@@ -24,6 +25,7 @@ describe("complex schema", () => {
       bar: S.Option(MiniStruct),
       baz: S.TxOutputId,
       inl: InlinedEnum,
+      map: S.Map(S.ValidatorHash, S.Int),
     },
     Right: S.Void,
   });
@@ -50,24 +52,35 @@ describe("complex schema", () => {
     }
 
     enum Datum {
-      Left
+      Up
       Down
-      Up {
+      Left {
         foo: OneStruct
         bar: Option[MiniStruct]
         baz: TxOutputId
+        inl: InlinedEnum
+        map: Map[ValidatorHash]Int
       }
       Right
     }
 
     func main(datum: Datum) -> Bool {
       datum.switch {
-        i: Up => {
+        i: Left => {
           i.foo.a == #${a}
             && i.bar.unwrap().b == ${b.toString()}
             && i.bar.unwrap().c == "${c}"
             && i.baz.tx_id.show() == "${d.txHash}"
             && i.baz.index == ${d.outputIndex.toString()}
+            && i.inl == InlinedEnum::Old {
+              MiniStruct {
+                b: ${b.toString()},
+                c: "${c}"
+              }
+            }
+            && i.map == Map[ValidatorHash]Int {
+              ValidatorHash::new(#${a}): ${b.toString()}
+            }
         },
         else => { false }
       }
@@ -85,6 +98,7 @@ describe("complex schema", () => {
         index: BigInt(d.outputIndex),
       },
       inl: { type: "Old", b: BigInt(b), c },
+      map: [[{ script: { hash: a } }, BigInt(b)]],
     };
   }
 
@@ -101,14 +115,19 @@ describe("complex schema", () => {
 
   const datum: Datum = buildDatum(sampleParams);
 
-  it("round trip", () => {
+  it("round trip cbor", () => {
     const sampleCbor =
-      "d87b9f44beef1234d8799f9f182a4b48656c6c6f20576f726c64ffffd8799fd8799f5820e1ffe6d8e94556ce6f24e53d94dc5d9559c2cbc8f00dad3737c61cd0d60a91dcff0affd8799f9f182a4b48656c6c6f20576f726c64ffffff";
+      "d87b9f44beef1234d8799f9f182a4b48656c6c6f20576f726c64ffffd8799fd8799f5820e1ffe6d8e94556ce6f24e53d94dc5d9559c2cbc8f00dad3737c61cd0d60a91dcff0affd8799f9f182a4b48656c6c6f20576f726c64ffffa144beef1234182aff";
     const cbor = S.toCbor(S.toData(datum, Datum));
     expect(cbor).toBe(sampleCbor);
 
     const deserialized = S.fromData(S.fromCbor(cbor), Datum);
     expect(deserialized).toStrictEqual(datum);
+  });
+
+  it("round trip json", () => {
+    // eslint-disable-next-line jest/prefer-strict-equal
+    expect(fromJson(toJson(datum), { forceBigInt: true })).toEqual(datum);
   });
 
   it("helios compatibility", async () => {

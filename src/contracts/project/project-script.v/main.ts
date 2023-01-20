@@ -240,7 +240,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 true
               } else {
                 (is_tx_authorized_by(tx, pparams_datum.governor_address.credential)
-                  || is_tx_authorized_by(tx, pparams_datum.staking_manager)
                 )
                   && tx.outputs.any(
                     (output: TxOutput) -> Bool {
