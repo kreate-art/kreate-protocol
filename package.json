@@ -54,11 +54,11 @@
   },
   "dependencies": {
     "@hyperionbt/helios": "^0.11.1",
-    "@sinclair/typebox": "^0.25.20",
+    "@sinclair/typebox": "^0.25.21",
     "lucid-cardano": "^0.8.7"
   },
   "devDependencies": {
-    "@types/jest": "^29.2.5",
+    "@types/jest": "^29.2.6",
     "@types/node": "^18.11.18",
     "@typescript-eslint/eslint-plugin": "^5.48.2",
     "@typescript-eslint/parser": "^5.48.2",
