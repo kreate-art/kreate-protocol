@@ -15,8 +15,8 @@ export function fromCbor(raw: Hex): Data {
   return Data.from(raw);
 }
 
-export const toJson = Data.toJson;
-export const fromJson = Data.fromJson;
+export const toDataJson = Data.toJson;
+export const fromDataJson = Data.fromJson;
 
 export function toData<T extends TUplc>(self: Static<T>, schema: T): Data {
   switch (schema[Kind]) {
@@ -48,11 +48,11 @@ export function toData<T extends TUplc>(self: Static<T>, schema: T): Data {
       assert(self instanceof Array, "self must be Array");
       return self.map((item) => toData(item, schema.items as TUplc));
     case "Map": {
-      assert(self instanceof Map, "self must be Map");
+      assert(self instanceof Array, "self must be Array (for Map)");
       const entries: [Data, Data][] = [];
       const keySchema = schema.key as TUplc;
       const valueSchema = schema.value as TUplc;
-      for (const [key, value] of self.entries())
+      for (const [key, value] of self)
         entries.push([toData(key, keySchema), toData(value, valueSchema)]);
       return new Map(entries);
     }
@@ -154,7 +154,7 @@ export function fromData<T extends TUplc>(data: Data, schema: T): Static<T> {
       const valueSchema = schema.value as TUplc;
       for (const [key, value] of data.entries())
         entries.push([fromData(key, keySchema), fromData(value, valueSchema)]);
-      return new Map(entries);
+      return entries;
     }
     case "Object": {
       // assert(schema.type === "struct", "expect Struct or ConStruct schema");

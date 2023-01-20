@@ -25,7 +25,8 @@ type Simplify<T> = T extends object ? { [K in keyof T]: T[K] } : T;
 // Custom typebox
 Custom.Set("Int", (_, value) => typeof value === "bigint");
 Custom.Set("Data", (_, value) => isData(value));
-Custom.Set("Map", (_, value) => value instanceof Map);
+// TODO: Stricter check
+Custom.Set("Map", (_, value) => value instanceof Array);
 Custom.Set("Option", () => true);
 
 // TODO: Restrict to TUplc instead of TSchema
@@ -105,7 +106,7 @@ export interface TMap<K extends TSchema = TSchema, V extends TSchema = TSchema>
   extends TSchema {
   $id: string;
   [Kind]: "Map";
-  static: Map<Static<K, this["params"]>, Static<V, this["params"]>>;
+  static: [Static<K, this["params"]>, Static<V, this["params"]>][];
   key: K;
   value: V;
   type: "map";

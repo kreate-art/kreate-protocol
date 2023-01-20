@@ -1,7 +1,7 @@
 import { UplcProgram, bytesToHex } from "@hyperionbt/helios";
 import { Data, Script } from "lucid-cardano";
 
-import { toJson } from "@/schema";
+import { toDataJson } from "@/schema";
 import { Hex } from "@/types";
 
 import modBackingVTypes from "./backing/backing.v/types";
@@ -73,7 +73,7 @@ export function compile(
   const program = newProgram(main, HELIOS_MODULES);
   if (opts.parameters)
     Object.entries(opts.parameters).forEach(([name, value]) =>
-      program.changeParam(name, toJson(value))
+      program.changeParam(name, toDataJson(value))
     );
   return program.compile(opts.simplify);
 }
