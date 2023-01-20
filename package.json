@@ -20,6 +20,7 @@
     "./commands/*": "./dist/commands/*.js",
     "./contracts/*": "./dist/contracts/*.js",
     "./helpers/*": "./dist/helpers/*.js",
+    "./json": "./dist/json.js",
     "./schema": "./dist/schema/index.js",
     "./schema/*": "./dist/schema/*.js",
     "./transactions/*": "./dist/transactions/*.js",
@@ -54,6 +55,7 @@
   },
   "dependencies": {
     "@hyperionbt/helios": "^0.11.1",
+    "@shinka-network/json-bigint": "^1.0.2",
     "@sinclair/typebox": "^0.25.21",
     "lucid-cardano": "^0.8.7"
   },

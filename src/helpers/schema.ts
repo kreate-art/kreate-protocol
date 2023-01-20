@@ -51,13 +51,11 @@ export function constructMigratableScript(
 ): MigratableScript {
   return {
     latest: { script: { hash: latestScriptHash } },
-    migrations: new Map(
-      Object.entries(migrations).map(
-        ([migratingScriptHash, { mintingPolicyHash, tokenName }]) => [
-          { script: { hash: migratingScriptHash } },
-          constructAssetClass(mintingPolicyHash, tokenName),
-        ]
-      )
+    migrations: Object.entries(migrations).map(
+      ([migratingScriptHash, { mintingPolicyHash, tokenName }]) => [
+        { script: { hash: migratingScriptHash } },
+        constructAssetClass(mintingPolicyHash, tokenName),
+      ]
     ),
   };
 }
