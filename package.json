@@ -57,7 +57,7 @@
     "@hyperionbt/helios": "^0.11.1",
     "@shinka-network/json-bigint": "^1.0.2",
     "@sinclair/typebox": "^0.25.21",
-    "lucid-cardano": "^0.8.7"
+    "lucid-cardano": "^0.8.8"
   },
   "devDependencies": {
     "@types/jest": "^29.2.6",
