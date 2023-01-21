@@ -31,6 +31,7 @@ export const ProjectRedeemer = Enum("case", {
   InitiateDelist: Void,
   CancelDelist: Void,
   FinalizeClose: Void,
+  FinalizeDelist: Void,
   Migrate: Void,
 });
 export type ProjectRedeemer = Static<typeof ProjectRedeemer>;
