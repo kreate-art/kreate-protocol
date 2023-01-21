@@ -1,11 +1,12 @@
 import { PROOF_OF_BACKING_TOKEN_NAMES } from "@/contracts/common/constants";
+import { Hex } from "@/types";
 
 import { helios } from "../../program";
 
 export type Params = {
-  projectAtMph: string;
-  protocolNftMph: string;
-  teikiMph: string;
+  projectAtMph: Hex;
+  protocolNftMph: Hex;
+  teikiMph: Hex;
 };
 
 export default function main({

@@ -2,7 +2,11 @@ import { Hex } from "@/types";
 
 import { HeliosSource, helios } from "../../program";
 
-export default function main(teikiPlantNftMph: Hex): HeliosSource {
+export type Params = {
+  teikiPlantNftMph: Hex;
+};
+
+export default function main({ teikiPlantNftMph }: Params): HeliosSource {
   return helios("v__teiki_plant", [
     "constants",
     "helpers",

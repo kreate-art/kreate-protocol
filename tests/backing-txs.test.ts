@@ -65,28 +65,32 @@ describe("backing transactions", () => {
     const protocolNftMph = generateBlake2b224Hash();
     const teikiMph = generateBlake2b224Hash();
     const projectId = constructProjectIdUsingBlake2b(generateOutRef());
-    const protocolStakeValidatorHash = generateBlake2b224Hash();
+    const protocolSvHash = generateBlake2b224Hash();
 
     const proofOfBackingMintingPolicy = exportScript(
-      compileProofOfBackingMpScript(projectAtMph, protocolNftMph, teikiMph)
+      compileProofOfBackingMpScript({ projectAtMph, protocolNftMph, teikiMph })
     );
     const proofOfBackingMph = lucid.utils.validatorToScriptHash(
       proofOfBackingMintingPolicy
     );
 
     const projectStakeValidator = exportScript(
-      compileProjectSvScript(projectId, "", projectAtMph, protocolNftMph)
+      compileProjectSvScript({
+        projectId,
+        _stakingSeed: "",
+        projectAtMph,
+        protocolNftMph,
+      })
     );
 
     const backingValidator = exportScript(
-      compileBackingVScript(proofOfBackingMph, protocolNftMph)
+      compileBackingVScript({ proofOfBackingMph, protocolNftMph })
     );
-    const backingValidatorHash =
-      lucid.utils.validatorToScriptHash(backingValidator);
+    const backingVHash = lucid.utils.validatorToScriptHash(backingValidator);
 
     const backingScriptAddress = scriptHashToAddress(
       lucid,
-      backingValidatorHash,
+      backingVHash,
       lucid.utils.validatorToScriptHash(projectStakeValidator)
     );
 
@@ -130,8 +134,8 @@ describe("backing transactions", () => {
       scriptRef: projectStakeValidator,
     };
 
-    const registry = generateProtocolRegistry(protocolStakeValidatorHash, {
-      backing: backingValidatorHash,
+    const registry = generateProtocolRegistry(protocolSvHash, {
+      backing: backingVHash,
     });
 
     const protocolParamsDatum: ProtocolParamsDatum = {
@@ -213,28 +217,32 @@ describe("backing transactions", () => {
     const protocolNftMph = generateBlake2b224Hash();
     const teikiMph = generateBlake2b224Hash();
     const projectId = constructProjectIdUsingBlake2b(generateOutRef());
-    const protocolStakeValidatorHash = generateBlake2b224Hash();
+    const protocolSvHash = generateBlake2b224Hash();
 
     const proofOfBackingMintingPolicy = exportScript(
-      compileProofOfBackingMpScript(projectAtMph, protocolNftMph, teikiMph)
+      compileProofOfBackingMpScript({ projectAtMph, protocolNftMph, teikiMph })
     );
     const proofOfBackingMph = lucid.utils.validatorToScriptHash(
       proofOfBackingMintingPolicy
     );
 
     const projectStakeValidator = exportScript(
-      compileProjectSvScript(projectId, "", projectAtMph, protocolNftMph)
+      compileProjectSvScript({
+        projectId,
+        _stakingSeed: "",
+        projectAtMph,
+        protocolNftMph,
+      })
     );
 
     const backingValidator = exportScript(
-      compileBackingVScript(proofOfBackingMph, protocolNftMph)
+      compileBackingVScript({ proofOfBackingMph, protocolNftMph })
     );
-    const backingValidatorHash =
-      lucid.utils.validatorToScriptHash(backingValidator);
+    const backingVHash = lucid.utils.validatorToScriptHash(backingValidator);
 
     const backingScriptAddress = scriptHashToAddress(
       lucid,
-      backingValidatorHash,
+      backingVHash,
       lucid.utils.validatorToScriptHash(projectStakeValidator)
     );
 
@@ -278,8 +286,8 @@ describe("backing transactions", () => {
       scriptRef: projectStakeValidator,
     };
 
-    const registry = generateProtocolRegistry(protocolStakeValidatorHash, {
-      backing: backingValidatorHash,
+    const registry = generateProtocolRegistry(protocolSvHash, {
+      backing: backingVHash,
     });
 
     const protocolParamsDatum: ProtocolParamsDatum = {
@@ -562,7 +570,7 @@ function generateUpdateBackingParams(
 
   const projectAtMph = generateBlake2b224Hash();
   const protocolNftMph = generateBlake2b224Hash();
-  const protocolStakeValidatorHash = generateBlake2b224Hash();
+  const protocolSvHash = generateBlake2b224Hash();
   const nftTeikiPlantMph = generateBlake2b224Hash();
 
   const teikiMintingPolicy = exportScript(
@@ -571,20 +579,24 @@ function generateUpdateBackingParams(
   const teikiMph = lucid.utils.validatorToScriptHash(teikiMintingPolicy);
 
   const proofOfBackingMintingPolicy = exportScript(
-    compileProofOfBackingMpScript(projectAtMph, protocolNftMph, teikiMph)
+    compileProofOfBackingMpScript({ projectAtMph, protocolNftMph, teikiMph })
   );
   const proofOfBackingMph = lucid.utils.validatorToScriptHash(
     proofOfBackingMintingPolicy
   );
 
   const backingValidator = exportScript(
-    compileBackingVScript(proofOfBackingMph, protocolNftMph)
+    compileBackingVScript({ proofOfBackingMph, protocolNftMph })
   );
-  const backingValidatorHash =
-    lucid.utils.validatorToScriptHash(backingValidator);
+  const backingVHash = lucid.utils.validatorToScriptHash(backingValidator);
 
   const projectStakeValidator = exportScript(
-    compileProjectSvScript(projectId, "", projectAtMph, protocolNftMph)
+    compileProjectSvScript({
+      projectId,
+      _stakingSeed: "",
+      projectAtMph,
+      protocolNftMph,
+    })
   );
 
   const proofOfBackingMpRefUtxo: UTxO = {
@@ -643,7 +655,7 @@ function generateUpdateBackingParams(
     })
   );
 
-  const sharedTreasuryValidatorHash = lucid.utils.validatorToScriptHash(
+  const sharedTreasuryVHash = lucid.utils.validatorToScriptHash(
     sharedTreasuryValidator
   );
 
@@ -654,10 +666,7 @@ function generateUpdateBackingParams(
     scriptRef: sharedTreasuryValidator,
   };
 
-  const sharedTreasuryAddress = scriptHashToAddress(
-    lucid,
-    sharedTreasuryValidatorHash
-  );
+  const sharedTreasuryAddress = scriptHashToAddress(lucid, sharedTreasuryVHash);
 
   const teikiUnit: Unit = teikiMph + TEIKI_TOKEN_NAME;
 
@@ -671,9 +680,9 @@ function generateUpdateBackingParams(
     datum: S.toCbor(S.toData(sharedTreasuryDatum, SharedTreasuryDatum)),
   };
 
-  const registry = generateProtocolRegistry(protocolStakeValidatorHash, {
-    backing: backingValidatorHash,
-    sharedTreasury: sharedTreasuryValidatorHash,
+  const registry = generateProtocolRegistry(protocolSvHash, {
+    backing: backingVHash,
+    sharedTreasury: sharedTreasuryVHash,
   });
 
   const protocolParamsDatum: ProtocolParamsDatum = {
@@ -695,7 +704,7 @@ function generateUpdateBackingParams(
 
   const backingScriptAddress = scriptHashToAddress(
     lucid,
-    backingValidatorHash,
+    backingVHash,
     lucid.utils.validatorToScriptHash(projectStakeValidator)
   );
 
