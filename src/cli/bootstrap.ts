@@ -26,7 +26,7 @@ import {
   compileTeikiPlantVScript,
   compileTeikiMpScript,
   compileProtocolNftScript,
-  compileProjectsAtScript,
+  compileProjectsAtMpScript,
   compileProtocolSvScript,
   compileProtocolParamsVScript,
   compileProtocolProposalVScript,
@@ -75,7 +75,7 @@ await sleep(60_000);
 // ==============DEPLOY REFERENCE ScRIPTS=====================
 const metaProtocolScripts = {
   TEIKI_PLANT_V_SCRIPT_HASH: exportScript(
-    compileTeikiPlantVScript(teikiPlantNftMph)
+    compileTeikiPlantVScript({ teikiPlantNftMph })
   ),
   TEIKI_MPH: exportScript(compileTeikiMpScript(teikiPlantNftMph)),
 };
@@ -157,7 +157,7 @@ async function runBootstrapMetaProtocol(lucid: Lucid) {
     lucid.utils.validatorToScriptHash(teikiPlantNftPolicy);
 
   const teikiPlantVScript = exportScript(
-    compileTeikiPlantVScript(teikiPlantNftMph)
+    compileTeikiPlantVScript({ teikiPlantNftMph })
   );
 
   const teikiPlantAddress = lucid.utils.validatorToAddress(teikiPlantVScript);
@@ -213,44 +213,48 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
   );
   const teikiMph = lucid.utils.validatorToScriptHash(teikiMintingPolicy);
 
-  const protocolNftScript = exportScript(compileProtocolNftScript(seedUtxo));
+  const protocolNftScript = exportScript(
+    compileProtocolNftScript({ protocolSeed: seedUtxo })
+  );
   const protocolNftMph = lucid.utils.validatorToScriptHash(protocolNftScript);
 
-  const projectAtScript = exportScript(compileProjectsAtScript(protocolNftMph));
+  const projectAtScript = exportScript(
+    compileProjectsAtMpScript({ protocolNftMph })
+  );
   const projectAtMph = lucid.utils.validatorToScriptHash(projectAtScript);
 
   const protocolSvScript = exportScript(
-    compileProtocolSvScript(protocolNftMph)
+    compileProtocolSvScript({ protocolNftMph })
   );
   const protocolParamsVScript = exportScript(
-    compileProtocolParamsVScript(protocolNftMph)
+    compileProtocolParamsVScript({ protocolNftMph })
   );
   const protocolProposalVScript = exportScript(
-    compileProtocolProposalVScript(protocolNftMph)
+    compileProtocolProposalVScript({ protocolNftMph })
   );
   const protocolScriptVScript = exportScript(
-    compileProtocolScriptVScript(protocolNftMph)
+    compileProtocolScriptVScript({ protocolNftMph })
   );
   const projectVScript = exportScript(
-    compileProjectVScript(projectAtMph, protocolNftMph)
+    compileProjectVScript({ projectAtMph, protocolNftMph })
   );
   const projectDetailVScript = exportScript(
-    compileProjectDetailVScript(projectAtMph, protocolNftMph)
+    compileProjectDetailVScript({ projectAtMph, protocolNftMph })
   );
   const projectScriptVScript = exportScript(
-    compileProjectScriptVScript(projectAtMph, protocolNftMph)
+    compileProjectScriptVScript({ projectAtMph, protocolNftMph })
   );
   const proofOfBackingMpScript = exportScript(
-    compileProofOfBackingMpScript(projectAtMph, protocolNftMph, teikiMph)
+    compileProofOfBackingMpScript({ projectAtMph, protocolNftMph, teikiMph })
   );
   const proofOfBackingMph = lucid.utils.validatorToScriptHash(
     proofOfBackingMpScript
   );
   const backingVScript = exportScript(
-    compileBackingVScript(proofOfBackingMph, protocolNftMph)
+    compileBackingVScript({ proofOfBackingMph, protocolNftMph })
   );
   const dedicatedTreasuryVScript = exportScript(
-    compileDedicatedTreasuryVScript(projectAtMph, protocolNftMph)
+    compileDedicatedTreasuryVScript({ projectAtMph, protocolNftMph })
   );
   const sharedTreasuryVScript = exportScript(
     compileSharedTreasuryVScript({
@@ -261,7 +265,7 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
     })
   );
   const openTreasuryVScript = exportScript(
-    compileOpenTreasuryVScript(projectAtMph)
+    compileOpenTreasuryVScript({ protocolNftMph })
   );
 
   const protocolParamsVHash = lucid.utils.validatorToScriptHash(
@@ -290,7 +294,9 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
   );
 
   const sampleMigrateTokenPolicy = exportScript(
-    compileSampleMigrateTokenMpScript(getPaymentKeyHash(governorAddress))
+    compileSampleMigrateTokenMpScript({
+      governorPkh: getPaymentKeyHash(governorAddress),
+    })
   );
 
   const sampleMigrateTokenMph = lucid.utils.validatorToScriptHash(

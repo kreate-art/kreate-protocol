@@ -13,7 +13,7 @@ import {
   compileProjectVScript,
   compileProjectDetailVScript,
   compileSharedTreasuryVScript,
-  compileProjectsAtScript,
+  compileProjectsAtMpScript,
   compileDedicatedTreasuryVScript,
 } from "@/commands/compile-scripts";
 import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
@@ -84,16 +84,21 @@ async function testWithdrawFunds(rewardAmount: bigint, actor: Actor) {
   const proofOfBackingMph = generateBlake2b224Hash();
 
   const projectSvScript = exportScript(
-    compileProjectSvScript(projectId, "", projectAtMph, protocolNftMph)
+    compileProjectSvScript({
+      projectId,
+      _stakingSeed: "",
+      projectAtMph,
+      protocolNftMph,
+    })
   );
   const projectVScript = exportScript(
-    compileProjectVScript(projectAtMph, protocolNftMph)
+    compileProjectVScript({ projectAtMph, protocolNftMph })
   );
   const projectDetailVScript = exportScript(
-    compileProjectDetailVScript(projectAtMph, protocolNftMph)
+    compileProjectDetailVScript({ projectAtMph, protocolNftMph })
   );
   const dedicatedTreasuryVScript = exportScript(
-    compileDedicatedTreasuryVScript(projectAtMph, protocolNftMph)
+    compileDedicatedTreasuryVScript({ projectAtMph, protocolNftMph })
   );
   const sharedTreasuryVScript = exportScript(
     compileSharedTreasuryVScript({
@@ -303,7 +308,6 @@ async function testDelegateProject(poolId: PoolId) {
   const governorAddress = await lucid.wallet.address();
 
   const protocolSvScriptHash = generateBlake2b224Hash();
-  const projectAtMph = generateBlake2b224Hash();
   const teikiMph = generateBlake2b224Hash();
   const proofOfBackingMph = generateBlake2b224Hash();
   const projectSeedOutRef = generateOutRef();
@@ -316,19 +320,26 @@ async function testDelegateProject(poolId: PoolId) {
   const protocolNftMph = generateBlake2b224Hash();
   const paramsNftUnit: Unit = protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
 
+  const projectAtMintingPolicy = exportScript(
+    compileProjectsAtMpScript({ protocolNftMph })
+  );
+  const projectAtMph = lucid.utils.validatorToScriptHash(
+    projectAtMintingPolicy
+  );
+
   const projectVScript = exportScript(
-    compileProjectVScript(projectAtMph, protocolNftMph)
+    compileProjectVScript({ projectAtMph, protocolNftMph })
   );
   const projectVScriptHash = lucid.utils.validatorToScriptHash(projectVScript);
 
   const projectDetailVScript = exportScript(
-    compileProjectDetailVScript(projectAtMph, protocolNftMph)
+    compileProjectDetailVScript({ projectAtMph, protocolNftMph })
   );
   const projectDetailVScriptHash =
     lucid.utils.validatorToScriptHash(projectDetailVScript);
 
   const dedicatedTreasuryVScript = exportScript(
-    compileDedicatedTreasuryVScript(projectAtMph, protocolNftMph)
+    compileDedicatedTreasuryVScript({ projectAtMph, protocolNftMph })
   );
   const dedicatedTreasuryVScriptHash = lucid.utils.validatorToScriptHash(
     dedicatedTreasuryVScript
@@ -376,20 +387,13 @@ async function testDelegateProject(poolId: PoolId) {
   const seedUtxo = (await lucid.wallet.getUtxos())[0];
   expect(seedUtxo).toBeTruthy();
 
-  const projectAtMintingPolicy = exportScript(
-    compileProjectsAtScript(protocolNftMph)
-  );
-  const projectsAuthTokenMph = lucid.utils.validatorToScriptHash(
-    projectAtMintingPolicy
-  );
-
   const projectStakeValidator = exportScript(
-    compileProjectSvScript(
-      constructProjectIdUsingBlake2b(seedUtxo),
-      "",
-      projectsAuthTokenMph,
-      protocolNftMph
-    )
+    compileProjectSvScript({
+      projectId: constructProjectIdUsingBlake2b(seedUtxo),
+      _stakingSeed: "",
+      projectAtMph,
+      protocolNftMph,
+    })
   );
   const projectScriptAddress = lucid.utils.credentialToAddress(
     lucid.utils.scriptHashToCredential(generateBlake2b224Hash()),
@@ -400,7 +404,12 @@ async function testDelegateProject(poolId: PoolId) {
   const projectScriptAtUnit: Unit =
     projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
   const projectSvScript = exportScript(
-    compileProjectSvScript(projectId, "", projectAtMph, protocolNftMph)
+    compileProjectSvScript({
+      projectId,
+      _stakingSeed: "",
+      projectAtMph,
+      protocolNftMph,
+    })
   );
 
   const projectScriptDatum: ProjectScriptDatum = {
@@ -586,14 +595,14 @@ function generateCreateProjectParams(
   lucid: Lucid,
   { isSponsored, seedUtxo, ownerAddress }: GenerateParams
 ) {
-  const protocolStakeValidatorHash = generateBlake2b224Hash();
+  const protocolSvHash = generateBlake2b224Hash();
 
   const protocolParamsAddress = lucid.utils.credentialToAddress(
     lucid.utils.scriptHashToCredential(generateBlake2b224Hash()),
-    lucid.utils.scriptHashToCredential(protocolStakeValidatorHash)
+    lucid.utils.scriptHashToCredential(protocolSvHash)
   );
 
-  const registry = generateProtocolRegistry(protocolStakeValidatorHash);
+  const registry = generateProtocolRegistry(protocolSvHash);
 
   const governorAddress = generateWalletAddress(lucid);
   const stakingManagerAddress = generateWalletAddress(lucid);
@@ -617,7 +626,7 @@ function generateCreateProjectParams(
   };
 
   const projectAtMintingPolicy = exportScript(
-    compileProjectsAtScript(protocolNftMph)
+    compileProjectsAtMpScript({ protocolNftMph })
   );
 
   const projectAtMph = lucid.utils.validatorToScriptHash(
@@ -625,12 +634,12 @@ function generateCreateProjectParams(
   );
 
   const projectStakeValidator = exportScript(
-    compileProjectSvScript(
-      constructProjectIdUsingBlake2b(seedUtxo),
-      "",
+    compileProjectSvScript({
+      projectId: constructProjectIdUsingBlake2b(seedUtxo),
+      _stakingSeed: "",
       projectAtMph,
-      protocolNftMph
-    )
+      protocolNftMph,
+    })
   );
 
   const projectScriptAddress = lucid.utils.credentialToAddress(
@@ -669,11 +678,11 @@ function generateUpdateProjectParams(
   lucid: Lucid,
   { seedUtxo, ownerAddress }: GenerateParams
 ): UpdateProjectParams {
-  const protocolStakeValidatorHash = generateBlake2b224Hash();
+  const protocolSvHash = generateBlake2b224Hash();
 
   const protocolParamsAddress = lucid.utils.credentialToAddress(
     lucid.utils.scriptHashToCredential(generateBlake2b224Hash()),
-    lucid.utils.scriptHashToCredential(protocolStakeValidatorHash)
+    lucid.utils.scriptHashToCredential(protocolSvHash)
   );
 
   const governorAddress = generateWalletAddress(lucid);
@@ -708,7 +717,7 @@ function generateUpdateProjectParams(
   const paramsNftUnit: Unit = protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
 
   const projectAtMintingPolicy = exportScript(
-    compileProjectsAtScript(protocolNftMph)
+    compileProjectsAtMpScript({ protocolNftMph })
   );
   const projectAtMph = lucid.utils.validatorToScriptHash(
     projectAtMintingPolicy
@@ -720,13 +729,13 @@ function generateUpdateProjectParams(
     projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
 
   const projectVScript = exportScript(
-    compileProjectVScript(projectAtMph, protocolNftMph)
+    compileProjectVScript({ projectAtMph, protocolNftMph })
   );
   const projectDetailVScript = exportScript(
-    compileProjectDetailVScript(projectAtMph, protocolNftMph)
+    compileProjectDetailVScript({ projectAtMph, protocolNftMph })
   );
   const dedicatedTreasuryVScript = exportScript(
-    compileDedicatedTreasuryVScript(projectAtMph, protocolNftMph)
+    compileDedicatedTreasuryVScript({ projectAtMph, protocolNftMph })
   );
 
   const projectVScriptHash = lucid.utils.validatorToScriptHash(projectVScript);
@@ -746,7 +755,7 @@ function generateUpdateProjectParams(
     lucid.utils.scriptHashToCredential(dedicatedTreasuryVScriptHash)
   );
 
-  const registry = generateProtocolRegistry(protocolStakeValidatorHash, {
+  const registry = generateProtocolRegistry(protocolSvHash, {
     projectDetail: projectDetailVScriptHash,
     dedicatedTreasury: dedicatedTreasuryVScriptHash,
   });

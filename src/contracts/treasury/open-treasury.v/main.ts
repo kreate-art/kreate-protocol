@@ -1,6 +1,12 @@
+import { Hex } from "@/types";
+
 import { helios } from "../../program";
 
-export default function main(protocolNftMph: string) {
+export type Params = {
+  protocolNftMph: Hex;
+};
+
+export default function main({ protocolNftMph }: Params) {
   return helios("v__open_treasury", [
     "v__open_treasury__types",
     "v__protocol_params__types",
