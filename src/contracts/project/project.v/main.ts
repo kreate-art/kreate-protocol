@@ -1,11 +1,13 @@
+import { Hex } from "@/types";
+
 import { helios } from "../../program";
 
-export type ProjectParams = {
-  projectAtMph: string;
-  protocolNftMph: string;
+export type Params = {
+  projectAtMph: Hex;
+  protocolNftMph: Hex;
 };
 
-export default function main({ projectAtMph, protocolNftMph }: ProjectParams) {
+export default function main({ projectAtMph, protocolNftMph }: Params) {
   return helios("v__project", [
     "v__project__types",
     "constants",

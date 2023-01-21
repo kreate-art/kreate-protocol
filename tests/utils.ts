@@ -17,13 +17,13 @@ export type ValidatorScriptHashRegistry = {
 };
 
 export function generateProtocolRegistry(
-  protocolStakeValidatorHash: Hex,
+  protocolSvHash: Hex,
   validatorScriptHashRegistry?: ValidatorScriptHashRegistry
 ): Registry {
   const migrateTokenName = fromText("migration");
 
   return {
-    protocolStakingValidator: { script: { hash: protocolStakeValidatorHash } },
+    protocolStakingValidator: { script: { hash: protocolSvHash } },
     projectValidator: getMigratableScript(
       validatorScriptHashRegistry?.project
         ? validatorScriptHashRegistry?.project

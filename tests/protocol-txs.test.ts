@@ -65,21 +65,22 @@ describe("protocol transactions", () => {
 
     expect(seedUtxo).toBeTruthy();
 
-    const protocolNftScript = exportScript(compileProtocolNftScript(seedUtxo));
+    const protocolNftScript = exportScript(
+      compileProtocolNftScript({ protocolSeed: seedUtxo })
+    );
 
     const protocolNftMph = lucid.utils.validatorToScriptHash(protocolNftScript);
 
     const protocolStakeValidator = exportScript(
-      compileProtocolSvScript(protocolNftMph)
+      compileProtocolSvScript({ protocolNftMph })
     );
 
-    const protocolStakeValidatorHash = lucid.utils.validatorToScriptHash(
+    const protocolSvHash = lucid.utils.validatorToScriptHash(
       protocolStakeValidator
     );
 
-    const protocolStakeCredential = lucid.utils.scriptHashToCredential(
-      protocolStakeValidatorHash
-    );
+    const protocolStakeCredential =
+      lucid.utils.scriptHashToCredential(protocolSvHash);
 
     const protocolStakeAddress = lucid.utils.credentialToRewardAddress(
       protocolStakeCredential
@@ -95,7 +96,7 @@ describe("protocol transactions", () => {
       protocolStakeCredential
     );
 
-    const registry = generateProtocolRegistry(protocolStakeValidatorHash);
+    const registry = generateProtocolRegistry(protocolSvHash);
 
     const params: BootstrapProtocolParams = {
       protocolParams: SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
@@ -133,7 +134,7 @@ describe("protocol transactions", () => {
       protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PROPOSAL;
 
     const protocolProposalValidator = exportScript(
-      compileProtocolProposalVScript(protocolNftMph)
+      compileProtocolProposalVScript({ protocolNftMph })
     );
 
     const protocolProposalValidatorHash = lucid.utils.validatorToScriptHash(
@@ -218,7 +219,7 @@ describe("protocol transactions", () => {
       protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PROPOSAL;
 
     const protocolProposalValidator = exportScript(
-      compileProtocolProposalVScript(protocolNftMph)
+      compileProtocolProposalVScript({ protocolNftMph })
     );
 
     const protocolProposalValidatorHash = lucid.utils.validatorToScriptHash(
@@ -306,10 +307,10 @@ describe("protocol transactions", () => {
       protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PROPOSAL;
 
     const protocolParamsValidator = exportScript(
-      compileProtocolParamsVScript(protocolNftMph)
+      compileProtocolParamsVScript({ protocolNftMph })
     );
     const protocolProposalValidator = exportScript(
-      compileProtocolProposalVScript(protocolNftMph)
+      compileProtocolProposalVScript({ protocolNftMph })
     );
 
     const protocolParamsValidatorHash = lucid.utils.validatorToScriptHash(
@@ -413,16 +414,15 @@ describe("protocol transactions", () => {
       protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
 
     const protocolStakeValidator = exportScript(
-      compileProtocolSvScript(protocolNftMph)
+      compileProtocolSvScript({ protocolNftMph })
     );
 
-    const protocolStakeValidatorHash = lucid.utils.validatorToScriptHash(
+    const protocolSvHash = lucid.utils.validatorToScriptHash(
       protocolStakeValidator
     );
 
-    const protocolStakeCredential = lucid.utils.scriptHashToCredential(
-      protocolStakeValidatorHash
-    );
+    const protocolStakeCredential =
+      lucid.utils.scriptHashToCredential(protocolSvHash);
 
     const protocolStakeAddress = lucid.utils.credentialToRewardAddress(
       protocolStakeCredential
@@ -438,7 +438,7 @@ describe("protocol transactions", () => {
       protocolStakeCredential
     );
 
-    const registry = generateProtocolRegistry(protocolStakeValidatorHash);
+    const registry = generateProtocolRegistry(protocolSvHash);
 
     const protocolParamsDatum: ProtocolParamsDatum = {
       registry,

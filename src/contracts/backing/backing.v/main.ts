@@ -1,8 +1,10 @@
+import { Hex } from "@/types";
+
 import { helios } from "../../program";
 
 export type Params = {
-  proofOfBackingMph: string;
-  protocolNftMph: string;
+  proofOfBackingMph: Hex;
+  protocolNftMph: Hex;
 };
 
 export default function main({ proofOfBackingMph, protocolNftMph }: Params) {

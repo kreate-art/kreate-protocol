@@ -15,7 +15,7 @@ import {
   compileDedicatedTreasuryVScript,
   compileOpenTreasuryVScript,
   compileProjectDetailVScript,
-  compileProjectsAtScript,
+  compileProjectsAtMpScript,
   compileProjectScriptVScript,
   compileProjectVScript,
   compileProofOfBackingMpScript,
@@ -25,14 +25,14 @@ import {
 } from "./compile-scripts";
 
 export type RegistryScript = {
-  protocolStakeValidatorHash: Hex;
-  projectValidatorHash: Hex;
-  projectDetailValidatorHash: Hex;
-  projectScriptValidatorHash: Hex;
-  backingValidatorHash: Hex;
-  dedicatedTreasuryValidatorHash: Hex;
-  sharedTreasuryValidatorHash: Hex;
-  openTreasuryValidatorHash: Hex;
+  protocolSvHash: Hex;
+  projectVHash: Hex;
+  projectDetailVHash: Hex;
+  projectScriptVHash: Hex;
+  backingVHash: Hex;
+  dedicatedTreasuryVHash: Hex;
+  sharedTreasuryVHash: Hex;
+  openTreasuryVHash: Hex;
 };
 
 export function getProtocolRegistryScript(
@@ -41,7 +41,7 @@ export function getProtocolRegistryScript(
   teikiPlantNftMph: Hex
 ): RegistryScript {
   const projectAtMph = lucid.utils.validatorToScriptHash(
-    exportScript(compileProjectsAtScript(protocolNftMph))
+    exportScript(compileProjectsAtMpScript({ protocolNftMph }))
   );
 
   const teikiMph = lucid.utils.validatorToScriptHash(
@@ -50,32 +50,36 @@ export function getProtocolRegistryScript(
 
   const proofOfBackingMph = lucid.utils.validatorToScriptHash(
     exportScript(
-      compileProofOfBackingMpScript(projectAtMph, protocolNftMph, teikiMph)
+      compileProofOfBackingMpScript({ projectAtMph, protocolNftMph, teikiMph })
     )
   );
 
   return {
-    protocolStakeValidatorHash: lucid.utils.validatorToScriptHash(
-      exportScript(compileProtocolSvScript(protocolNftMph))
+    protocolSvHash: lucid.utils.validatorToScriptHash(
+      exportScript(compileProtocolSvScript({ protocolNftMph }))
     ),
-    projectValidatorHash: lucid.utils.validatorToScriptHash(
-      exportScript(compileProjectVScript(projectAtMph, protocolNftMph))
+    projectVHash: lucid.utils.validatorToScriptHash(
+      exportScript(compileProjectVScript({ projectAtMph, protocolNftMph }))
     ),
-    projectDetailValidatorHash: lucid.utils.validatorToScriptHash(
-      exportScript(compileProjectDetailVScript(projectAtMph, protocolNftMph))
-    ),
-    projectScriptValidatorHash: lucid.utils.validatorToScriptHash(
-      exportScript(compileProjectScriptVScript(projectAtMph, protocolNftMph))
-    ),
-    backingValidatorHash: lucid.utils.validatorToScriptHash(
-      exportScript(compileBackingVScript(proofOfBackingMph, protocolNftMph))
-    ),
-    dedicatedTreasuryValidatorHash: lucid.utils.validatorToScriptHash(
+    projectDetailVHash: lucid.utils.validatorToScriptHash(
       exportScript(
-        compileDedicatedTreasuryVScript(projectAtMph, protocolNftMph)
+        compileProjectDetailVScript({ projectAtMph, protocolNftMph })
       )
     ),
-    sharedTreasuryValidatorHash: lucid.utils.validatorToScriptHash(
+    projectScriptVHash: lucid.utils.validatorToScriptHash(
+      exportScript(
+        compileProjectScriptVScript({ projectAtMph, protocolNftMph })
+      )
+    ),
+    backingVHash: lucid.utils.validatorToScriptHash(
+      exportScript(compileBackingVScript({ proofOfBackingMph, protocolNftMph }))
+    ),
+    dedicatedTreasuryVHash: lucid.utils.validatorToScriptHash(
+      exportScript(
+        compileDedicatedTreasuryVScript({ projectAtMph, protocolNftMph })
+      )
+    ),
+    sharedTreasuryVHash: lucid.utils.validatorToScriptHash(
       exportScript(
         compileSharedTreasuryVScript({
           projectAtMph,
@@ -85,8 +89,8 @@ export function getProtocolRegistryScript(
         })
       )
     ),
-    openTreasuryValidatorHash: lucid.utils.validatorToScriptHash(
-      exportScript(compileOpenTreasuryVScript(protocolNftMph))
+    openTreasuryVHash: lucid.utils.validatorToScriptHash(
+      exportScript(compileOpenTreasuryVScript({ protocolNftMph }))
     ),
   };
 }
@@ -119,40 +123,40 @@ export function getProtocolRegistry(
 
   return {
     protocolStakingValidator: {
-      script: { hash: registryScript.protocolStakeValidatorHash },
+      script: { hash: registryScript.protocolSvHash },
     },
     projectValidator: getMigratableScript(
-      registryScript.projectValidatorHash,
+      registryScript.projectVHash,
       migrateTokenMph,
       migrateTokenName
     ),
     projectDetailValidator: getMigratableScript(
-      registryScript.projectDetailValidatorHash,
+      registryScript.projectDetailVHash,
       migrateTokenMph,
       migrateTokenName
     ),
     projectScriptValidator: getMigratableScript(
-      registryScript.projectScriptValidatorHash,
+      registryScript.projectScriptVHash,
       migrateTokenMph,
       migrateTokenName
     ),
     backingValidator: getMigratableScript(
-      registryScript.backingValidatorHash,
+      registryScript.backingVHash,
       migrateTokenMph,
       migrateTokenName
     ),
     dedicatedTreasuryValidator: getMigratableScript(
-      registryScript.dedicatedTreasuryValidatorHash,
+      registryScript.dedicatedTreasuryVHash,
       migrateTokenMph,
       migrateTokenName
     ),
     sharedTreasuryValidator: getMigratableScript(
-      registryScript.sharedTreasuryValidatorHash,
+      registryScript.sharedTreasuryVHash,
       migrateTokenMph,
       migrateTokenName
     ),
     openTreasuryValidator: getMigratableScript(
-      registryScript.openTreasuryValidatorHash,
+      registryScript.openTreasuryVHash,
       migrateTokenMph,
       migrateTokenName
     ),

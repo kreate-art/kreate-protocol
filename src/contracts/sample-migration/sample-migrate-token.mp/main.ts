@@ -2,7 +2,11 @@ import { Hex } from "@/types";
 
 import { HeliosSource, helios } from "../../program";
 
-export default function main(governorPkh: Hex): HeliosSource {
+export type Params = {
+  governorPkh: Hex;
+};
+
+export default function main({ governorPkh }: Params): HeliosSource {
   return helios("mp__sample_migrate_token_policy", ["helpers"])`
     minting mp__sample_migrate_token_policy
 
