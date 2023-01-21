@@ -1,14 +1,13 @@
+import { Hex } from "@/types";
+
 import { helios } from "../../program";
 
-export type DedicatedTreasuryParams = {
-  projectAtMph: string;
-  protocolNftMph: string;
+export type Params = {
+  projectAtMph: Hex;
+  protocolNftMph: Hex;
 };
 
-export default function main({
-  projectAtMph,
-  protocolNftMph,
-}: DedicatedTreasuryParams) {
+export default function main({ projectAtMph, protocolNftMph }: Params) {
   return helios("v__dedicated_treasury", [
     "v__dedicated_treasury__types",
     "v__protocol_params__types",

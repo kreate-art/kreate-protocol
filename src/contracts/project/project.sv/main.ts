@@ -2,7 +2,7 @@ import { Hex } from "@/types";
 
 import { helios } from "../../program";
 
-export type ProjectStakeParams = {
+export type Params = {
   projectId: Hex;
   _stakingSeed: string;
   projectAtMph: Hex;
@@ -15,7 +15,7 @@ export default function main({
   _stakingSeed,
   projectAtMph,
   protocolNftMph,
-}: ProjectStakeParams) {
+}: Params) {
   return helios("sv__project", [
     "v__project_detail__types",
     "v__project__types",

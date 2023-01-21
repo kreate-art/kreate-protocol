@@ -2,7 +2,7 @@ import { Hex } from "@/types";
 
 import { helios } from "../../program";
 
-export type SharedTreasuryParams = {
+export type Params = {
   projectAtMph: Hex;
   protocolNftMph: Hex;
   teikiMph: Hex;
@@ -14,7 +14,7 @@ export default function main({
   protocolNftMph,
   teikiMph,
   proofOfBackingMph,
-}: SharedTreasuryParams) {
+}: Params) {
   return helios("v__shared_treasury", [
     "v__shared_treasury__types",
     "v__protocol_params__types",

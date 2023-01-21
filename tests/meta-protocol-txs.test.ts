@@ -104,7 +104,7 @@ describe("meta-protocol transactions", () => {
     );
     const teikiPlantNftMph = lucid.utils.mintingPolicyToId(teikiPlantNftScript);
     const teikiPlantValidator = exportScript(
-      compileTeikiPlantVScript(teikiPlantNftMph)
+      compileTeikiPlantVScript({ teikiPlantNftMph })
     );
 
     const teikiPlantValidatorHash =
@@ -193,7 +193,7 @@ describe("meta-protocol transactions", () => {
     );
     const teikiPlantNftMph = lucid.utils.mintingPolicyToId(teikiPlantNftScript);
     const teikiPlantValidator = exportScript(
-      compileTeikiPlantVScript(teikiPlantNftMph)
+      compileTeikiPlantVScript({ teikiPlantNftMph })
     );
 
     const teikiPlantValidatorHash =
@@ -280,7 +280,7 @@ describe("meta-protocol transactions", () => {
     );
     const teikiPlantNftMph = lucid.utils.mintingPolicyToId(teikiPlantNftScript);
     const teikiPlantValidator = exportScript(
-      compileTeikiPlantVScript(teikiPlantNftMph)
+      compileTeikiPlantVScript({ teikiPlantNftMph })
     );
 
     const teikiPlantValidatorHash =

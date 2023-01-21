@@ -1,98 +1,120 @@
 import { UplcProgram } from "@hyperionbt/helios";
-import { OutRef, UTxO } from "lucid-cardano";
+import { OutRef } from "lucid-cardano";
 
-import getBackingV from "@/contracts/backing/backing.v/main";
-import getProofOfBackingMp from "@/contracts/backing/proof-of-backing.mp/main";
+import getBackingV, {
+  Params as BackingVParams,
+} from "@/contracts/backing/backing.v/main";
+import getProofOfBackingMp, {
+  Params as ProofOfBackingMpParams,
+} from "@/contracts/backing/proof-of-backing.mp/main";
 import { compile } from "@/contracts/compile";
 import getTeikiPlantNft from "@/contracts/meta-protocol/teiki-plant.nft/main";
-import getTeikiPlantV from "@/contracts/meta-protocol/teiki-plant.v/main";
+import getTeikiPlantV, {
+  Params as TeikiPlantVParams,
+} from "@/contracts/meta-protocol/teiki-plant.v/main";
 import getTeikiMp from "@/contracts/meta-protocol/teiki.mp/main";
-import getProjectDetailV from "@/contracts/project/project-detail.v/main";
-import getProjectScriptV from "@/contracts/project/project-script.v/main";
-import getProjectAt from "@/contracts/project/project.at/main";
-import getProjectSv from "@/contracts/project/project.sv/main";
-import getProjectV from "@/contracts/project/project.v/main";
-import getProtocolParamsV from "@/contracts/protocol/protocol-params.v/main";
-import getProtocolProposalV from "@/contracts/protocol/protocol-proposal.v/main";
-import getProtocolScriptV from "@/contracts/protocol/protocol-script.v/main";
-import getProtocolNft from "@/contracts/protocol/protocol.nft/main";
-import getProtocolSv from "@/contracts/protocol/protocol.sv/main";
-import getSampleMigrateTokenMp from "@/contracts/sample-migration/sample-migrate-token.mp/main";
-import getDedicatedTreasuryV from "@/contracts/treasury/dedicated-treasury.v/main";
-import getOpenTreasuryV from "@/contracts/treasury/open-treasury.v/main";
+import getProjectDetailV, {
+  Params as ProjectDetailVParams,
+} from "@/contracts/project/project-detail.v/main";
+import getProjectScriptV, {
+  Params as ProjectScriptVParams,
+} from "@/contracts/project/project-script.v/main";
+import getProjectAt, {
+  Params as ProjectAtMpParams,
+} from "@/contracts/project/project.at/main";
+import getProjectSv, {
+  Params as ProjectSvParams,
+} from "@/contracts/project/project.sv/main";
+import getProjectV, {
+  Params as ProjectVParams,
+} from "@/contracts/project/project.v/main";
+import getProtocolParamsV, {
+  Params as ProtocolParamsVParams,
+} from "@/contracts/protocol/protocol-params.v/main";
+import getProtocolProposalV, {
+  Params as ProtocolProposalVParams,
+} from "@/contracts/protocol/protocol-proposal.v/main";
+import getProtocolScriptV, {
+  Params as ProtocolScriptVParams,
+} from "@/contracts/protocol/protocol-script.v/main";
+import getProtocolNft, {
+  Params as ProtocolNftMpParams,
+} from "@/contracts/protocol/protocol.nft/main";
+import getProtocolSv, {
+  Params as ProtocolSvParams,
+} from "@/contracts/protocol/protocol.sv/main";
+import getSampleMigrateTokenMp, {
+  Params as SampleMigrateTokenMpParams,
+} from "@/contracts/sample-migration/sample-migrate-token.mp/main";
+import getDedicatedTreasuryV, {
+  Params as DedicatedTreasuryVParams,
+} from "@/contracts/treasury/dedicated-treasury.v/main";
+import getOpenTreasuryV, {
+  Params as OpenTreasuryVParams,
+} from "@/contracts/treasury/open-treasury.v/main";
 import getSharedTreasuryV, {
-  SharedTreasuryParams,
+  Params as SharedTreasuryVParams,
 } from "@/contracts/treasury/shared-treasury.v/main";
 import { Hex } from "@/types";
 
-// TODO: @sk-saru, @sk-umiuma: Use Hex for all those script hash params,
-// both this file and the contracts.
-
-export function compileProtocolNftScript(seedUtxo: UTxO): UplcProgram {
-  return compile(getProtocolNft({ protocolSeed: seedUtxo }));
+export function compileProtocolNftScript(
+  params: ProtocolNftMpParams
+): UplcProgram {
+  return compile(getProtocolNft(params));
 }
 
-export function compileProtocolParamsVScript(protocolNftMph: Hex): UplcProgram {
-  return compile(getProtocolParamsV(protocolNftMph));
+export function compileProtocolParamsVScript(
+  params: ProtocolParamsVParams
+): UplcProgram {
+  return compile(getProtocolParamsV(params));
 }
 
-export function compileProtocolScriptVScript(protocolNftMph: Hex): UplcProgram {
-  return compile(getProtocolScriptV(protocolNftMph));
+export function compileProtocolScriptVScript(
+  params: ProtocolScriptVParams
+): UplcProgram {
+  return compile(getProtocolScriptV(params));
 }
 
 export function compileProtocolProposalVScript(
-  protocolNftMph: Hex
+  params: ProtocolProposalVParams
 ): UplcProgram {
-  return compile(getProtocolProposalV(protocolNftMph));
+  return compile(getProtocolProposalV(params));
 }
 
-export function compileProtocolSvScript(protocolNftMph: Hex): UplcProgram {
-  return compile(getProtocolSv(protocolNftMph));
+export function compileProtocolSvScript(params: ProtocolSvParams): UplcProgram {
+  return compile(getProtocolSv(params));
 }
 
-export function compileProjectsAtScript(protocolNftMph: Hex): UplcProgram {
-  return compile(getProjectAt(protocolNftMph));
-}
-
-export function compileProjectVScript(
-  projectAtMph: Hex,
-  protocolNftMph: Hex
+export function compileProjectsAtMpScript(
+  params: ProjectAtMpParams
 ): UplcProgram {
-  return compile(getProjectV({ projectAtMph, protocolNftMph }));
+  return compile(getProjectAt(params));
+}
+
+export function compileProjectVScript(params: ProjectVParams): UplcProgram {
+  return compile(getProjectV(params));
 }
 
 export function compileProjectDetailVScript(
-  projectAtMph: Hex,
-  protocolNftMph: Hex
+  params: ProjectDetailVParams
 ): UplcProgram {
-  return compile(getProjectDetailV({ projectAtMph, protocolNftMph }));
+  return compile(getProjectDetailV(params));
 }
 
 export function compileProjectScriptVScript(
-  projectAtMph: Hex,
-  protocolNftMph: Hex
+  params: ProjectScriptVParams
 ): UplcProgram {
-  return compile(getProjectScriptV({ projectAtMph, protocolNftMph }));
+  return compile(getProjectScriptV(params));
 }
 
-export function compileProjectSvScript(
-  projectId: Hex,
-  _stakingSeed: string,
-  projectAtMph: Hex,
-  protocolNftMph: Hex
-): UplcProgram {
-  return compile(
-    getProjectSv({
-      projectId,
-      _stakingSeed,
-      projectAtMph,
-      protocolNftMph,
-    })
-  );
+export function compileProjectSvScript(params: ProjectSvParams): UplcProgram {
+  return compile(getProjectSv(params));
 }
 
-export function compileTeikiPlantVScript(teikiPlantNftMph: Hex): UplcProgram {
-  return compile(getTeikiPlantV(teikiPlantNftMph));
+export function compileTeikiPlantVScript(
+  params: TeikiPlantVParams
+): UplcProgram {
+  return compile(getTeikiPlantV(params));
 }
 
 export function compileTeikiPlantNftScript(
@@ -106,41 +128,35 @@ export function compileTeikiMpScript(nftTeikiPlantMph: Hex): UplcProgram {
 }
 
 export function compileProofOfBackingMpScript(
-  projectAtMph: Hex,
-  protocolNftMph: Hex,
-  teikiMph: Hex
+  params: ProofOfBackingMpParams
 ): UplcProgram {
-  return compile(
-    getProofOfBackingMp({ projectAtMph, protocolNftMph, teikiMph })
-  );
+  return compile(getProofOfBackingMp(params));
 }
 
-export function compileBackingVScript(
-  proofOfBackingMph: Hex,
-  protocolNftMph: Hex
-): UplcProgram {
-  return compile(getBackingV({ proofOfBackingMph, protocolNftMph }));
+export function compileBackingVScript(params: BackingVParams): UplcProgram {
+  return compile(getBackingV(params));
 }
 
 export function compileDedicatedTreasuryVScript(
-  projectAtMph: Hex,
-  protocolNftMph: Hex
+  params: DedicatedTreasuryVParams
 ): UplcProgram {
-  return compile(getDedicatedTreasuryV({ projectAtMph, protocolNftMph }));
+  return compile(getDedicatedTreasuryV(params));
 }
 
-export function compileOpenTreasuryVScript(protocolNftMph: Hex): UplcProgram {
-  return compile(getOpenTreasuryV(protocolNftMph));
+export function compileOpenTreasuryVScript(
+  params: OpenTreasuryVParams
+): UplcProgram {
+  return compile(getOpenTreasuryV(params));
 }
 
 export function compileSharedTreasuryVScript(
-  params: SharedTreasuryParams
+  params: SharedTreasuryVParams
 ): UplcProgram {
   return compile(getSharedTreasuryV(params));
 }
 
 export function compileSampleMigrateTokenMpScript(
-  governorPkh: Hex
+  params: SampleMigrateTokenMpParams
 ): UplcProgram {
-  return compile(getSampleMigrateTokenMp(governorPkh));
+  return compile(getSampleMigrateTokenMp(params));
 }
