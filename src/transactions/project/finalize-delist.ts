@@ -26,6 +26,7 @@ export type ProjectUtxoInfo = {
 export type FinalizeDelistParams = {
   projectUtxoInfo: ProjectUtxoInfo[];
   projectVRefScriptUtxo: UTxO;
+  projectDetailVRefScriptUtxo: UTxO;
   protocolParamsUtxo: UTxO;
   txTimeStartPadding?: TimeDifference;
   txTimeEndPadding?: TimeDifference;
@@ -36,6 +37,7 @@ export function finalizeDelistTx(
   {
     projectUtxoInfo,
     projectVRefScriptUtxo,
+    projectDetailVRefScriptUtxo,
     protocolParamsUtxo,
     txTimeStartPadding = 60_000,
     txTimeEndPadding = 60_000,
@@ -57,7 +59,11 @@ export function finalizeDelistTx(
 
   let tx = lucid
     .newTx()
-    .readFrom([projectVRefScriptUtxo, protocolParamsUtxo])
+    .readFrom([
+      projectVRefScriptUtxo,
+      projectDetailVRefScriptUtxo,
+      protocolParamsUtxo,
+    ])
     .validFrom(txTimeStart)
     .validTo(txTimeEnd);
 
