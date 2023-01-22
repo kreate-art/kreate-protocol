@@ -41,6 +41,8 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
     } from helpers
 
     import {
+      ADA_MINTING_POLICY_HASH,
+      ADA_TOKEN_NAME,
       INACTIVE_PROJECT_UTXO_ADA,
       PROJECT_AT_TOKEN_NAME,
       PROJECT_CLOSE_DISCOUNT_CENTS,
@@ -165,47 +167,84 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Wrong project status"
               );
 
+              output_project_script: TxOutput = 
+                tx.outputs.find_safe(
+                  (output: TxOutput) -> Bool {
+                    output.value.to_map().all(
+                      (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                        if (mph == ADA_MINTING_POLICY_HASH) { 
+                          own_output_txout.value.get_safe(AssetClass::ADA)
+                            == PROJECT_SCRIPT_UTXO_ADA
+                        } else if (mph == PROJECTS_AT_MPH) { 
+                          tokens == Map[ByteArray]Int {PROJECT_SCRIPT_AT_TOKEN_NAME: 1} 
+                        } else { false }
+                      }
+                    )
+                  }
+                )
+                .switch {
+                  None => error("Missing output project script"),
+                  s: Some => s.some
+                };
+              
               assert (
-                tx.outputs
-                  .any(
-                    (output: TxOutput) -> Bool {
-                      output.address == Address::new(
-                        Credential::new_validator(
-                          pparams_datum.registry
-                            .project_script_validator
-                            .latest
-                        ),
-                        Option[StakingCredential]::Some{new_staking_credential}
-                      )
-                        && output.value.to_map().length == 2
-                        && output.value.get_safe(AssetClass::ADA) == PROJECT_SCRIPT_UTXO_ADA
-                        && output.value.get_safe(PROJECT_SCRIPT_AT_ASSET_CLASS) == 1
-                        && output.datum.switch{
-                          i: Inline => {
-                            project_script_datum: ProjectScriptDatum = ProjectScriptDatum::from_data(i.data);
-
-                            project_script_datum.project_id == datum.project_id
-                              && project_script_datum.stake_key_deposit == pparams_datum.stake_key_deposit
-                          },
-                          else => false
-                        }
-                        && StakingValidatorHash::from_script_hash(output.ref_script_hash.unwrap())
-                            == allocate.new_staking_validator
-                    }
+                output_project_script.address == Address::new(
+                  Credential::new_validator(
+                    pparams_datum.registry
+                      .project_script_validator
+                      .latest
                   ),
-                "Invalid project script UTxO"
-                );
+                  Option[StakingCredential]::Some{new_staking_credential}
+                ),
+                "Invalid output project script address"
+              );
 
               assert (
-                own_output_txout.address == own_input_txout.address
-                  && own_output_txout.value.to_map().length == 2
-                  && own_output_txout.value.get_safe(PROJECT_AT_ASSET_CLASS) == 1
-                  && own_output_txout.value.get_safe(AssetClass::ADA)
-                      >= own_input_txout.value.get_safe(AssetClass::ADA)
-                          - pparams_datum.stake_key_deposit
-                          - PROJECT_SCRIPT_UTXO_ADA
-                  && own_output_datum == datum,
+                output_project_script.datum.switch {
+                  i: Inline => {
+                    project_script_datum: ProjectScriptDatum = ProjectScriptDatum::from_data(i.data);
+
+                    project_script_datum.project_id == datum.project_id
+                      && project_script_datum.stake_key_deposit == pparams_datum.stake_key_deposit
+                  },
+                  else => false
+                },
+                "Invalid output project script datum"
+              );
+
+              assert (
+                StakingValidatorHash::from_script_hash(output_project_script.ref_script_hash.unwrap())
+                  == allocate.new_staking_validator,
+                "Invalid output project script ref script hash"
+              );
+
+              assert (
+                own_output_txout.address == own_input_txout.address,
                 "Invalid own output UTxO"
+              );
+              
+              assert (
+                own_output_datum == datum,
+                "Invalid own output address"
+              );
+
+              is_own_output_value_valid: Bool = 
+                own_output_txout.value.to_map().all(
+                  (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                    if (mph == ADA_MINTING_POLICY_HASH) { 
+                      own_output_txout.value.get_safe(AssetClass::ADA)
+                        >= own_input_txout.value.get_safe(AssetClass::ADA)
+                            - pparams_datum.stake_key_deposit
+                            - PROJECT_SCRIPT_UTXO_ADA 
+                    }
+                    else if (mph == PROJECTS_AT_MPH) { tokens == Map[ByteArray]Int {PROJECT_AT_TOKEN_NAME: 1} }
+                    else { false }
+                  }
+                );
+              
+              assert (
+                is_own_output_value_valid,
+                "Invalid output value"
               );
 
               tx.dcerts
@@ -368,9 +407,25 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                       pparams_datum.registry.protocol_staking_validator
                     )
                   }
-                )
-                  && own_output_txout.value == Value::lovelace(INACTIVE_PROJECT_UTXO_ADA)
-                  && own_output_datum.milestone_reached == datum.milestone_reached
+                ),
+                "Invalid output txout address"
+              );
+
+              assert (
+                own_output_txout.value.to_map().all(
+                  (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                    if (mph == ADA_MINTING_POLICY_HASH) {
+                      tokens == Map[ByteArray]Int{ADA_TOKEN_NAME: INACTIVE_PROJECT_UTXO_ADA}
+                    } else {
+                      tokens == own_input_txout.value.to_map().get(mph)
+                    }
+                  }
+                ),
+                "Invalid own output txout value"
+              );
+
+              assert (
+                own_output_datum.milestone_reached == datum.milestone_reached
                   && own_output_datum.project_id == datum.project_id
                   && own_output_datum.owner_address == datum.owner_address
                   && own_output_datum.status.switch {
@@ -379,7 +434,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     }
                   && own_output_datum.is_staking_delegation_managed_by_protocol
                       == datum.is_staking_delegation_managed_by_protocol,
-                "Invalid own output UTxO"
+                "Invalid own output datum"
               );
 
               if (is_tx_authorized_by(tx, datum.owner_address.credential)){
@@ -471,9 +526,25 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                       pparams_datum.registry.protocol_staking_validator
                     )
                   }
-                )
-                  && own_output_txout.value == Value::lovelace(INACTIVE_PROJECT_UTXO_ADA)
-                  && own_output_datum.milestone_reached == datum.milestone_reached
+                ),
+                "Invalid own output txout address"
+              );
+
+              assert (
+                own_output_txout.value.to_map().all(
+                  (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                    if (mph == ADA_MINTING_POLICY_HASH) {
+                      tokens == Map[ByteArray]Int{ADA_TOKEN_NAME: INACTIVE_PROJECT_UTXO_ADA}
+                    } else {
+                      tokens == own_input_txout.value.to_map().get(mph)
+                    }
+                  }
+                ),
+                "Invalid own output txout value"
+              );
+
+              assert (
+                own_output_datum.milestone_reached == datum.milestone_reached
                   && own_output_datum.project_id == datum.project_id
                   && own_output_datum.owner_address == datum.owner_address
                   && own_output_datum.status.switch {
@@ -482,7 +553,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     }
                   && own_output_datum.is_staking_delegation_managed_by_protocol
                       == datum.is_staking_delegation_managed_by_protocol,
-                "Invalid own output UTxO"
+                "Invalid own output datum"
               );
 
               if (ada_to_treasury > 0){
