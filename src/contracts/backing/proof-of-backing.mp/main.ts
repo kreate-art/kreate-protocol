@@ -432,9 +432,14 @@ export default function main({
 
               assert(does_mint_correctly, "Proof of backing: Mint incorrectly value");
 
-              does_consume_treasury_correctly
-                && is_tx_authorized_by(tx, consumed_backer_address.credential)
+              if (!cleanup) {
+                assert(
+                  is_tx_authorized_by(tx, consumed_backer_address.credential),
+                  "Transaction must be authorized by the backer"
+                )
+              };
 
+              does_consume_treasury_correctly
             };
 
           case_produced_backing_not_empty: Bool =

@@ -36,6 +36,8 @@ export const TEIKI_PLANT_NFT_TOKEN_NAME: Hex = fromText("teiki-plant");
 
 export const MIGRATE_TOKEN_NAME: Hex = fromText("migration");
 
+export const INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS = 20n;
+
 export default helios("constants")`
   module constants
 
@@ -91,7 +93,7 @@ export default helios("constants")`
   const PROJECT_SCRIPT_DELIST_DISCOUNT_CENTS: Int = 500000
 
   // Backing
-  const INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS: Int = 20
+  const INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS: Int = ${INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS.toString()}
 
   // Treasury
   const TREASURY_MIN_WITHDRAWAL_ADA: Int = 100000000
