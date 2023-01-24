@@ -16,6 +16,8 @@ const governorAddress = await lucid.wallet.address();
 
 const currentProtocolNftMph =
   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+const currentTeikiPlantNftMph =
+  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 
 const proposalNftUnit: Unit =
   currentProtocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PROPOSAL;
@@ -43,18 +45,18 @@ const protocolProposalRefScriptUtxo = (
   ])
 )[0];
 
-const proposeProtocolNftMph = "";
-const proposeTeikiPlantNftMph = "";
 const proposeMigrateTokenMph = "";
 const proposeMigrateTokenName = "";
 
-const proposedRegistry: Registry = getProtocolRegistry(
-  lucid,
-  proposeProtocolNftMph,
-  proposeTeikiPlantNftMph,
-  proposeMigrateTokenMph,
-  proposeMigrateTokenName
-);
+// NOTE: only need to attach the migration info to the current registry
+const proposedRegistry: Registry = getProtocolRegistry(lucid, {
+  protocolNftMph: currentProtocolNftMph,
+  teikiPlantNftMph: currentTeikiPlantNftMph,
+  migrationInfo: {
+    migrateTokenMph: proposeMigrateTokenMph,
+    migrateTokenName: proposeMigrateTokenName,
+  },
+});
 
 const proposedNonScriptParams = SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS;
 

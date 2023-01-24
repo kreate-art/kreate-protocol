@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Address, Lucid, Script } from "lucid-cardano";
 
-import { MIGRATE_TOKEN_NAME } from "@/contracts/common/constants";
 import { compile, exportScript } from "@/contracts/compile";
 import { HeliosSource, helios } from "@/contracts/program";
 import { getPaymentKeyHash, signAndSubmit } from "@/helpers/lucid";
@@ -52,7 +51,8 @@ import { getLucid } from "../commands/utils";
 const POOL_ID = "pool1kgyazdg4n0vvdkznuud3ktm0wmwvd2gr932k6mt346d2u4l9tt2";
 
 // Staking manager address - only use payment credential
-const STAKING_MANAGER_ADDRESS = "addr1xxxxxxxxxxxxxxxxxxxxxx";
+const STAKING_MANAGER_ADDRESS =
+  "addr_test1qr96lcz9ac5ujtkwxzwgc8u276hcm5zp8u82hvgkh7spcwl6vq0xp4mj8q472g22vfpp5n3mgcxwlrm0dqd4uuch2cqqug4st7";
 
 const lucid = await getLucid();
 
@@ -299,17 +299,10 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
     })
   );
 
-  const sampleMigrateTokenMph = lucid.utils.validatorToScriptHash(
-    sampleMigrateTokenPolicy
-  );
-
-  const registry: Registry = getProtocolRegistry(
-    lucid,
+  const registry: Registry = getProtocolRegistry(lucid, {
     protocolNftMph,
     teikiPlantNftMph,
-    sampleMigrateTokenMph,
-    MIGRATE_TOKEN_NAME
-  );
+  });
 
   const params: BootstrapProtocolParams = {
     protocolParams: SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
