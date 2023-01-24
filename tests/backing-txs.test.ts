@@ -1,3 +1,4 @@
+// TODO: @sk-saru refactor this file please!!!
 import { Emulator, Lucid, UTxO, Unit } from "lucid-cardano";
 
 import {
@@ -25,7 +26,11 @@ import {
 import * as S from "@/schema";
 import { BackingDatum } from "@/schema/teiki/backing";
 import { TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
-import { ProjectDatum, ProjectScriptDatum } from "@/schema/teiki/project";
+import {
+  ProjectDatum,
+  ProjectScriptDatum,
+  ProjectStatus,
+} from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { SharedTreasuryDatum } from "@/schema/teiki/treasury";
 import { PlantParams, plantTx } from "@/transactions/backing/plant";
@@ -41,6 +46,7 @@ import {
   scriptHashToAddress,
 } from "./emulator";
 import { generateProtocolRegistry } from "./utils";
+import { CleanUpParams, cleanUpTx } from "@/transactions/backing/clean-up";
 
 // NOTE: Becareful with global emulator, one test fails may lead to others fails
 const BACKER_ACCOUNT = await generateAccount();
@@ -415,6 +421,7 @@ describe("backing transactions", () => {
     const plantParams = generateUpdateBackingParams(
       sharedTreasuryDatum,
       projectId,
+      { type: "Active" },
       governorTeiki,
       availableTeiki,
       20
@@ -456,6 +463,7 @@ describe("backing transactions", () => {
     const plantParams = generateUpdateBackingParams(
       sharedTreasuryDatum,
       projectId,
+      { type: "Active" },
       governorTeiki,
       availableTeiki,
       8
@@ -495,6 +503,7 @@ describe("backing transactions", () => {
     const plantParams = generateUpdateBackingParams(
       sharedTreasuryDatum,
       projectId,
+      { type: "Active" },
       governorTeiki,
       availableTeiki,
       20
@@ -534,6 +543,7 @@ describe("backing transactions", () => {
     const plantParams = generateUpdateBackingParams(
       sharedTreasuryDatum,
       projectId,
+      { type: "Active" },
       governorTeiki,
       availableTeiki,
       8
@@ -541,6 +551,59 @@ describe("backing transactions", () => {
 
     let tx = plantTx(lucid, plantParams);
     tx = tx.addSigner(plantParams.backingInfo.backerAddress);
+
+    const txComplete = await tx.complete();
+
+    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+      true
+    );
+  });
+
+  it("clean up tx - TeikiEmpty - wilted flower", async () => {
+    expect.assertions(1);
+
+    lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
+
+    const projectId = constructProjectIdUsingBlake2b(generateOutRef());
+    const governorTeiki = 0n;
+    const availableTeiki = 0n;
+
+    const sharedTreasuryDatum: SharedTreasuryDatum = {
+      projectId: { id: projectId },
+      governorTeiki: 0n,
+      projectTeiki: {
+        teikiCondition: "TeikiEmpty",
+      },
+      tag: {
+        kind: "TagContinuation",
+        former: constructTxOutputId(generateOutRef()),
+      },
+    };
+
+    const plantParams = generateUpdateBackingParams(
+      sharedTreasuryDatum,
+      projectId,
+      { type: "Delisted" },
+      governorTeiki,
+      availableTeiki,
+      8
+    );
+
+    const cleaupParams: CleanUpParams = {
+      protocolParamsUtxo: plantParams.protocolParamsUtxo,
+      projectInfo: plantParams.projectInfo,
+      cleanUpInfo: {
+        backingUtxos: plantParams.backingInfo.backingUtxos,
+        backingScriptAddress: plantParams.backingInfo.backingScriptAddress,
+        backingScriptRefUtxo: plantParams.backingInfo.backingScriptRefUtxo,
+        proofOfBackingMpRefUtxo:
+          plantParams.backingInfo.proofOfBackingMpRefUtxo,
+        proofOfBackingMph: plantParams.backingInfo.proofOfBackingMph,
+      },
+      teikiMintingInfo: plantParams.teikiMintingInfo,
+    };
+
+    const tx = cleanUpTx(lucid, cleaupParams);
 
     const txComplete = await tx.complete();
 
@@ -556,6 +619,7 @@ describe("backing transactions", () => {
 function generateUpdateBackingParams(
   sharedTreasuryDatum: SharedTreasuryDatum,
   projectId: Hex,
+  projectStatus: ProjectStatus,
   governorTeiki: bigint,
   availableTeiki: bigint,
   epochs: number // after n blocks, backer could claim teiki rewards
@@ -617,7 +681,7 @@ function generateUpdateBackingParams(
     ownerAddress: constructAddress(projectOwnerAddress),
     milestoneReached: current_project_milestone + 1n,
     isStakingDelegationManagedByProtocol: true,
-    status: { type: "Active" },
+    status: projectStatus,
   };
 
   const projectUtxo: UTxO = {
