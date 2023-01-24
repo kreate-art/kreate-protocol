@@ -97,23 +97,34 @@ export function getProtocolRegistryScript(
 
 export function getMigratableScript(
   validatorHash: Hex,
-  migrateTokenMph: Hex,
-  migrateTokenName: string
+  migrationInfo?: MigrationInfo
 ): MigratableScript {
-  return constructMigratableScript(validatorHash, {
-    [validatorHash]: {
-      mintingPolicyHash: migrateTokenMph,
-      tokenName: migrateTokenName,
-    },
-  });
+  return constructMigratableScript(
+    validatorHash,
+    migrationInfo
+      ? {
+          [validatorHash]: {
+            mintingPolicyHash: migrationInfo.migrateTokenMph,
+            tokenName: migrationInfo.migrateTokenName,
+          },
+        }
+      : {}
+  );
 }
+
+export type MigrationInfo = {
+  migrateTokenMph: Hex;
+  migrateTokenName: Hex;
+};
+export type ProtocolRegistryParams = {
+  protocolNftMph: Hex;
+  teikiPlantNftMph: Hex;
+  migrationInfo?: MigrationInfo;
+};
 
 export function getProtocolRegistry(
   lucid: Lucid,
-  protocolNftMph: Hex,
-  teikiPlantNftMph: Hex,
-  migrateTokenMph: Hex,
-  migrateTokenName: string
+  { protocolNftMph, teikiPlantNftMph, migrationInfo }: ProtocolRegistryParams
 ): Registry {
   const registryScript: RegistryScript = getProtocolRegistryScript(
     lucid,
@@ -127,38 +138,31 @@ export function getProtocolRegistry(
     },
     projectValidator: getMigratableScript(
       registryScript.projectVHash,
-      migrateTokenMph,
-      migrateTokenName
+      migrationInfo
     ),
     projectDetailValidator: getMigratableScript(
       registryScript.projectDetailVHash,
-      migrateTokenMph,
-      migrateTokenName
+      migrationInfo
     ),
     projectScriptValidator: getMigratableScript(
       registryScript.projectScriptVHash,
-      migrateTokenMph,
-      migrateTokenName
+      migrationInfo
     ),
     backingValidator: getMigratableScript(
       registryScript.backingVHash,
-      migrateTokenMph,
-      migrateTokenName
+      migrationInfo
     ),
     dedicatedTreasuryValidator: getMigratableScript(
       registryScript.dedicatedTreasuryVHash,
-      migrateTokenMph,
-      migrateTokenName
+      migrationInfo
     ),
     sharedTreasuryValidator: getMigratableScript(
       registryScript.sharedTreasuryVHash,
-      migrateTokenMph,
-      migrateTokenName
+      migrationInfo
     ),
     openTreasuryValidator: getMigratableScript(
       registryScript.openTreasuryVHash,
-      migrateTokenMph,
-      migrateTokenName
+      migrationInfo
     ),
   };
 }

@@ -33,6 +33,7 @@ import {
 } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { SharedTreasuryDatum } from "@/schema/teiki/treasury";
+import { CleanUpParams, cleanUpTx } from "@/transactions/backing/clean-up";
 import { PlantParams, plantTx } from "@/transactions/backing/plant";
 import { Hex } from "@/types";
 
@@ -46,7 +47,6 @@ import {
   scriptHashToAddress,
 } from "./emulator";
 import { generateProtocolRegistry } from "./utils";
-import { CleanUpParams, cleanUpTx } from "@/transactions/backing/clean-up";
 
 // NOTE: Becareful with global emulator, one test fails may lead to others fails
 const BACKER_ACCOUNT = await generateAccount();
