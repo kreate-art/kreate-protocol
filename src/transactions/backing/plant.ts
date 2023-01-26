@@ -1,4 +1,4 @@
-import { Address, Lucid, Tx, UTxO, Unit } from "lucid-cardano";
+import { Address, Lucid, Tx, Unit, UTxO } from "lucid-cardano";
 
 import {
   PROOF_OF_BACKING_TOKEN_NAMES,
@@ -7,8 +7,9 @@ import {
 import { getCurrentTime } from "@/helpers/lucid";
 import {
   constructAddress,
-  constructTxOutputId,
   constructPlantHashUsingBlake2b,
+  constructTxOutputId,
+  parseProtocolParams,
 } from "@/helpers/schema";
 import * as S from "@/schema";
 import {
@@ -19,7 +20,10 @@ import {
 } from "@/schema/teiki/backing";
 import { TeikiMintingRedeemer } from "@/schema/teiki/meta-protocol";
 import { ProjectDatum } from "@/schema/teiki/project";
-import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
+import {
+  ProtocolParamsDatum,
+  LegacyProtocolParamsDatum,
+} from "@/schema/teiki/protocol";
 import {
   SharedTreasuryDatum,
   SharedTreasuryRedeemer,
@@ -212,9 +216,8 @@ function addMintingInstruction(
     "Missing backing validator reference script UTxO"
   );
 
-  const protocolParams = S.fromData(
-    S.fromCbor(protocolParamsUtxo.datum),
-    ProtocolParamsDatum
+  const { protocolParams } = parseProtocolParams(
+    S.fromCbor(protocolParamsUtxo.datum)
   );
 
   const projectDatum = S.fromData(S.fromCbor(projectUtxo.datum), ProjectDatum);
@@ -306,7 +309,7 @@ function mintTeiki(
   tx: Tx,
   teikiMintingInfo: TeikiMintingInfo,
   totalTeikiRewards: bigint,
-  protocolParams: ProtocolParamsDatum,
+  protocolParams: ProtocolParamsDatum | LegacyProtocolParamsDatum,
   txTimeStart: number
 ) {
   const teikiUnit: Unit = teikiMintingInfo.teikiMph + TEIKI_TOKEN_NAME;

@@ -58,6 +58,19 @@ export type ProtocolNonScriptParams = Omit<
   "registry" | "governorAddress" | "stakingManager"
 >;
 
+// TODO: Remove this after the migration on testnet is over
+const { stakingManager: _, ...legacyProtocolParamsProperties } =
+  ProtocolParamsDatum.properties;
+export const LegacyProtocolParamsDatum = Struct(legacyProtocolParamsProperties);
+export type LegacyProtocolParamsDatum = Static<
+  typeof LegacyProtocolParamsDatum
+>;
+export function isLegacyProtocolParams(
+  datum: ProtocolParamsDatum | LegacyProtocolParamsDatum
+): datum is LegacyProtocolParamsDatum {
+  return !("stakingManager" in datum);
+}
+
 export const ProtocolParamsRedeemer = Enum("case", {
   ApplyProposal: Void,
 });

@@ -7,11 +7,16 @@ import {
   Lucid,
   OutRef,
   toHex,
+  Data,
 } from "lucid-cardano";
 
 import * as S from "@/schema";
 import { Plant } from "@/schema/teiki/backing";
-import { MigratableScript } from "@/schema/teiki/protocol";
+import {
+  MigratableScript,
+  ProtocolParamsDatum,
+  LegacyProtocolParamsDatum,
+} from "@/schema/teiki/protocol";
 import { Hex } from "@/types";
 import { assert } from "@/utils";
 
@@ -116,6 +121,28 @@ export function deconstructAddress(
     lcPaymentCredential,
     lcStakingCredential
   );
+}
+
+export function parseProtocolParams(
+  data: Data
+):
+  | { legacy: false; protocolParams: ProtocolParamsDatum }
+  | { legacy: true; protocolParams: LegacyProtocolParamsDatum } {
+  try {
+    return {
+      legacy: false,
+      protocolParams: S.fromData(data, ProtocolParamsDatum),
+    };
+  } catch (e) {
+    try {
+      return {
+        legacy: true,
+        protocolParams: S.fromData(data, LegacyProtocolParamsDatum),
+      };
+    } catch {
+      throw e;
+    }
+  }
 }
 
 export function hashBlake2b256(cbor: Hex): Hex {
