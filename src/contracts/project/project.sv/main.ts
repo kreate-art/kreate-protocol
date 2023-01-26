@@ -49,6 +49,7 @@ export default function main({
     } from constants
 
     const project_id: ByteArray = #${projectId}
+    const staking_seed: ByteArray = #${_stakingSeed}
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${projectAtMph})
@@ -197,6 +198,11 @@ export default function main({
                   } else {
                     is_tx_authorized_by(tx, project_datum.owner_address.credential)
                   }
+              },
+              // Note: this case is unreachable
+              // We need this check to generate distinguish stake validators by _stakingSeed
+              Register => {
+                staking_seed == tx.inputs.head.serialize()
               },
               else => false
             }
