@@ -83,7 +83,7 @@ describe("backing transactions", () => {
     const projectStakeValidator = exportScript(
       compileProjectSvScript({
         projectId,
-        _stakingSeed: "",
+        stakingSeed: "",
         projectAtMph,
         protocolNftMph,
       })
@@ -235,7 +235,7 @@ describe("backing transactions", () => {
     const projectStakeValidator = exportScript(
       compileProjectSvScript({
         projectId,
-        _stakingSeed: "",
+        stakingSeed: "",
         projectAtMph,
         protocolNftMph,
       })
@@ -657,7 +657,7 @@ function generateUpdateBackingParams(
   const projectStakeValidator = exportScript(
     compileProjectSvScript({
       projectId,
-      _stakingSeed: "",
+      stakingSeed: "",
       projectAtMph,
       protocolNftMph,
     })

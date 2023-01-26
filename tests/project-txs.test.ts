@@ -86,7 +86,7 @@ async function testWithdrawFunds(rewardAmount: bigint, actor: Actor) {
   const projectSvScript = exportScript(
     compileProjectSvScript({
       projectId,
-      _stakingSeed: "",
+      stakingSeed: "",
       projectAtMph,
       protocolNftMph,
     })
@@ -390,7 +390,7 @@ async function testDelegateProject(poolId: PoolId) {
   const projectStakeValidator = exportScript(
     compileProjectSvScript({
       projectId: constructProjectIdUsingBlake2b(seedUtxo),
-      _stakingSeed: "",
+      stakingSeed: "",
       projectAtMph,
       protocolNftMph,
     })
@@ -406,7 +406,7 @@ async function testDelegateProject(poolId: PoolId) {
   const projectSvScript = exportScript(
     compileProjectSvScript({
       projectId,
-      _stakingSeed: "",
+      stakingSeed: "",
       projectAtMph,
       protocolNftMph,
     })
@@ -636,7 +636,7 @@ function generateCreateProjectParams(
   const projectStakeValidator = exportScript(
     compileProjectSvScript({
       projectId: constructProjectIdUsingBlake2b(seedUtxo),
-      _stakingSeed: "",
+      stakingSeed: "",
       projectAtMph,
       protocolNftMph,
     })
