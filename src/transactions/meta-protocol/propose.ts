@@ -9,7 +9,7 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { getCurrentTime } from "../../helpers/lucid";
+import { getTime } from "../../helpers/time";
 
 export type ProposeMetaProtocolTxParams = {
   teikiPlantUtxo: UTxO;
@@ -56,5 +56,5 @@ export function proposeMetaProtocolProposalTx(
       { inline: S.toCbor(S.toData(newTeikiPlantDatum, TeikiPlantDatum)) },
       teikiPlantUtxo.assets
     )
-    .validTo(getCurrentTime(lucid) + txTimePadding);
+    .validTo(getTime({ lucid }) + txTimePadding);
 }

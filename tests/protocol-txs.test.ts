@@ -9,12 +9,9 @@ import {
 import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
 import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
-import {
-  getCurrentTime,
-  getPaymentKeyHash,
-  signAndSubmit,
-} from "@/helpers/lucid";
+import { getPaymentKeyHash, signAndSubmit } from "@/helpers/lucid";
 import { constructAddress, constructTxOutputId } from "@/helpers/schema";
+import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   ProtocolParamsDatum,
@@ -350,7 +347,7 @@ describe("protocol transactions", () => {
       proposal: {
         params: { ...protocolParamsDatum, projectPledge: 2_000_000_000n },
         base: constructTxOutputId(protocolParamsUtxo),
-        inEffectAt: { timestamp: BigInt(getCurrentTime(lucid)) },
+        inEffectAt: { timestamp: BigInt(getTime({ lucid })) },
       },
     };
 

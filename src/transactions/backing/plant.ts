@@ -4,13 +4,13 @@ import {
   PROOF_OF_BACKING_TOKEN_NAMES,
   TEIKI_TOKEN_NAME,
 } from "@/contracts/common/constants";
-import { getCurrentTime } from "@/helpers/lucid";
 import {
   constructAddress,
   constructPlantHashUsingBlake2b,
   constructTxOutputId,
   parseProtocolParams,
 } from "@/helpers/schema";
+import { getTime, TimeProvider } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   BackingDatum,
@@ -69,6 +69,7 @@ export type PlantParams = {
   teikiMintingInfo?: TeikiMintingInfo;
   txTimeStartPadding?: TimeDifference;
   txTimeEndPadding?: TimeDifference;
+  timeProvider?: TimeProvider;
 };
 
 // clean up is splitted to another transaction
@@ -81,6 +82,7 @@ export function plantTx(
     teikiMintingInfo,
     txTimeStartPadding = 20_000,
     txTimeEndPadding = 60_000,
+    timeProvider,
   }: PlantParams
 ) {
   const proofOfBackingMpRefUtxo = backingInfo.proofOfBackingMpRefUtxo;
@@ -94,7 +96,7 @@ export function plantTx(
     S.toData({ case: "Plant", cleanup: false }, ProofOfBackingMintingRedeemer)
   );
 
-  const now = getCurrentTime(lucid);
+  const now = getTime({ timeProvider, lucid });
   const txTimeStart = now - txTimeStartPadding;
   const txTimeEnd = now + txTimeEndPadding;
 

@@ -15,12 +15,12 @@ import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { getCurrentTime } from "../../helpers/lucid";
 import {
   constructAddress,
   constructProjectIdUsingBlake2b,
   constructTxOutputId,
 } from "../../helpers/schema";
+import { getTime } from "../../helpers/time";
 import {
   PROJECT_DETAIL_UTXO_ADA,
   PROJECT_SCRIPT_UTXO_ADA,
@@ -111,7 +111,7 @@ export function createProjectTx(
     protocolParams.projectCreationFee +
     (isSponsored ? protocolParams.projectSponsorshipFee : 0n);
 
-  const txTimeStart = getCurrentTime(lucid) - txTimePadding;
+  const txTimeStart = getTime({ lucid }) - txTimePadding;
   const sponsoredUntil = isSponsored
     ? {
         timestamp:

@@ -17,12 +17,13 @@ import {
   TEIKI_TOKEN_NAME,
 } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
-import { getCurrentTime, signAndSubmit } from "@/helpers/lucid";
+import { signAndSubmit } from "@/helpers/lucid";
 import {
   constructAddress,
   constructProjectIdUsingBlake2b,
   constructTxOutputId,
 } from "@/helpers/schema";
+import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import { BackingDatum } from "@/schema/teiki/backing";
 import { TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
@@ -323,7 +324,7 @@ describe("backing transactions", () => {
     const backingDatum: BackingDatum = {
       projectId: { id: projectId },
       backerAddress: constructAddress(BACKER_ACCOUNT.address),
-      stakedAt: { timestamp: BigInt(getCurrentTime(lucid)) },
+      stakedAt: { timestamp: BigInt(getTime({ lucid })) },
       milestoneBacked: current_project_milestone,
     };
 
@@ -340,7 +341,7 @@ describe("backing transactions", () => {
     const backingDatum1: BackingDatum = {
       projectId: { id: projectId },
       backerAddress: constructAddress(BACKER_ACCOUNT.address),
-      stakedAt: { timestamp: BigInt(getCurrentTime(lucid)) + 100_000n },
+      stakedAt: { timestamp: BigInt(getTime({ lucid })) + 100_000n },
       milestoneBacked: current_project_milestone,
     };
 
@@ -410,7 +411,7 @@ describe("backing transactions", () => {
       projectTeiki: {
         teikiCondition: "TeikiBurntPeriodically",
         available: availableTeiki,
-        lastBurnAt: { timestamp: BigInt(getCurrentTime(lucid)) },
+        lastBurnAt: { timestamp: BigInt(getTime({ lucid })) },
       },
       tag: {
         kind: "TagContinuation",
@@ -452,7 +453,7 @@ describe("backing transactions", () => {
       projectTeiki: {
         teikiCondition: "TeikiBurntPeriodically",
         available: availableTeiki,
-        lastBurnAt: { timestamp: BigInt(getCurrentTime(lucid)) },
+        lastBurnAt: { timestamp: BigInt(getTime({ lucid })) },
       },
       tag: {
         kind: "TagContinuation",
@@ -775,7 +776,7 @@ function generateUpdateBackingParams(
   const backingDatum: BackingDatum = {
     projectId: { id: projectId },
     backerAddress: constructAddress(BACKER_ACCOUNT.address),
-    stakedAt: { timestamp: BigInt(getCurrentTime(lucid)) },
+    stakedAt: { timestamp: BigInt(getTime({ lucid })) },
     milestoneBacked: current_project_milestone,
   };
 

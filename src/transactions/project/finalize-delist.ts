@@ -1,6 +1,6 @@
 import { Lucid, UTxO, getAddressDetails } from "lucid-cardano";
 
-import { getCurrentTime } from "@/helpers/lucid";
+import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   ProjectDatum,
@@ -53,7 +53,7 @@ export function finalizeDelistTx(
     ProtocolParamsDatum
   );
 
-  const now = getCurrentTime(lucid);
+  const now = getTime({ lucid });
   const txTimeStart = now - txTimeStartPadding;
   const txTimeEnd = now + txTimeEndPadding;
 

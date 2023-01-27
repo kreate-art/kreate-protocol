@@ -9,11 +9,11 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { getCurrentTime } from "../../helpers/lucid";
 import {
   constructTxOutputId,
   extractPaymentPubKeyHash,
 } from "../../helpers/schema";
+import { getTime } from "../../helpers/time";
 
 export type ProposeProtocolTxParams = {
   protocolParamsUtxo: UTxO;
@@ -43,7 +43,7 @@ export function proposeProtocolProposalTx(
     protocolParams.governorAddress
   );
 
-  const txTimeEnd = getCurrentTime(lucid) + txTimePadding;
+  const txTimeEnd = getTime({ lucid }) + txTimePadding;
 
   const protocolProposalDatum: ProtocolProposalDatum = {
     proposal: {
