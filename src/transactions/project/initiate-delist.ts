@@ -1,6 +1,6 @@
 import { Lucid, UTxO } from "lucid-cardano";
 
-import { getCurrentTime } from "@/helpers/lucid";
+import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import { ProjectDatum, ProjectRedeemer } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
@@ -35,7 +35,7 @@ export function initiateDelistTx(
     ProtocolParamsDatum
   );
 
-  const now = getCurrentTime(lucid);
+  const now = getTime({ lucid });
   const txTimeStart = now - txTimeStartPadding;
   const txTimeEnd = now + txTimeEndPadding;
 

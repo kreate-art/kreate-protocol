@@ -1,23 +1,12 @@
 import {
   Address,
   AddressDetails,
-  Emulator,
   getAddressDetails,
-  Lucid,
   TxComplete,
 } from "lucid-cardano";
 
-import { Hex, UnixTime } from "@/types";
+import { Hex } from "@/types";
 import { assert } from "@/utils";
-
-export function getCurrentTime(lucid: Lucid): UnixTime {
-  if (lucid.provider instanceof Emulator) return lucid.provider.now();
-  else {
-    // Truncate to the beginning of a second, due to how ouroboros works.
-    const now = Date.now();
-    return now - (now % 1000);
-  }
-}
 
 export async function signAndSubmit(tx: TxComplete): Promise<Hex> {
   const signedTx = await tx.sign().complete();

@@ -8,7 +8,7 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { getCurrentTime } from "../../helpers/lucid";
+import { getTime } from "../../helpers/time";
 
 export type ApplyMetaProtocolTxParams = {
   teikiPlantUtxo: UTxO;
@@ -37,7 +37,7 @@ export function applyMetaProtocolProposalTx(
     teikiPlantDatum.proposal,
     "Invalid Teiki plant datum: Proposed rule cannot be null"
   );
-  const txTimeStart = getCurrentTime(lucid) - txTimePadding;
+  const txTimeStart = getTime({ lucid }) - txTimePadding;
   const teikiPlantRedeemer: TeikiPlantRedeemer = { case: "Apply" };
 
   const appliedTeikiPlantDatum: TeikiPlantDatum = {

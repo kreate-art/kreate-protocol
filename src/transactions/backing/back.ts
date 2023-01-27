@@ -8,8 +8,8 @@ import {
 import { Hex, TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { getCurrentTime } from "../../helpers/lucid";
 import { constructAddress } from "../../helpers/schema";
+import { getTime, TimeProvider } from "../../helpers/time";
 
 export type ProjectInfo = {
   id: Hex;
@@ -30,6 +30,7 @@ export type CreateBackingParams = {
   projectUtxo: UTxO;
   projectScriptUtxo: UTxO;
   txTimePadding?: TimeDifference;
+  timeProvider?: TimeProvider;
 };
 
 // This is a case of plant transaction with minimize information
@@ -44,6 +45,7 @@ export function createBackingTx(
     projectUtxo,
     projectScriptUtxo,
     txTimePadding = 200000,
+    timeProvider,
   }: CreateBackingParams
 ) {
   assert(
@@ -51,7 +53,8 @@ export function createBackingTx(
     "Invalid proof of backing reference UTxO: must reference proof of backing script"
   );
 
-  const txTimeEnd = getCurrentTime(lucid) + txTimePadding;
+  const now = getTime({ timeProvider, lucid });
+  const txTimeEnd = now + txTimePadding;
 
   const backingDatum: BackingDatum = {
     projectId: { id: projectInfo.id },

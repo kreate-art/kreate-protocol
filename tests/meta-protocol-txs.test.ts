@@ -6,11 +6,8 @@ import {
 } from "@/commands/compile-scripts";
 import { TEIKI_PLANT_NFT_TOKEN_NAME } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
-import {
-  getCurrentTime,
-  getPaymentKeyHash,
-  signAndSubmit,
-} from "@/helpers/lucid";
+import { getPaymentKeyHash, signAndSubmit } from "@/helpers/lucid";
+import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import { RulesProposal, TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
 import {
@@ -138,7 +135,7 @@ describe("meta-protocol transactions", () => {
     };
 
     const proposedRules: RulesProposal = {
-      inEffectAt: { timestamp: BigInt(getCurrentTime(lucid) + 50_000) },
+      inEffectAt: { timestamp: BigInt(getTime({ lucid }) + 50_000) },
       rules: {
         ...teikiPlantDatum.rules,
         proposalWaitingPeriod: { milliseconds: 10_000n },
@@ -229,7 +226,7 @@ describe("meta-protocol transactions", () => {
     const proposedTeikiPlantDatum: TeikiPlantDatum = {
       ...teikiPlantDatum,
       proposal: {
-        inEffectAt: { timestamp: BigInt(getCurrentTime(lucid) + 50_000) },
+        inEffectAt: { timestamp: BigInt(getTime({ lucid }) + 50_000) },
         rules: {
           ...teikiPlantDatum.rules,
           proposalWaitingPeriod: { milliseconds: 10_000n },
@@ -316,7 +313,7 @@ describe("meta-protocol transactions", () => {
     const proposedTeikiPlantDatum: TeikiPlantDatum = {
       ...teikiPlantDatum,
       proposal: {
-        inEffectAt: { timestamp: BigInt(getCurrentTime(lucid) + 50_000) },
+        inEffectAt: { timestamp: BigInt(getTime({ lucid }) + 50_000) },
         rules: {
           ...teikiPlantDatum.rules,
           proposalWaitingPeriod: { milliseconds: 10_000n },

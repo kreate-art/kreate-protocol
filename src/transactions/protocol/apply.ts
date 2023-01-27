@@ -10,8 +10,8 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { getCurrentTime } from "../../helpers/lucid";
 import { extractPaymentPubKeyHash } from "../../helpers/schema";
+import { getTime } from "../../helpers/time";
 
 export type ApplyProtocolTxParams = {
   protocolParamsUtxo: UTxO;
@@ -74,5 +74,5 @@ export function applyProtocolProposalTx(
       },
       protocolParamsUtxo.assets
     )
-    .validFrom(getCurrentTime(lucid) - txTimePadding);
+    .validFrom(getTime({ lucid }) - txTimePadding);
 }

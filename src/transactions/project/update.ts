@@ -16,7 +16,7 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { getCurrentTime } from "../../helpers/lucid";
+import { getTime } from "../../helpers/time";
 import { RATIO_MULTIPLIER } from "../constants";
 
 export type UpdateProjectParams = {
@@ -111,7 +111,7 @@ export function updateProjectTx(
     minTotalFees += protocolParams.projectCommunityUpdateFee;
   }
 
-  const txTime = getCurrentTime(lucid) - txTimePadding;
+  const txTime = getTime({ lucid }) - txTimePadding;
 
   const newProjectDetail: ProjectDetailDatum = {
     ...projectDetail,
