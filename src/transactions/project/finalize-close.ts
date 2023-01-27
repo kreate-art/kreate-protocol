@@ -93,9 +93,13 @@ export function finalizeCloseTx(
     protocolSvCredential
   );
 
-  const tx = lucid
+  let tx = lucid
     .newTx()
-    .readFrom([projectVScriptUtxo, projectDetailVScriptUtxo])
+    .readFrom([
+      protocolParamsUtxo,
+      projectVScriptUtxo,
+      projectDetailVScriptUtxo,
+    ])
     .collectFrom(
       [projectUtxo],
       S.toCbor(S.toData({ case: "FinalizeClose" }, ProjectRedeemer))
@@ -120,6 +124,8 @@ export function finalizeCloseTx(
     );
 
   if (actor === "project-owner") {
+    tx = tx.addSigner(deconstructAddress(lucid, project.ownerAddress));
+  } else {
     const adaToOwner =
       projectUtxo.assets.lovelace -
       INACTIVE_PROJECT_UTXO_ADA -
