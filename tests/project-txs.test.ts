@@ -1,3 +1,4 @@
+/* eslint-disable jest/max-expects */
 import {
   Emulator,
   Lucid,
@@ -42,6 +43,10 @@ import {
   DelegateProjectParams,
   delegateProjectTx,
 } from "@/transactions/project/delegate";
+import {
+  FinalizeCloseParams,
+  finalizeCloseTx,
+} from "@/transactions/project/finalize-close";
 import {
   UpdateProjectParams,
   updateProjectTx,
@@ -503,6 +508,146 @@ async function testDelegateProject(poolId: PoolId) {
   await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
 }
 
+async function testFinalizeCloseProject(actor: "project-owner" | "anyone") {
+  lucid.selectWalletFromSeed(GOVERNOR_ACCOUNT.seedPhrase);
+  const governorAddress = await lucid.wallet.address();
+
+  lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
+  const ownerAddress = await lucid.wallet.address();
+
+  const protocolSvScriptHash = generateBlake2b224Hash();
+  const projectSeedOutRef = generateOutRef();
+  const projectId = constructProjectIdUsingBlake2b(projectSeedOutRef);
+
+  const protocolParamsAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(generateBlake2b224Hash())
+  );
+
+  const protocolNftMph = generateBlake2b224Hash();
+  const paramsNftUnit: Unit = protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
+
+  const projectAtMintingPolicy = exportScript(
+    compileProjectsAtMpScript({ protocolNftMph })
+  );
+  const projectAtMph = lucid.utils.validatorToScriptHash(
+    projectAtMintingPolicy
+  );
+
+  const projectVScript = exportScript(
+    compileProjectVScript({ projectAtMph, protocolNftMph })
+  );
+  const projectVScriptHash = lucid.utils.validatorToScriptHash(projectVScript);
+
+  const projectDetailVScript = exportScript(
+    compileProjectDetailVScript({ projectAtMph, protocolNftMph })
+  );
+  const projectDetailVScriptHash =
+    lucid.utils.validatorToScriptHash(projectDetailVScript);
+
+  const validatorScriptHashRegistry: ValidatorScriptHashRegistry = {
+    project: projectVScriptHash,
+    projectDetail: projectDetailVScriptHash,
+  };
+
+  const registry = generateProtocolRegistry(
+    protocolSvScriptHash,
+    validatorScriptHashRegistry
+  );
+
+  const stakingManagerAddress = generateWalletAddress(lucid);
+  const protocolParamsDatum: ProtocolParamsDatum = {
+    registry,
+    governorAddress: constructAddress(governorAddress),
+    stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
+    ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+  };
+
+  const protocolParamsUtxo: UTxO = {
+    ...generateOutRef(),
+    address: protocolParamsAddress,
+    assets: { lovelace: 2_000_000n, [paramsNftUnit]: 1n },
+    datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
+  };
+
+  const projectAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(projectVScriptHash)
+  );
+  const projectDetailAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(projectDetailVScriptHash)
+  );
+
+  const projectAtUnit: Unit = projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
+  const projectDetailAtUnit: Unit =
+    projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_DETAIL;
+
+  const projectDatum: ProjectDatum = {
+    projectId: { id: projectId },
+    ownerAddress: constructAddress(ownerAddress),
+    milestoneReached: 0n,
+    isStakingDelegationManagedByProtocol: true,
+    status: { type: "Active" },
+  };
+
+  const projectDetailDatum: ProjectDetailDatum = {
+    projectId: { id: projectId },
+    withdrawnFunds: 0n,
+    sponsoredUntil: null,
+    informationCid: { cid: "QmaMS3jikf86AC1aGpUVD2wn3jFv1SaeVBChhkNDit5XQy" },
+    lastCommunityUpdateCid: null,
+  };
+
+  const projectUtxo: UTxO = {
+    ...generateOutRef(),
+    address: projectAddress,
+    assets: { lovelace: 2_000_000n, [projectAtUnit]: 1n },
+    datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
+  };
+
+  const projectDetailUtxo: UTxO = {
+    ...generateOutRef(),
+    address: projectDetailAddress,
+    assets: { lovelace: 2_000_000n, [projectDetailAtUnit]: 1n },
+    datum: S.toCbor(S.toData(projectDetailDatum, ProjectDetailDatum)),
+  };
+
+  const projectDetailVScriptUtxo: UTxO = {
+    ...generateOutRef(),
+    address: generateScriptAddress(lucid),
+    assets: { lovelace: 2_000_000n },
+    scriptRef: projectDetailVScript,
+  };
+
+  const projectVScriptUtxo: UTxO = {
+    ...generateOutRef(),
+    address: generateScriptAddress(lucid),
+    assets: { lovelace: 2_000_000n },
+    scriptRef: projectVScript,
+  };
+
+  const params: FinalizeCloseParams = {
+    protocolParamsUtxo,
+    projectUtxo,
+    projectDetailUtxo,
+    projectVScriptUtxo,
+    projectDetailVScriptUtxo,
+    actor,
+  };
+
+  attachUtxos(emulator, [
+    protocolParamsUtxo,
+    projectUtxo,
+    projectDetailUtxo,
+    projectVScriptUtxo,
+    projectDetailVScriptUtxo,
+  ]);
+
+  const tx = finalizeCloseTx(lucid, params);
+  const txComplete = await tx.complete();
+  const txHash = await signAndSubmit(txComplete);
+
+  await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+}
+
 describe("project transactions", () => {
   it("create project tx - with sponsor", async () => {
     expect.assertions(2);
@@ -622,6 +767,12 @@ describe("project transactions", () => {
     await testDelegateProject(
       "pool1l5u4zh84na80xr56d342d32rsdw62qycwaw97hy9wwsc6axdwla"
     );
+  });
+
+  it("finalize close project tx - close immediately", async () => {
+    expect.assertions(1);
+
+    await testFinalizeCloseProject("project-owner");
   });
 });
 
