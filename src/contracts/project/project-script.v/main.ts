@@ -9,6 +9,7 @@ export type Params = {
 
 export default function main({ projectAtMph, protocolNftMph }: Params) {
   return helios("v__project_script", [
+    "v__project_detail__types",
     "v__project_script__types",
     "v__project__types",
     "at__project__types",
@@ -28,6 +29,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       Redeemer as OpenTreasuryRedeemer
     } from v__open_treasury__types
     import { Redeemer as ProjectAtRedeemer } from at__project__types
+    import { Redeemer as ProjectDetailRedeemer } from v__project_detail__types
     import { UserTag } from common__types
 
     import {
@@ -41,6 +43,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       MULTIPLIER,
       TREASURY_UTXO_MIN_ADA,
       PROJECT_AT_TOKEN_NAME,
+      PROJECT_DETAIL_AT_TOKEN_NAME,
       PROJECT_SCRIPT_AT_TOKEN_NAME,
       PROJECT_SCRIPT_DELIST_DISCOUNT_CENTS,
       PROJECT_SCRIPT_CLOSE_DISCOUNT_CENTS
@@ -51,6 +54,9 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
     const PROJECT_AT_ASSET_CLASS: AssetClass =
       AssetClass::new(PROJECTS_AT_MPH, PROJECT_AT_TOKEN_NAME)
+
+    const PROJECT_DETAIL_AT_ASSET_CLASS: AssetClass =
+      AssetClass::new(PROJECTS_AT_MPH, PROJECT_DETAIL_AT_TOKEN_NAME)
 
     const PROJECT_SCRIPT_AT_ASSET_CLASS: AssetClass =
       AssetClass::new(PROJECTS_AT_MPH, PROJECT_SCRIPT_AT_TOKEN_NAME)
@@ -111,8 +117,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             "Incorrect project UTxO"
           );
 
-          withdrawn_rewards: Int = tx.withdrawals.get(staking_credential);
-
           project_at_script_purpose: ScriptPurpose =
             ScriptPurpose::new_minting(PROJECTS_AT_MPH);
 
@@ -153,16 +157,34 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
           redeemer.switch {
             Close => {
-              is_delayed_staking: Bool =
+              does_pass_project_datum_check: Bool =
                 project_datum.status.switch {
-                  Closed => true,
-                  PreClosed => false,
-                  else => error("Wrong project status")
-                };
+                  PreClosed => {
+                    project_detail_txinput: TxInput =
+                      tx.inputs
+                        .find(
+                          (input: TxInput) -> Bool {
+                            input.output.value.get_safe(PROJECT_DETAIL_AT_ASSET_CLASS) == 1
+                          }
+                        );
 
-              withdrawn_rewards_to_owner: Int =
-                if (is_delayed_staking) {
-                  delay_staking_condition: Bool =
+                    project_detail_script_purpose: ScriptPurpose =
+                      ScriptPurpose::new_spending(project_detail_txinput.output_id);
+
+                    project_detail_redeemer_data: Data = tx.redeemers.get(project_detail_script_purpose);
+
+                    ProjectDetailRedeemer::from_data(project_detail_redeemer_data).switch {
+                      WithdrawFunds => true,
+                      else => error("Incorrect project detail redeemer")
+                    }
+                  },
+                  Closed => {
+                    withdrawn_rewards: Int =
+                      tx.withdrawals.get_safe(staking_credential).switch {
+                        None => 0,
+                        s: Some => s.some
+                      };
+
                     if (withdrawn_rewards == 0) {
                       true
                     } else if (withdrawn_rewards < TREASURY_UTXO_MIN_ADA) {
@@ -170,7 +192,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                         tx.inputs.find(
                           (input: TxInput) -> Bool {
                             input.output.address.credential
-                              == Credential::new_validator (
+                              == Credential::new_validator(
                                   pparams_datum.registry
                                     .open_treasury_validator
                                     .latest
@@ -189,7 +211,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                           collect.staking_withdrawals.get(staking_validator_hash)
                             == withdrawn_rewards
                         },
-                        else => false
+                        else => error("Incorrect open treasury redeemer")
                       }
 
                     } else {
@@ -225,21 +247,21 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                             }
                         }
                       )
-                    };
-
-                  if (delay_staking_condition) {
-                    0
-                  } else {
-                    error("Invalid Open treasury UTxO")
-                  }
-                } else {
-                  withdrawn_rewards
+                    }
+                  },
+                  else => error("Wrong project status")
                 };
+
+              assert (
+                does_pass_project_datum_check,
+                "Incorrect project status"
+              );
 
               if(is_tx_authorized_by(tx, project_datum.owner_address.credential)){
                 true
               } else {
                 (is_tx_authorized_by(tx, pparams_datum.governor_address.credential)
+                  || is_tx_authorized_by(tx, pparams_datum.staking_manager)
                 )
                   && tx.outputs.any(
                     (output: TxOutput) -> Bool {
@@ -248,8 +270,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                             own_input_txout.value
                               + Value::lovelace(
                                   datum.stake_key_deposit
-                                  + withdrawn_rewards_to_owner
-                                  - pparams_datum.discount_cent_price * PROJECT_SCRIPT_CLOSE_DISCOUNT_CENTS
+                                    - pparams_datum.discount_cent_price * PROJECT_SCRIPT_CLOSE_DISCOUNT_CENTS
                                 )
                         && output.datum.switch {
                           i: Inline =>
@@ -267,6 +288,8 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
             },
             Delist => {
+              withdrawn_rewards: Int = tx.withdrawals.get(staking_credential);
+
               is_output_project_datum_valid: Bool =
                 project_datum.status.switch {
                   Delisted => true,

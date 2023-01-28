@@ -119,6 +119,14 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       )
     }
 
+    func is_project_script_valid(input: TxInput, project_id: ByteArray) -> Bool {
+      input.output.value.get_safe(PROJECT_SCRIPT_AT_ASSET_CLASS) == 1
+        && input.output.datum.switch {
+          i: Inline => ProjectScriptDatum::from_data(i.data).project_id == project_id,
+          else => false
+        }
+    }
+
     func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
       own_validator_hash: ValidatorHash = ctx.get_current_validator_hash();
@@ -148,32 +156,32 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               else => false
             };
 
-          staking_credentials: []StakingCredential =
-            tx.ref_inputs
-              .filter(
-                (input: TxInput) -> Bool {
-                  input.output.value.get_safe(PROJECT_SCRIPT_AT_ASSET_CLASS) == 1
-                    && input.output.datum.switch {
-                      i: Inline =>
-                        ProjectScriptDatum::from_data(i.data).project_id
-                          == datum.project_id,
-                      else => false
-                    }
-                }
-              )
-              .map(
-                (input: TxInput) -> StakingCredential {
-                  input.output.address.staking_credential.unwrap()
-                }
+          withdrawals: Map[StakingCredential]Int = tx.withdrawals;
+
+          project_script_input_withdrawals: Int =
+            tx.inputs
+              .filter((input: TxInput) -> Bool { is_project_script_valid(input, datum.project_id) })
+              .fold(
+                (acc: Int, input: TxInput) -> Int {
+                  acc + withdrawals.get(input.output.address.staking_credential.unwrap())
+                },
+                0
+              );
+
+          project_script_ref_inputs: []TxInput =
+            tx.ref_inputs.filter((input: TxInput) -> Bool { is_project_script_valid(input, datum.project_id) });
+
+          project_script_ref_input_withdrawals: Int =
+            project_script_ref_inputs
+              .fold(
+                (acc: Int, input: TxInput) -> Int {
+                  acc + withdrawals.get(input.output.address.staking_credential.unwrap())
+                },
+                0
               );
 
           total_withdrawal: Int =
-            staking_credentials.fold (
-              (acc: Int, staking_credential: StakingCredential) -> Int {
-                acc + tx.withdrawals.get(staking_credential)
-              },
-              0
-            );
+            project_script_input_withdrawals + project_script_ref_input_withdrawals;
 
           new_withdrawn_funds: Int = datum.withdrawn_funds + total_withdrawal;
 
@@ -250,19 +258,19 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             };
 
           does_send_rewards_correctly: Bool =
-            if (is_tx_authorized_by(tx, project_datum.owner_address.credential)) {
+            if (!is_tx_authorized_by(tx, project_datum.owner_address.credential)) {
               discount: Int =
                 total_withdrawal * PROJECT_FUNDS_WITHDRAWAL_DISCOUNT_RATIO / MULTIPLIER
                 + if (is_new_milestone_reached) {
                   pparams_datum.discount_cent_price * PROJECT_NEW_MILESTONE_DISCOUNT_CENTS
                 } else {
-                  if (total_withdrawal >= PROJECT_MIN_FUNDS_WITHDRAWAL_ADA) {
-                    0
-                  } else {
-                    error("Withdrawal amount too small")
-                  }
-                }
-                ;
+                  assert (
+                    total_withdrawal >= PROJECT_MIN_FUNDS_WITHDRAWAL_ADA
+                      || project_script_ref_inputs.is_empty(),
+                    "Total withdrawal must be larger than min funds or must consume all project script UTxO"
+                  );
+                  0
+                };
 
               tx.outputs.any(
                 (output: TxOutput) -> Bool {
