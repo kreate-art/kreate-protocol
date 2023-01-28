@@ -64,6 +64,10 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
 
+    func is_project_txout (output: TxOutput) -> Bool {
+      output.value.get_safe(PROJECT_AT_ASSET_CLASS) == 1
+    }
+
     func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
 
@@ -99,12 +103,13 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             StakingValidatorHash::from_script_hash(staking_script_hash);
 
           project_txout: TxOutput =
-            (tx.ref_inputs.map((input: TxInput) -> TxOutput { input.output }) + tx.outputs)
-              .find(
-                (output: TxOutput) -> Bool {
-                  output.value.get_safe(PROJECT_AT_ASSET_CLASS) == 1
-                }
-              );
+            tx.ref_inputs
+              .map((input: TxInput) -> TxOutput { input.output })
+              .find_safe(is_project_txout)
+              .switch {
+                None => tx.outputs.find(is_project_txout),
+                s: Some => s.some
+              };
 
           project_datum: ProjectDatum =
             project_txout.datum.switch {
@@ -260,8 +265,8 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               if(is_tx_authorized_by(tx, project_datum.owner_address.credential)){
                 true
               } else {
-                (is_tx_authorized_by(tx, pparams_datum.governor_address.credential)
-                  || is_tx_authorized_by(tx, pparams_datum.staking_manager)
+                (is_tx_authorized_by(tx, pparams_datum.staking_manager)
+                  || is_tx_authorized_by(tx, pparams_datum.governor_address.credential)
                 )
                   && tx.outputs.any(
                     (output: TxOutput) -> Bool {

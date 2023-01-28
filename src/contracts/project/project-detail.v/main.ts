@@ -266,7 +266,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 } else {
                   assert (
                     total_withdrawal >= PROJECT_MIN_FUNDS_WITHDRAWAL_ADA
-                      || project_script_ref_inputs.is_empty(),
+                      || (total_withdrawal > 0 && project_script_ref_inputs.is_empty() ),
                     "Total withdrawal must be larger than min funds or must consume all project script UTxO"
                   );
                   0
