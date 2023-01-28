@@ -15,7 +15,7 @@ import { assert } from "@/utils";
 
 import { INACTIVE_PROJECT_UTXO_ADA } from "../constants";
 
-export type FinalizeCloseParams = {
+export type CloseImmediatelyParams = {
   protocolParamsUtxo: UTxO;
   projectUtxo: UTxO;
   projectDetailUtxo: UTxO;
@@ -27,7 +27,7 @@ export type FinalizeCloseParams = {
   projectAtScriptUtxo: UTxO;
 };
 
-export function finalizeCloseTx(
+export function closeImmediatelyTx(
   lucid: Lucid,
   {
     protocolParamsUtxo,
@@ -39,7 +39,7 @@ export function finalizeCloseTx(
     projectScriptUtxos,
     projectAtPolicyId,
     projectAtScriptUtxo,
-  }: FinalizeCloseParams
+  }: CloseImmediatelyParams
 ) {
   assert(
     projectVScriptUtxo.scriptRef != null,

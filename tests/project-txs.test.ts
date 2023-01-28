@@ -39,15 +39,15 @@ import {
 } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
+import {
+  CloseImmediatelyParams,
+  closeImmediatelyTx,
+} from "@/transactions/project/close-immediately";
 import { createProjectTx } from "@/transactions/project/create";
 import {
   DelegateProjectParams,
   delegateProjectTx,
 } from "@/transactions/project/delegate";
-import {
-  FinalizeCloseParams,
-  finalizeCloseTx,
-} from "@/transactions/project/finalize-close";
 import {
   UpdateProjectParams,
   updateProjectTx,
@@ -673,7 +673,7 @@ async function testFinalizeCloseProject() {
     scriptRef: projectSvScript,
   };
 
-  const params: FinalizeCloseParams = {
+  const params: CloseImmediatelyParams = {
     protocolParamsUtxo,
     projectUtxo,
     projectDetailUtxo,
@@ -709,7 +709,7 @@ async function testFinalizeCloseProject() {
   const delegateTxHash = await signAndSubmit(delegateTx);
   await expect(lucid.awaitTx(delegateTxHash)).resolves.toBe(true);
 
-  const tx = finalizeCloseTx(lucid, params);
+  const tx = closeImmediatelyTx(lucid, params);
   const txComplete = await tx.complete();
   const txHash = await signAndSubmit(txComplete);
 
