@@ -16,6 +16,7 @@ import {
   compileSharedTreasuryVScript,
   compileProjectsAtMpScript,
   compileDedicatedTreasuryVScript,
+  compileProjectScriptVScript,
 } from "@/commands/compile-scripts";
 import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
 import {
@@ -508,7 +509,7 @@ async function testDelegateProject(poolId: PoolId) {
   await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
 }
 
-async function testFinalizeCloseProject(actor: "project-owner" | "anyone") {
+async function testFinalizeCloseProject() {
   lucid.selectWalletFromSeed(GOVERNOR_ACCOUNT.seedPhrase);
   const governorAddress = await lucid.wallet.address();
 
@@ -533,6 +534,15 @@ async function testFinalizeCloseProject(actor: "project-owner" | "anyone") {
     projectAtMintingPolicy
   );
 
+  const projectSvScript = exportScript(
+    compileProjectSvScript({
+      projectId: projectId,
+      stakingSeed: "",
+      projectAtMph,
+      protocolNftMph,
+    })
+  );
+
   const projectVScript = exportScript(
     compileProjectVScript({ projectAtMph, protocolNftMph })
   );
@@ -544,9 +554,16 @@ async function testFinalizeCloseProject(actor: "project-owner" | "anyone") {
   const projectDetailVScriptHash =
     lucid.utils.validatorToScriptHash(projectDetailVScript);
 
+  const projectScriptVScript = exportScript(
+    compileProjectScriptVScript({ projectAtMph, protocolNftMph })
+  );
+  const projectScriptVScriptHash =
+    lucid.utils.validatorToScriptHash(projectScriptVScript);
+
   const validatorScriptHashRegistry: ValidatorScriptHashRegistry = {
     project: projectVScriptHash,
     projectDetail: projectDetailVScriptHash,
+    projectScript: projectScriptVScriptHash,
   };
 
   const registry = generateProtocolRegistry(
@@ -575,10 +592,15 @@ async function testFinalizeCloseProject(actor: "project-owner" | "anyone") {
   const projectDetailAddress = lucid.utils.credentialToAddress(
     lucid.utils.scriptHashToCredential(projectDetailVScriptHash)
   );
+  const projectScriptAddress = lucid.utils.credentialToAddress(
+    lucid.utils.scriptHashToCredential(projectScriptVScriptHash)
+  );
 
   const projectAtUnit: Unit = projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT;
   const projectDetailAtUnit: Unit =
     projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_DETAIL;
+  const projectScriptAtUnit: Unit =
+    projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
 
   const projectDatum: ProjectDatum = {
     projectId: { id: projectId },
@@ -594,6 +616,11 @@ async function testFinalizeCloseProject(actor: "project-owner" | "anyone") {
     sponsoredUntil: null,
     informationCid: { cid: "QmaMS3jikf86AC1aGpUVD2wn3jFv1SaeVBChhkNDit5XQy" },
     lastCommunityUpdateCid: null,
+  };
+
+  const projectScriptDatum: ProjectScriptDatum = {
+    projectId: { id: projectId },
+    stakingKeyDeposit: 0n,
   };
 
   const projectUtxo: UTxO = {
@@ -617,11 +644,33 @@ async function testFinalizeCloseProject(actor: "project-owner" | "anyone") {
     scriptRef: projectDetailVScript,
   };
 
+  const projectScriptVScriptUtxo: UTxO = {
+    ...generateOutRef(),
+    address: generateScriptAddress(lucid),
+    assets: { lovelace: 2_000_000n },
+    scriptRef: projectScriptVScript,
+  };
+
   const projectVScriptUtxo: UTxO = {
     ...generateOutRef(),
     address: generateScriptAddress(lucid),
     assets: { lovelace: 2_000_000n },
     scriptRef: projectVScript,
+  };
+
+  const projectAtScriptUtxo: UTxO = {
+    ...generateOutRef(),
+    address: generateScriptAddress(lucid),
+    assets: { lovelace: 2_000_000n },
+    scriptRef: projectAtMintingPolicy,
+  };
+
+  const projectScriptUtxo: UTxO = {
+    ...generateOutRef(),
+    address: projectScriptAddress,
+    assets: { lovelace: 200_000_000n, [projectScriptAtUnit]: 1n },
+    datum: S.toCbor(S.toData(projectScriptDatum, ProjectScriptDatum)),
+    scriptRef: projectSvScript,
   };
 
   const params: FinalizeCloseParams = {
@@ -630,7 +679,10 @@ async function testFinalizeCloseProject(actor: "project-owner" | "anyone") {
     projectDetailUtxo,
     projectVScriptUtxo,
     projectDetailVScriptUtxo,
-    actor,
+    projectScriptVScriptUtxo,
+    projectScriptUtxos: [projectScriptUtxo],
+    projectAtPolicyId: projectAtMph,
+    projectAtScriptUtxo,
   };
 
   attachUtxos(emulator, [
@@ -639,7 +691,23 @@ async function testFinalizeCloseProject(actor: "project-owner" | "anyone") {
     projectDetailUtxo,
     projectVScriptUtxo,
     projectDetailVScriptUtxo,
+    projectScriptVScriptUtxo,
+    projectScriptUtxo,
+    projectAtScriptUtxo,
   ]);
+
+  const projectStakeAddress =
+    lucid.utils.validatorToRewardAddress(projectSvScript);
+
+  const delegateTx = await lucid
+    .newTx()
+    .readFrom([protocolParamsUtxo, projectScriptVScriptUtxo, projectUtxo])
+    .addSigner(stakingManagerAddress)
+    .registerStake(projectStakeAddress)
+    .complete();
+
+  const delegateTxHash = await signAndSubmit(delegateTx);
+  await expect(lucid.awaitTx(delegateTxHash)).resolves.toBe(true);
 
   const tx = finalizeCloseTx(lucid, params);
   const txComplete = await tx.complete();
@@ -770,9 +838,9 @@ describe("project transactions", () => {
   });
 
   it("finalize close project tx - close immediately", async () => {
-    expect.assertions(1);
+    expect.assertions(2);
 
-    await testFinalizeCloseProject("project-owner");
+    await testFinalizeCloseProject();
   });
 });
 

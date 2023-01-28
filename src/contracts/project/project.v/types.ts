@@ -24,9 +24,9 @@ export default helios("v__project__types")`
     AllocateStakingValidator { new_staking_validator: StakingValidatorHash }
     UpdateStakingDelegationManagement
     InitiateClose
+    FinalizeClose
     InitiateDelist
     CancelDelist
-    FinalizeClose
     FinalizeDelist
     Migrate
   }
