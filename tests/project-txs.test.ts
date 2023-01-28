@@ -33,6 +33,7 @@ import {
   ProjectDatum,
   ProjectDetailDatum,
   ProjectScriptDatum,
+  ProjectStatus,
 } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
@@ -63,15 +64,32 @@ import { generateProtocolRegistry, ValidatorScriptHashRegistry } from "./utils";
 
 const PROJECT_OWNER_ACCOUNT = await generateAccount();
 const GOVERNOR_ACCOUNT = await generateAccount();
-const emulator = new Emulator([PROJECT_OWNER_ACCOUNT, GOVERNOR_ACCOUNT]);
+const STAKING_MANAGER_ACCOUNT = await generateAccount();
+const ANYONE_ACCOUNT = await generateAccount();
+
+const emulator = new Emulator([
+  PROJECT_OWNER_ACCOUNT,
+  GOVERNOR_ACCOUNT,
+  STAKING_MANAGER_ACCOUNT,
+  ANYONE_ACCOUNT,
+]);
 const lucid = await Lucid.new(emulator);
 
-async function testWithdrawFunds(rewardAmount: bigint, actor: Actor) {
+async function testWithdrawFunds(
+  rewardAmount: bigint,
+  actor: Actor,
+  projectStatus: ProjectStatus
+) {
   lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
   const ownerAddress = await lucid.wallet.address();
 
   lucid.selectWalletFromSeed(GOVERNOR_ACCOUNT.seedPhrase);
   const governorAddress = await lucid.wallet.address();
+
+  lucid.selectWalletFromSeed(ANYONE_ACCOUNT.seedPhrase);
+  const anyoneAddress = await lucid.wallet.address();
+
+  lucid.selectWalletFromSeed(STAKING_MANAGER_ACCOUNT.seedPhrase);
   const stakingManagerAddress = await lucid.wallet.address();
 
   const projectSeedOutRef = generateOutRef();
@@ -179,7 +197,7 @@ async function testWithdrawFunds(rewardAmount: bigint, actor: Actor) {
     ownerAddress: constructAddress(ownerAddress),
     milestoneReached: 0n,
     isStakingDelegationManagedByProtocol: true,
-    status: { type: "Active" },
+    status: projectStatus,
   };
   const projectDetailDatum: ProjectDetailDatum = {
     projectId: { id: projectId },
@@ -264,7 +282,7 @@ async function testWithdrawFunds(rewardAmount: bigint, actor: Actor) {
   const delegateTx = await lucid
     .newTx()
     .readFrom([protocolParamsUtxo, projectScriptVScriptUtxo, projectUtxo])
-    .addSigner(governorAddress)
+    .addSigner(stakingManagerAddress)
     .registerStake(projectStakeAddress)
     .delegateTo(projectStakeAddress, poolId, Data.void())
     .complete();
@@ -290,15 +308,18 @@ async function testWithdrawFunds(rewardAmount: bigint, actor: Actor) {
   };
 
   emulator.awaitSlot(100);
-  if (actor === "anyone") {
-    lucid.selectWalletFromSeed(GOVERNOR_ACCOUNT.seedPhrase);
-  }
 
   let tx = withdrawFundsTx(lucid, params);
-  tx = tx.addSigner(ownerAddress);
+
+  if (actor == "project-owner") {
+    tx = tx.addSigner(ownerAddress);
+  } else {
+    tx = tx.addSigner(anyoneAddress);
+  }
+
   const txComplete = await tx.complete();
   const txHash = await signAndSubmit(txComplete);
-  await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+  return txHash;
 }
 
 async function testDelegateProject(poolId: PoolId) {
@@ -538,16 +559,34 @@ describe("project transactions", () => {
     );
   });
 
-  it("withdraw funds tx - milestone does not reach - non-owner", async () => {
+  it("withdraw funds tx - active - milestone does reach - non-owner", async () => {
     expect.assertions(2);
 
-    await testWithdrawFunds(900_000n, "anyone");
+    const txHash = await testWithdrawFunds(9_000_000_000n, "anyone", {
+      type: "Active",
+    });
+
+    await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
   });
 
-  it("withdraw funds tx - milestone does reach - project owner", async () => {
+  it("withdraw funds tx - active - milestone does not reach - project owner", async () => {
     expect.assertions(2);
 
-    await testWithdrawFunds(9_000_000n, "project-owner");
+    const txHash = await testWithdrawFunds(900_000n, "project-owner", {
+      type: "Active",
+    });
+
+    await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+  });
+
+  it("withdraw funds tx - active - milestone does reach - project owner", async () => {
+    expect.assertions(2);
+
+    const txHash = await testWithdrawFunds(9_000_000_000n, "project-owner", {
+      type: "Active",
+    });
+
+    await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
   });
 
   it("update project tx", async () => {

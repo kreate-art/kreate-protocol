@@ -84,8 +84,8 @@ export default function main({ protocolNftMph }: Params): HeliosSource {
             );
 
           is_authorized: Bool =
-            is_tx_authorized_by(tx, pparams_datum.governor_address.credential)
-              || is_tx_authorized_by(tx, pparams_datum.staking_manager);
+            is_tx_authorized_by(tx, pparams_datum.staking_manager)
+              || is_tx_authorized_by(tx, pparams_datum.governor_address.credential);
 
           certifying.dcert.switch {
             Register => error("unreachable"),
