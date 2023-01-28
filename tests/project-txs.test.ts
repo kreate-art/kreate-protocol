@@ -294,7 +294,8 @@ async function testWithdrawFunds(rewardAmount: bigint, actor: Actor) {
     lucid.selectWalletFromSeed(GOVERNOR_ACCOUNT.seedPhrase);
   }
 
-  const tx = withdrawFundsTx(lucid, params);
+  let tx = withdrawFundsTx(lucid, params);
+  tx = tx.addSigner(ownerAddress);
   const txComplete = await tx.complete();
   const txHash = await signAndSubmit(txComplete);
   await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
