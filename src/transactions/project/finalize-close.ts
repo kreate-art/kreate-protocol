@@ -1,19 +1,19 @@
-import { Lucid, UTxO } from "lucid-cardano";
+import { Data, Lucid, PolicyId, Unit, UTxO } from "lucid-cardano";
 
+import { PROJECT_AT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { deconstructAddress } from "@/helpers/schema";
 import * as S from "@/schema";
 import {
   ProjectDatum,
   ProjectDetailRedeemer,
+  ProjectMintingRedeemer,
   ProjectRedeemer,
+  ProjectScriptRedeemer,
 } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { assert } from "@/utils";
 
-import {
-  INACTIVE_PROJECT_UTXO_ADA,
-  PROJECT_CLOSE_DISCOUNT_CENTS,
-} from "../constants";
+import { INACTIVE_PROJECT_UTXO_ADA } from "../constants";
 
 export type FinalizeCloseParams = {
   protocolParamsUtxo: UTxO;
@@ -21,7 +21,10 @@ export type FinalizeCloseParams = {
   projectDetailUtxo: UTxO;
   projectVScriptUtxo: UTxO;
   projectDetailVScriptUtxo: UTxO;
-  actor: "project-owner" | "anyone";
+  projectScriptVScriptUtxo: UTxO;
+  projectScriptUtxos: UTxO[];
+  projectAtPolicyId: PolicyId;
+  projectAtScriptUtxo: UTxO;
 };
 
 export function finalizeCloseTx(
@@ -32,7 +35,10 @@ export function finalizeCloseTx(
     projectDetailUtxo,
     projectVScriptUtxo,
     projectDetailVScriptUtxo,
-    actor,
+    projectScriptVScriptUtxo,
+    projectScriptUtxos,
+    projectAtPolicyId,
+    projectAtScriptUtxo,
   }: FinalizeCloseParams
 ) {
   assert(
@@ -43,6 +49,11 @@ export function finalizeCloseTx(
   assert(
     projectDetailVScriptUtxo.scriptRef != null,
     "Invalid project detail script UTxO: Missing script reference"
+  );
+
+  assert(
+    projectAtScriptUtxo.scriptRef != null,
+    "Invalid project at script UTxO: Missing script reference"
   );
 
   assert(
@@ -93,13 +104,26 @@ export function finalizeCloseTx(
     protocolSvCredential
   );
 
+  const projectAtUnit: Unit =
+    projectAtPolicyId + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
+
   let tx = lucid
     .newTx()
     .readFrom([
       protocolParamsUtxo,
       projectVScriptUtxo,
       projectDetailVScriptUtxo,
+      projectScriptVScriptUtxo,
+      projectAtScriptUtxo,
     ])
+    .collectFrom(
+      projectScriptUtxos,
+      S.toCbor(S.toData({ case: "Close" }, ProjectScriptRedeemer))
+    )
+    .mintAssets(
+      { [projectAtUnit]: -BigInt(projectScriptUtxos.length) },
+      S.toCbor(S.toData({ case: "DeallocateStaking" }, ProjectMintingRedeemer))
+    )
     .collectFrom(
       [projectUtxo],
       S.toCbor(S.toData({ case: "FinalizeClose" }, ProjectRedeemer))
@@ -115,32 +139,28 @@ export function finalizeCloseTx(
           S.toData({ ...project, status: { type: "Closed" } }, ProjectDatum)
         ),
       },
-      { lovelace: INACTIVE_PROJECT_UTXO_ADA }
+      { ...projectUtxo.assets, lovelace: INACTIVE_PROJECT_UTXO_ADA }
     )
     .payToContract(
       outputProjectDetailAddress,
       { inline: projectDetailUtxo.datum },
       projectDetailUtxo.assets
+    )
+    .addSigner(deconstructAddress(lucid, project.ownerAddress));
+
+  for (const projectScriptUtxo of projectScriptUtxos) {
+    assert(
+      projectScriptUtxo.scriptRef != null,
+      "Invalid project script UTxO: Missing script reference"
+    );
+    const projectStakeCredential = lucid.utils.scriptHashToCredential(
+      lucid.utils.validatorToScriptHash(projectScriptUtxo.scriptRef)
+    );
+    const projectStakeAddress = lucid.utils.credentialToRewardAddress(
+      projectStakeCredential
     );
 
-  if (actor === "project-owner") {
-    tx = tx.addSigner(deconstructAddress(lucid, project.ownerAddress));
-  } else {
-    const adaToOwner =
-      projectUtxo.assets.lovelace -
-      INACTIVE_PROJECT_UTXO_ADA -
-      protocolParams.discountCentPrice * PROJECT_CLOSE_DISCOUNT_CENTS;
-    if (adaToOwner > 0) {
-      tx.payToContract(
-        deconstructAddress(lucid, project.ownerAddress),
-        {
-          inline: S.toCbor(
-            S.toData({ ...project, status: { type: "Closed" } }, ProjectDatum)
-          ),
-        },
-        { lovelace: adaToOwner }
-      );
-    }
+    tx = tx.deregisterStake(projectStakeAddress, Data.void());
   }
 
   return tx;

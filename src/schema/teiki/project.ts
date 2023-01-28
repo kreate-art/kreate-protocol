@@ -23,7 +23,7 @@ export const ProjectDatum = Struct({
 });
 export type ProjectDatum = Static<typeof ProjectDatum>;
 
-export const ProjectRedeemer = Enum("case", {
+export const LegacyProjectRedeemer = Enum("case", {
   RecordNewMilestone: { newMilestone: Int },
   AllocateStakingValidator: { newStakingValidator: StakingValidatorHash },
   UpdateStakingDelegationManagement: Void,
@@ -31,6 +31,19 @@ export const ProjectRedeemer = Enum("case", {
   InitiateDelist: Void,
   CancelDelist: Void,
   FinalizeClose: Void,
+  FinalizeDelist: Void,
+  Migrate: Void,
+});
+export type LegacyProjectRedeemer = Static<typeof LegacyProjectRedeemer>;
+
+export const ProjectRedeemer = Enum("case", {
+  RecordNewMilestone: { newMilestone: Int },
+  AllocateStakingValidator: { newStakingValidator: StakingValidatorHash },
+  UpdateStakingDelegationManagement: Void,
+  InitiateClose: Void,
+  FinalizeClose: Void,
+  InitiateDelist: Void,
+  CancelDelist: Void,
   FinalizeDelist: Void,
   Migrate: Void,
 });
