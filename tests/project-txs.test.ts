@@ -92,9 +92,6 @@ async function testWithdrawFunds(
   lucid.selectWalletFromSeed(GOVERNOR_ACCOUNT.seedPhrase);
   const governorAddress = await lucid.wallet.address();
 
-  lucid.selectWalletFromSeed(ANYONE_ACCOUNT.seedPhrase);
-  const anyoneAddress = await lucid.wallet.address();
-
   lucid.selectWalletFromSeed(STAKING_MANAGER_ACCOUNT.seedPhrase);
   const stakingManagerAddress = await lucid.wallet.address();
 
@@ -305,24 +302,16 @@ async function testWithdrawFunds(
     dedicatedTreasuryUtxo,
     projectVScriptUtxo,
     projectDetailVScriptUtxo,
-    projectScriptVScriptUtxo,
+    projectScriptUtxos: [projectScriptVScriptUtxo],
+    rewardAddressAndAmount: [[projectRewardAddress, rewardAmount]],
     dedicatedTreasuryVScriptUtxo,
-    projectRewardAddress,
     sharedTreasuryAddress,
-    totalWithdrawal: rewardAmount,
     actor,
   };
 
   emulator.awaitSlot(100);
 
-  let tx = withdrawFundsTx(lucid, params);
-
-  if (actor == "project-owner") {
-    tx = tx.addSigner(ownerAddress);
-  } else {
-    tx = tx.addSigner(anyoneAddress);
-  }
-
+  const tx = withdrawFundsTx(lucid, params);
   const txComplete = await tx.complete();
   const txHash = await signAndSubmit(txComplete);
   return txHash;
