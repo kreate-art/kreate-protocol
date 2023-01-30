@@ -94,9 +94,6 @@ export function withdrawFundsTx(
     0n
   );
 
-  const fees =
-    (totalWithdrawal * protocolParamsDatum.protocolFundsShareRatio) /
-    RATIO_MULTIPLIER;
   const newWithdrawnFunds = projectDetailDatum.withdrawnFunds + totalWithdrawal;
   const milestone =
     newWithdrawnFunds < protocolParamsDatum.projectMilestones[0]
@@ -104,8 +101,27 @@ export function withdrawFundsTx(
       : protocolParamsDatum.projectMilestones.length -
         [...protocolParamsDatum.projectMilestones]
           .reverse()
-          .findIndex((value) => value <= newWithdrawnFunds);
+          .findIndex((value) => value < newWithdrawnFunds);
   const isNewMilestoneReached = milestone > projectDatum.milestoneReached;
+
+  const split = isNewMilestoneReached
+    ? protocolParamsDatum.minTreasuryPerMilestoneEvent * TREASURY_UTXO_MIN_ADA
+    : 0n;
+  const minFees = split + TREASURY_UTXO_MIN_ADA;
+  const withdrawFees =
+    (totalWithdrawal * protocolParamsDatum.protocolFundsShareRatio) /
+    RATIO_MULTIPLIER;
+  const inW = BigInt(dedicatedTreasuryUtxo.assets.lovelace);
+  const inG =
+    dedicatedTreasuryDatum.governorAda > inW
+      ? inW
+      : dedicatedTreasuryDatum.governorAda;
+  const lowerbound =
+    ((inW - split - inG) * RATIO_MULTIPLIER) /
+    (protocolParamsDatum.governorShareRatio - RATIO_MULTIPLIER);
+  const fees = [minFees, withdrawFees, lowerbound].reduce((max, item) =>
+    max > item ? max : item
+  );
 
   let tx = lucid
     .newTx()
@@ -120,7 +136,11 @@ export function withdrawFundsTx(
       [dedicatedTreasuryUtxo],
       S.toCbor(
         S.toData(
-          { case: "CollectFees", split: isNewMilestoneReached, minFees: fees },
+          {
+            case: "CollectFees",
+            split: isNewMilestoneReached,
+            minFees: withdrawFees,
+          },
           DedicatedTreasuryRedeemer
         )
       )
@@ -176,11 +196,8 @@ export function withdrawFundsTx(
               {
                 ...dedicatedTreasuryDatum,
                 governorAda:
-                  dedicatedTreasuryDatum.governorAda +
-                  ((fees +
-                    BigInt(protocolParamsDatum.minTreasuryPerMilestoneEvent) *
-                      TREASURY_UTXO_MIN_ADA) *
-                    protocolParamsDatum.governorShareRatio) /
+                  inG +
+                  (fees * protocolParamsDatum.governorShareRatio) /
                     RATIO_MULTIPLIER,
                 tag: {
                   kind: "TagContinuation",
@@ -191,7 +208,7 @@ export function withdrawFundsTx(
             )
           ),
         },
-        { lovelace: BigInt(dedicatedTreasuryUtxo.assets.lovelace) + fees }
+        { lovelace: inW + fees - split }
       );
 
     for (let i = 0; i < protocolParamsDatum.minTreasuryPerMilestoneEvent; ++i) {
@@ -224,7 +241,7 @@ export function withdrawFundsTx(
             {
               ...dedicatedTreasuryDatum,
               governorAda:
-                dedicatedTreasuryDatum.governorAda +
+                inG +
                 (fees * protocolParamsDatum.governorShareRatio) /
                   RATIO_MULTIPLIER,
               tag: {
@@ -236,7 +253,7 @@ export function withdrawFundsTx(
           )
         ),
       },
-      { lovelace: BigInt(dedicatedTreasuryUtxo.assets.lovelace) + fees }
+      { lovelace: inW + fees }
     );
   }
 
@@ -252,6 +269,12 @@ export function withdrawFundsTx(
         PROJECT_NEW_MILESTONE_DISCOUNT_CENTS;
     }
 
+    const minLovelaceToOwner = totalWithdrawal - fees - discount;
+    const lovelaceToOwner =
+      minLovelaceToOwner < TREASURY_UTXO_MIN_ADA
+        ? TREASURY_UTXO_MIN_ADA
+        : minLovelaceToOwner;
+
     tx = tx.payToContract(
       deconstructAddress(lucid, projectDatum.ownerAddress),
       {
@@ -265,7 +288,7 @@ export function withdrawFundsTx(
           )
         ),
       },
-      { lovelace: totalWithdrawal - fees - discount }
+      { lovelace: lovelaceToOwner }
     );
   }
 
