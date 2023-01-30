@@ -33,11 +33,10 @@ export type WithdrawFundsParams = {
   dedicatedTreasuryUtxo: UTxO;
   projectVScriptUtxo: UTxO;
   projectDetailVScriptUtxo: UTxO;
-  projectScriptVScriptUtxo: UTxO;
+  projectScriptUtxos: UTxO[];
+  rewardAddressAndAmount: [RewardAddress, bigint][];
   dedicatedTreasuryVScriptUtxo: UTxO;
-  projectRewardAddress: RewardAddress;
   sharedTreasuryAddress: Address;
-  totalWithdrawal: bigint;
   actor: Actor;
 };
 
@@ -50,19 +49,13 @@ export function withdrawFundsTx(
     dedicatedTreasuryUtxo,
     projectVScriptUtxo,
     projectDetailVScriptUtxo,
-    projectScriptVScriptUtxo,
+    projectScriptUtxos,
+    rewardAddressAndAmount,
     dedicatedTreasuryVScriptUtxo,
-    projectRewardAddress,
     sharedTreasuryAddress,
-    totalWithdrawal,
     actor,
   }: WithdrawFundsParams
 ) {
-  assert(
-    projectScriptVScriptUtxo.scriptRef,
-    "Invalid project script UTxO: Missing script reference"
-  );
-
   assert(
     protocolParamsUtxo.datum != null,
     "Invalid protocol params UTxO: Missing inline datum"
@@ -96,6 +89,11 @@ export function withdrawFundsTx(
     DedicatedTreasuryDatum
   );
 
+  const totalWithdrawal = rewardAddressAndAmount.reduce(
+    (sum, [_, rewardAmount]) => sum + rewardAmount,
+    0n
+  );
+
   const fees =
     (totalWithdrawal * protocolParamsDatum.protocolFundsShareRatio) /
     RATIO_MULTIPLIER;
@@ -112,13 +110,12 @@ export function withdrawFundsTx(
   let tx = lucid
     .newTx()
     .readFrom([
+      ...projectScriptUtxos,
       protocolParamsUtxo,
       projectVScriptUtxo,
       projectDetailVScriptUtxo,
-      projectScriptVScriptUtxo,
       dedicatedTreasuryVScriptUtxo,
     ])
-    .withdraw(projectRewardAddress, totalWithdrawal, Data.void())
     .collectFrom(
       [dedicatedTreasuryUtxo],
       S.toCbor(
@@ -144,6 +141,9 @@ export function withdrawFundsTx(
       },
       projectDetailUtxo.assets
     );
+
+  for (const [rewardAddress, rewardAmount] of rewardAddressAndAmount)
+    tx = tx.withdraw(rewardAddress, rewardAmount, Data.void());
 
   if (isNewMilestoneReached) {
     tx = tx
@@ -240,7 +240,9 @@ export function withdrawFundsTx(
     );
   }
 
-  if (actor !== "project-owner") {
+  if (actor === "project-owner") {
+    tx = tx.addSigner(deconstructAddress(lucid, projectDatum.ownerAddress));
+  } else {
     let discount =
       (PROJECT_FUNDS_WITHDRAWAL_DISCOUNT_RATIO * totalWithdrawal) /
       RATIO_MULTIPLIER;
