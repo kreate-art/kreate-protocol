@@ -8,4 +8,4 @@ This repository contains the implementation in Generation I. The code is a **wor
 
 ---
 
-Please feel free to connect: [Website](https://teiki.network), [Medium](https://teikinetwork.medium.com), [Discord](https://discord.gg/Nfs2Wbr28H), [Twitter](https://twitter.com/TeikiNetwork), [Telegram](https://t.me/teiki_announcement), [Reddit](https://www.reddit.com/r/teiki/). We are very open to discussions, questions, and feedback :seedling:.
+Please feel free to connect: [Website](https://teiki.network), [Medium](https://teikinetwork.medium.com), [Discord](https://discord.gg/Nfs2Wbr28H), [Twitter](https://twitter.com/TeikiNetwork), [Telegram](https://t.me/teiki_announcement). We are very open to discussions, questions, and feedback :seedling:.
