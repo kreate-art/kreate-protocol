@@ -329,11 +329,10 @@ function mintTeiki(
   );
 
   const inputSharedTreasuryTeikiAmount =
-    inputSharedTreasuryUtxo.assets[teikiUnit] ?? 0n;
+    BigInt(inputSharedTreasuryUtxo.assets[teikiUnit]) ?? 0n;
 
   let sharedTreasuryRedeemer: SharedTreasuryRedeemer;
   let remainingTeikiAmount: bigint;
-  let projectRewards: bigint;
   let outputLastBurnAtTimestamp: bigint;
   switch (inputSharedTreasuryDatum.projectTeiki.teikiCondition) {
     case "TeikiEmpty":
@@ -344,7 +343,6 @@ function mintTeiki(
         rewards: totalTeikiRewards,
       };
       remainingTeikiAmount = 0n;
-      projectRewards = sharedTreasuryRedeemer.rewards;
       outputLastBurnAtTimestamp = BigInt(txTimeStart);
       break;
     case "TeikiBurntPeriodically": {
@@ -353,6 +351,19 @@ function mintTeiki(
           Number(inputSharedTreasuryDatum.projectTeiki.lastBurnAt.timestamp)) /
           Number(protocolParams.epochLength.milliseconds)
       );
+
+      if (epochs === 0) {
+        sharedTreasuryRedeemer = {
+          case: "UpdateTeiki",
+          burnAction: { burn: "BurnPeriodically" },
+          burnAmount: 0n,
+          rewards: totalTeikiRewards,
+        };
+        remainingTeikiAmount = inputSharedTreasuryDatum.projectTeiki.available;
+        outputLastBurnAtTimestamp =
+          inputSharedTreasuryDatum.projectTeiki.lastBurnAt.timestamp;
+        break;
+      }
 
       remainingTeikiAmount = calculateTeikiRemaining(
         inputSharedTreasuryDatum.projectTeiki.available,
@@ -370,8 +381,6 @@ function mintTeiki(
         rewards: totalTeikiRewards,
       };
 
-      projectRewards = sharedTreasuryRedeemer.rewards;
-
       outputLastBurnAtTimestamp =
         inputSharedTreasuryDatum.projectTeiki.lastBurnAt.timestamp +
         BigInt(epochs * Number(protocolParams.epochLength.milliseconds));
@@ -387,7 +396,7 @@ function mintTeiki(
   const outputSharedTreasuryTeikiAmount: bigint =
     inputSharedTreasuryTeikiAmount +
     sharedTreasuryRedeemer.rewards +
-    projectRewards -
+    totalTeikiRewards -
     sharedTreasuryRedeemer.burnAmount;
 
   const outputSharedTreasuryDatum: SharedTreasuryDatum = {
