@@ -139,8 +139,8 @@ export function plantTx(
     );
   }
 
-  // Check whether the backer unstake or not
-  if (backingInfo.amount < 0n) {
+  // TODO: @sk-saru Check whether the backer unstake or not
+  if (backingInfo.amount <= 0n) {
     tx = addCollectBackingInstruction(tx, backingInfo);
 
     tx = addMintingInstruction(tx, {
