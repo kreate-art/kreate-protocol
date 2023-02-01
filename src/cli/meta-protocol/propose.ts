@@ -39,7 +39,6 @@ const proposedRules: RulesProposal = {
       {
         mintingPolicyHash: { script: { hash: teikiMph } },
         redeemer: { kind: "ConstrNotIn", constrs: [2n] },
-        amounts: null,
       },
     ],
   },
