@@ -107,8 +107,7 @@ export function withdrawFundsTx(
   const split = isNewMilestoneReached
     ? protocolParamsDatum.minTreasuryPerMilestoneEvent * TREASURY_UTXO_MIN_ADA
     : 0n;
-  const minFees = split + TREASURY_UTXO_MIN_ADA;
-  const withdrawFees =
+  const minFees =
     (totalWithdrawal * protocolParamsDatum.protocolFundsShareRatio) /
     RATIO_MULTIPLIER;
   const inW = BigInt(dedicatedTreasuryUtxo.assets.lovelace);
@@ -116,12 +115,18 @@ export function withdrawFundsTx(
     dedicatedTreasuryDatum.governorAda > inW
       ? inW
       : dedicatedTreasuryDatum.governorAda;
-  const lowerbound =
+  const governorAdaLowerbound =
     ((inW - split - inG) * RATIO_MULTIPLIER) /
     (protocolParamsDatum.governorShareRatio - RATIO_MULTIPLIER);
-  const fees = [minFees, withdrawFees, lowerbound].reduce((max, item) =>
-    max > item ? max : item
-  );
+  const dedicatedTreasuryAdaLowerBound = TREASURY_UTXO_MIN_ADA + split - inW;
+  const fees = [
+    minFees,
+    governorAdaLowerbound,
+    dedicatedTreasuryAdaLowerBound,
+  ].reduce((max, item) => (max > item ? max : item));
+  const outW = inW + fees - split;
+  const outG =
+    inG + (fees * protocolParamsDatum.governorShareRatio) / RATIO_MULTIPLIER;
 
   let tx = lucid
     .newTx()
@@ -139,7 +144,7 @@ export function withdrawFundsTx(
           {
             case: "CollectFees",
             split: isNewMilestoneReached,
-            minFees: withdrawFees,
+            minFees,
           },
           DedicatedTreasuryRedeemer
         )
@@ -195,10 +200,7 @@ export function withdrawFundsTx(
             S.toData(
               {
                 ...dedicatedTreasuryDatum,
-                governorAda:
-                  inG +
-                  (fees * protocolParamsDatum.governorShareRatio) /
-                    RATIO_MULTIPLIER,
+                governorAda: outG,
                 tag: {
                   kind: "TagContinuation",
                   former: constructTxOutputId(dedicatedTreasuryUtxo),
@@ -208,7 +210,7 @@ export function withdrawFundsTx(
             )
           ),
         },
-        { lovelace: inW + fees - split }
+        { lovelace: outW }
       );
 
     for (let i = 0; i < protocolParamsDatum.minTreasuryPerMilestoneEvent; ++i) {
@@ -240,10 +242,7 @@ export function withdrawFundsTx(
           S.toData(
             {
               ...dedicatedTreasuryDatum,
-              governorAda:
-                inG +
-                (fees * protocolParamsDatum.governorShareRatio) /
-                  RATIO_MULTIPLIER,
+              governorAda: outG,
               tag: {
                 kind: "TagContinuation",
                 former: constructTxOutputId(dedicatedTreasuryUtxo),
@@ -253,7 +252,7 @@ export function withdrawFundsTx(
           )
         ),
       },
-      { lovelace: inW + fees }
+      { lovelace: outW }
     );
   }
 
