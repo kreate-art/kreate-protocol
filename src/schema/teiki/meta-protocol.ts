@@ -9,7 +9,6 @@ import {
   Enum,
   Int,
   List,
-  Map,
   Option,
   Static,
   Struct,
@@ -25,18 +24,9 @@ export const MintingRedeemer = Enum("kind", {
 });
 export type MintingRedeemer = Static<typeof MintingRedeemer>;
 
-export const MintingAmount = Enum("amount", {
-  Zero: Void,
-  NonZero: Void,
-  Positive: Void,
-  Negative: Void,
-});
-export type MintingAmount = Static<typeof MintingAmount>;
-
 export const MintingPredicate = Struct({
   mintingPolicyHash: MintingPolicyHash,
   redeemer: MintingRedeemer,
-  amounts: Option(Map(ByteArray, MintingAmount)),
 });
 export type MintingPredicate = Static<typeof MintingPredicate>;
 

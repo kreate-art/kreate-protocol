@@ -3,13 +3,6 @@ import { helios } from "../../program";
 export default helios("v__teiki_plant__types")`
   module v__teiki_plant__types
 
-  enum MintingAmount {
-    Zero
-    NonZero
-    Positive
-    Negative
-  }
-
   enum MintingRedeemer {
     Any
     ConstrIn { constrs: []Int }
@@ -19,7 +12,6 @@ export default helios("v__teiki_plant__types")`
   struct MintingPredicate {
     minting_policy_hash: MintingPolicyHash
     redeemer: MintingRedeemer
-    amounts: Option[Map[ByteArray]MintingAmount]
   }
 
   struct TokenPredicate {
