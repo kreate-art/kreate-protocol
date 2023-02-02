@@ -328,8 +328,9 @@ function mintTeiki(
     SharedTreasuryDatum
   );
 
-  const inputSharedTreasuryTeikiAmount =
-    BigInt(inputSharedTreasuryUtxo.assets[teikiUnit]) ?? 0n;
+  const inputSharedTreasuryTeikiAmount = BigInt(
+    inputSharedTreasuryUtxo.assets[teikiUnit] ?? 0n
+  );
 
   let sharedTreasuryRedeemer: SharedTreasuryRedeemer;
   let remainingTeikiAmount: bigint;
