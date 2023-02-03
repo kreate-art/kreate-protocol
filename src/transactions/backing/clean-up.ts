@@ -24,6 +24,8 @@ import { UserTag } from "@/schema/teiki/tags";
 import { Hex, TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
+import { attachTeikiNftMetadata, getPlantNftName } from "../meta-data";
+
 import { mintTeiki } from "./utils";
 
 // NOTE: @sk-saru clean up by project id for now
@@ -212,9 +214,11 @@ function addMintingInstruction(
 
       const plantHash = constructPlantHashUsingBlake2b(plant);
 
+      const backingDuration = BigInt(
+        BigInt(unstakedAt) - backingDatum.stakedAt.timestamp
+      );
       const teikiRewards = isMatured
-        ? (backingAmount *
-            BigInt(BigInt(unstakedAt) - backingDatum.stakedAt.timestamp)) /
+        ? (backingAmount * backingDuration) /
           BigInt(protocolParams.epochLength.milliseconds) /
           protocolParams.teikiCoefficient
         : 0n;
@@ -234,6 +238,15 @@ function addMintingInstruction(
             [teikiUnit]: teikiRewards,
           }
         );
+
+      tx = attachTeikiNftMetadata(tx, {
+        policyId: cleanUpInfo.proofOfBackingMph,
+        assetName: plantHash,
+        nftName: getPlantNftName({ isMatured }),
+        projectId: backingDatum.projectId.id,
+        backingAmount,
+        duration: backingDuration,
+      });
 
       totalTeikiRewards += teikiRewards;
     } else {

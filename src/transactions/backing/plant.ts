@@ -19,6 +19,8 @@ import { ProjectDatum } from "@/schema/teiki/project";
 import { Hex, TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
+import { attachTeikiNftMetadata, getPlantNftName } from "../meta-data";
+
 import { mintTeiki } from "./utils";
 
 export type ProjectInfo = {
@@ -249,6 +251,15 @@ function addMintingInstruction(
         { [backingInfo.proofOfBackingMph + plantHash]: 1n },
         proofOfBackingMintingRedeemer
       );
+
+      tx = attachTeikiNftMetadata(tx, {
+        policyId: backingInfo.proofOfBackingMph,
+        assetName: plantHash,
+        nftName: getPlantNftName({ isMatured }),
+        projectId: backingDatum.projectId.id,
+        backingAmount,
+        duration: timePassed,
+      });
 
       const teikiRewards = isMatured
         ? (backingAmount *
