@@ -11,6 +11,8 @@ import { ProjectDatum } from "@/schema/teiki/project";
 import { Hex, TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
+import { attachTeikiNftMetadata } from "../meta-data";
+
 import { MintTeikiParams, mintTeiki } from "./utils";
 
 export type Params = {
@@ -117,19 +119,33 @@ export function claimRewardsByFlowerTx(
       isMatured: true,
     };
 
+    const fruitPlantHash = constructPlantHashUsingBlake2b(fruit);
+
     mintingPlantAssets = {
       ...mintingPlantAssets,
       [proofOfBackingMph + constructPlantHashUsingBlake2b(flower)]: -1n,
-      [proofOfBackingMph + constructPlantHashUsingBlake2b(fruit)]: 1n,
+      [proofOfBackingMph + fruitPlantHash]: 1n,
     };
 
+    const backingDuration = BigInt(
+      flower.unstakedAt.timestamp - flower.stakedAt.timestamp
+    );
+
     const teikiRewards =
-      (flower.backingAmount *
-        BigInt(flower.unstakedAt.timestamp - flower.stakedAt.timestamp)) /
+      (flower.backingAmount * backingDuration) /
       BigInt(protocolParams.epochLength.milliseconds) /
       protocolParams.teikiCoefficient;
 
     totalTeikiRewards += teikiRewards;
+
+    tx = attachTeikiNftMetadata(tx, {
+      policyId: backingInfo.proofOfBackingMph,
+      assetName: fruitPlantHash,
+      nftName: "Teiki Kuda",
+      projectId: flower.projectId.id,
+      backingAmount: flower.backingAmount,
+      duration: backingDuration,
+    });
   }
 
   tx = tx.mintAssets(mintingPlantAssets, proofOfBackingMintingRedeemer);
