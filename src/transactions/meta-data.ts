@@ -38,8 +38,8 @@ export function attachTeikiNftMetadata(
         }`,
         description: "The Proof of Backing NFT on Teiki protocol",
         project_id: projectId,
-        backing_amount: backingAmount,
-        duration,
+        backing_amount: Number(backingAmount),
+        duration: Number(duration),
       },
     },
     version: 2, // asset name in hex format
