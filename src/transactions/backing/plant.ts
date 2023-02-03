@@ -1,9 +1,6 @@
-import { Address, Lucid, Tx, Unit, UTxO } from "lucid-cardano";
+import { Address, Lucid, Tx, UTxO } from "lucid-cardano";
 
-import {
-  PROOF_OF_BACKING_TOKEN_NAMES,
-  TEIKI_TOKEN_NAME,
-} from "@/contracts/common/constants";
+import { PROOF_OF_BACKING_TOKEN_NAMES } from "@/contracts/common/constants";
 import {
   constructAddress,
   constructPlantHashUsingBlake2b,
@@ -18,22 +15,11 @@ import {
   Plant,
   ProofOfBackingMintingRedeemer,
 } from "@/schema/teiki/backing";
-import { TeikiMintingRedeemer } from "@/schema/teiki/meta-protocol";
 import { ProjectDatum } from "@/schema/teiki/project";
-import {
-  ProtocolParamsDatum,
-  LegacyProtocolParamsDatum,
-} from "@/schema/teiki/protocol";
-import {
-  SharedTreasuryDatum,
-  SharedTreasuryRedeemer,
-} from "@/schema/teiki/treasury";
 import { Hex, TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { RATIO_MULTIPLIER } from "../constants";
-
-import { calculateTeikiRemaining } from "./utils";
+import { mintTeiki } from "./utils";
 
 export type ProjectInfo = {
   id: Hex;
@@ -295,155 +281,14 @@ function addMintingInstruction(
       "Invalid teiki reference script UTxO: Missing inline datum"
     );
 
-    tx = mintTeiki(
-      tx,
+    tx = mintTeiki(tx, {
       teikiMintingInfo,
       totalTeikiRewards,
       protocolParams,
-      txTimeStart
-    );
+      projectDatum,
+      txTimeStart,
+    });
   }
 
   return tx;
-}
-
-function mintTeiki(
-  tx: Tx,
-  teikiMintingInfo: TeikiMintingInfo,
-  totalTeikiRewards: bigint,
-  protocolParams: ProtocolParamsDatum | LegacyProtocolParamsDatum,
-  txTimeStart: number
-) {
-  const teikiUnit: Unit = teikiMintingInfo.teikiMph + TEIKI_TOKEN_NAME;
-
-  const inputSharedTreasuryUtxo = teikiMintingInfo.sharedTreasuryUtxo;
-
-  assert(
-    inputSharedTreasuryUtxo.datum != null,
-    "Missing shared treasury UTxO: Missing inline datum"
-  );
-
-  const inputSharedTreasuryDatum = S.fromData(
-    S.fromCbor(inputSharedTreasuryUtxo.datum),
-    SharedTreasuryDatum
-  );
-
-  const inputSharedTreasuryTeikiAmount = BigInt(
-    inputSharedTreasuryUtxo.assets[teikiUnit] ?? 0n
-  );
-
-  let sharedTreasuryRedeemer: SharedTreasuryRedeemer;
-  let remainingTeikiAmount: bigint;
-  let outputLastBurnAtTimestamp: bigint;
-  switch (inputSharedTreasuryDatum.projectTeiki.teikiCondition) {
-    case "TeikiEmpty":
-      sharedTreasuryRedeemer = {
-        case: "UpdateTeiki",
-        burnAction: { burn: "BurnPeriodically" },
-        burnAmount: 0n,
-        rewards: totalTeikiRewards,
-      };
-      remainingTeikiAmount = 0n;
-      outputLastBurnAtTimestamp = BigInt(txTimeStart);
-      break;
-    case "TeikiBurntPeriodically": {
-      const epochs = Math.floor(
-        (txTimeStart -
-          Number(inputSharedTreasuryDatum.projectTeiki.lastBurnAt.timestamp)) /
-          Number(protocolParams.epochLength.milliseconds)
-      );
-
-      if (epochs === 0) {
-        sharedTreasuryRedeemer = {
-          case: "UpdateTeiki",
-          burnAction: { burn: "BurnPeriodically" },
-          burnAmount: 0n,
-          rewards: totalTeikiRewards,
-        };
-        remainingTeikiAmount = inputSharedTreasuryDatum.projectTeiki.available;
-        outputLastBurnAtTimestamp =
-          inputSharedTreasuryDatum.projectTeiki.lastBurnAt.timestamp;
-        break;
-      }
-
-      remainingTeikiAmount = calculateTeikiRemaining(
-        inputSharedTreasuryDatum.projectTeiki.available,
-        RATIO_MULTIPLIER - protocolParams.projectTeikiBurnRate,
-        epochs
-      );
-
-      const burnAmount =
-        inputSharedTreasuryDatum.projectTeiki.available - remainingTeikiAmount;
-
-      sharedTreasuryRedeemer = {
-        case: "UpdateTeiki",
-        burnAction: { burn: "BurnPeriodically" },
-        burnAmount: burnAmount,
-        rewards: totalTeikiRewards,
-      };
-
-      outputLastBurnAtTimestamp =
-        inputSharedTreasuryDatum.projectTeiki.lastBurnAt.timestamp +
-        BigInt(epochs * Number(protocolParams.epochLength.milliseconds));
-      break;
-    }
-    case "TeikiBurntEntirely":
-      // TODO: @sk-saru
-      throw new Error("Not support case TeikiBurntEntirely");
-  }
-
-  const teikiMint = 3n * totalTeikiRewards - sharedTreasuryRedeemer.burnAmount;
-
-  const outputSharedTreasuryTeikiAmount: bigint =
-    inputSharedTreasuryTeikiAmount +
-    sharedTreasuryRedeemer.rewards +
-    totalTeikiRewards -
-    sharedTreasuryRedeemer.burnAmount;
-
-  const outputSharedTreasuryDatum: SharedTreasuryDatum = {
-    ...inputSharedTreasuryDatum,
-    governorTeiki:
-      inputSharedTreasuryDatum.governorTeiki +
-      (sharedTreasuryRedeemer.rewards * protocolParams.governorShareRatio) /
-        RATIO_MULTIPLIER,
-    projectTeiki: {
-      teikiCondition: "TeikiBurntPeriodically",
-      available: remainingTeikiAmount + sharedTreasuryRedeemer.rewards,
-      lastBurnAt: { timestamp: outputLastBurnAtTimestamp },
-    },
-    tag: {
-      kind: "TagContinuation",
-      former: {
-        txId: inputSharedTreasuryUtxo.txHash,
-        index: BigInt(inputSharedTreasuryUtxo.outputIndex),
-      },
-    },
-  };
-
-  return tx
-    .readFrom([
-      teikiMintingInfo.sharedTreasuryVRefUtxo,
-      teikiMintingInfo.teikiMpRefUtxo,
-      teikiMintingInfo.teikiPlantVRefUtxo,
-    ])
-    .collectFrom(
-      [inputSharedTreasuryUtxo],
-      S.toCbor(S.toData(sharedTreasuryRedeemer, SharedTreasuryRedeemer))
-    )
-    .payToContract(
-      inputSharedTreasuryUtxo.address,
-      {
-        inline: S.toCbor(
-          S.toData(outputSharedTreasuryDatum, SharedTreasuryDatum)
-        ),
-      },
-      {
-        ...inputSharedTreasuryUtxo.assets,
-        [teikiUnit]: outputSharedTreasuryTeikiAmount,
-      }
-    )
-    .mintAssets(
-      { [teikiUnit]: teikiMint },
-      S.toCbor(S.toData({ case: "Mint" }, TeikiMintingRedeemer))
-    );
 }
