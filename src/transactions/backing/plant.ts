@@ -27,7 +27,7 @@ export type ProjectInfo = {
   id: Hex;
   currentMilestone: bigint;
   projectUtxo: UTxO;
-  projectScriptUtxo: UTxO;
+  projectScriptUtxo?: UTxO;
 };
 
 export type BackingInfo = {
@@ -36,7 +36,7 @@ export type BackingInfo = {
   amount: bigint;
   backerAddress: Address;
   backingUtxos: UTxO[];
-  backingScriptAddress: Address;
+  backingScriptAddress?: Address;
   backingScriptRefUtxo: UTxO;
   proofOfBackingMpRefUtxo: UTxO;
   proofOfBackingMph: Hex;
@@ -106,13 +106,20 @@ export function plantTx(
       proofOfBackingMpRefUtxo,
       projectInfo.projectUtxo,
       protocolParamsUtxo,
-      projectInfo.projectScriptUtxo,
     ])
     .validFrom(txTimeStart)
     .validTo(txTimeEnd);
 
   // NOTE: We may only need to produce multiple backing UTxOs in case of cleanup
   const numProducedBackingUtxos = remainBackingAmount === 0n ? 0 : 1;
+  if (numProducedBackingUtxos) {
+    assert(
+      projectInfo.projectScriptUtxo?.scriptRef,
+      "Invalid parameters: Missing project script UTxO"
+    );
+
+    tx = tx.readFrom([projectInfo.projectScriptUtxo]);
+  }
 
   const seedTokenMintAmount =
     numProducedBackingUtxos - backingInfo.backingUtxos.length;
@@ -143,6 +150,11 @@ export function plantTx(
 
   // Check whether a new backing UTxO should be produced
   if (remainBackingAmount > 0n) {
+    assert(
+      backingInfo.backingScriptAddress,
+      "Invalid parameters: Missing backing script address"
+    );
+
     const backingDatum: BackingDatum = {
       projectId: { id: projectInfo.id },
       backerAddress: constructAddress(backingInfo.backerAddress),
@@ -152,9 +164,7 @@ export function plantTx(
 
     tx = tx.payToContract(
       backingInfo.backingScriptAddress,
-      {
-        inline: S.toCbor(S.toData(backingDatum, BackingDatum)),
-      },
+      { inline: S.toCbor(S.toData(backingDatum, BackingDatum)) },
       { [seedUnit]: 1n, lovelace: remainBackingAmount }
     );
   }
