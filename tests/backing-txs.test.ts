@@ -1,5 +1,5 @@
 // TODO: @sk-saru refactor this file please!!!
-import { Emulator, Lucid, UTxO, Unit } from "lucid-cardano";
+import { Assets, Emulator, Lucid, UTxO, Unit } from "lucid-cardano";
 
 import {
   compileBackingVScript,
@@ -22,10 +22,11 @@ import {
   constructAddress,
   constructProjectIdUsingBlake2b,
   constructTxOutputId,
+  constructPlantHashUsingBlake2b,
 } from "@/helpers/schema";
 import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
-import { BackingDatum } from "@/schema/teiki/backing";
+import { BackingDatum, Plant } from "@/schema/teiki/backing";
 import { TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
 import {
   ProjectDatum,
@@ -34,8 +35,10 @@ import {
 } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { SharedTreasuryDatum } from "@/schema/teiki/treasury";
+import { claimRewardsByFlowerTx } from "@/transactions/backing/claim-rewards-by-flower";
 import { CleanUpParams, cleanUpTx } from "@/transactions/backing/clean-up";
 import { PlantParams, plantTx } from "@/transactions/backing/plant";
+import { sortPlantByBackingOutputId } from "@/transactions/backing/utils";
 import { Hex } from "@/types";
 
 import {
@@ -53,6 +56,7 @@ import { generateProtocolRegistry } from "./utils";
 const BACKER_ACCOUNT = await generateAccount();
 const emulator = new Emulator([BACKER_ACCOUNT]);
 const lucid = await Lucid.new(emulator);
+const MIN_UTXO_LOVELACE = 2_000_000n;
 
 // Context
 
@@ -124,21 +128,21 @@ const sharedTreasuryAddress = scriptHashToAddress(lucid, sharedTreasuryVHash);
 const proofOfBackingMpRefUtxo: UTxO = {
   ...generateOutRef(),
   address: refScriptAddress,
-  assets: { lovelace: 2_000_000n },
+  assets: { lovelace: MIN_UTXO_LOVELACE },
   scriptRef: proofOfBackingMintingPolicy,
 };
 
 const backingScriptRefUtxo: UTxO = {
   ...generateOutRef(),
   address: refScriptAddress,
-  assets: { lovelace: 2_000_000n },
+  assets: { lovelace: MIN_UTXO_LOVELACE },
   scriptRef: backingValidator,
 };
 
 const sharedTreasuryVRefUtxo: UTxO = {
   ...generateOutRef(),
   address: refScriptAddress,
-  assets: { lovelace: 2_000_000n },
+  assets: { lovelace: MIN_UTXO_LOVELACE },
   scriptRef: sharedTreasuryValidator,
 };
 
@@ -191,7 +195,7 @@ const protocolParamsNftUnit: Unit =
 const protocolParamsUtxo: UTxO = {
   ...generateOutRef(),
   address: protocolParamsAddress,
-  assets: { lovelace: 2_000_000n, [protocolParamsNftUnit]: 1n },
+  assets: { lovelace: MIN_UTXO_LOVELACE, [protocolParamsNftUnit]: 1n },
   datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
 };
 
@@ -203,12 +207,12 @@ const projectScriptDatum: ProjectScriptDatum = {
 const projectScriptUtxo: UTxO = {
   ...generateOutRef(),
   address: projectScriptAddress,
-  assets: { lovelace: 2_000_000n, [projectScriptATUnit]: 1n },
+  assets: { lovelace: MIN_UTXO_LOVELACE, [projectScriptATUnit]: 1n },
   datum: S.toCbor(S.toData(projectScriptDatum, ProjectScriptDatum)),
   scriptRef: projectStakeValidator,
 };
 
-const current_project_milestone = 0n;
+const initialProjectMilestone = 0n;
 // End context
 
 describe("backing transactions", () => {
@@ -220,7 +224,7 @@ describe("backing transactions", () => {
     const projectDatum: ProjectDatum = {
       projectId: { id: projectId },
       ownerAddress: constructAddress(ownerAddress),
-      milestoneReached: current_project_milestone,
+      milestoneReached: initialProjectMilestone,
       isStakingDelegationManagedByProtocol: true,
       status: { type: "Active" },
     };
@@ -240,7 +244,7 @@ describe("backing transactions", () => {
       protocolParamsUtxo,
       projectInfo: {
         id: projectId,
-        currentMilestone: current_project_milestone,
+        currentMilestone: initialProjectMilestone,
         projectUtxo,
         projectScriptUtxo,
       },
@@ -273,32 +277,28 @@ describe("backing transactions", () => {
     const projectDatum: ProjectDatum = {
       projectId: { id: projectId },
       ownerAddress: constructAddress(ownerAddress),
-      milestoneReached: current_project_milestone,
+      milestoneReached: initialProjectMilestone,
       isStakingDelegationManagedByProtocol: true,
       status: { type: "Active" },
     };
 
     const projectUtxo: UTxO = generateProjectUtxo(projectDatum);
 
-    const backingUtxo = generateBackingUtxo({
-      milestoneBacked: current_project_milestone,
-      amount: 500_000_000n,
-      stakedAt: { timestamp: BigInt(getTime({ lucid })) },
-    });
-
-    const backingUtxo1 = generateBackingUtxo({
-      milestoneBacked: current_project_milestone,
-      amount: 600_000_000n,
-      stakedAt: { timestamp: BigInt(getTime({ lucid })) },
-    });
+    const backingUtxos = generateBackingUtxoList(10);
+    const totalBackedAmount = backingUtxos.reduce(
+      (total, utxo) => total + utxo.assets.lovelace,
+      0n
+    );
+    const unbackAmount = getRandomLovelaceAmount(
+      Number(totalBackedAmount - MIN_UTXO_LOVELACE)
+    );
 
     attachUtxos(emulator, [
       proofOfBackingMpRefUtxo,
       projectUtxo,
       projectScriptUtxo,
       protocolParamsUtxo,
-      backingUtxo,
-      backingUtxo1,
+      ...backingUtxos,
       backingScriptRefUtxo,
     ]);
 
@@ -308,14 +308,14 @@ describe("backing transactions", () => {
       protocolParamsUtxo,
       projectInfo: {
         id: projectId,
-        currentMilestone: current_project_milestone,
+        currentMilestone: initialProjectMilestone,
         projectUtxo,
         projectScriptUtxo,
       },
       backingInfo: {
-        amount: -400_000_000n,
+        amount: -unbackAmount,
         backerAddress: BACKER_ACCOUNT.address,
-        backingUtxos: [backingUtxo, backingUtxo1],
+        backingUtxos,
         backingScriptAddress,
         backingScriptRefUtxo,
         proofOfBackingMpRefUtxo,
@@ -363,13 +363,14 @@ describe("backing transactions", () => {
       availableTeiki
     );
 
-    const backingUtxo: UTxO = generateBackingUtxo({
-      milestoneBacked: current_project_milestone,
-      amount: 500_000_000n,
-      stakedAt: { timestamp: BigInt(getTime({ lucid })) },
-    });
-
-    const backingUtxos = [backingUtxo];
+    const backingUtxos = generateBackingUtxoList(10);
+    const totalBackedAmount = backingUtxos.reduce(
+      (total, utxo) => total + utxo.assets.lovelace,
+      0n
+    );
+    const unbackAmount = getRandomLovelaceAmount(
+      Number(totalBackedAmount - MIN_UTXO_LOVELACE)
+    );
 
     attachUtxos(emulator, backingUtxos);
 
@@ -379,7 +380,7 @@ describe("backing transactions", () => {
       ...generatedParams,
       backingInfo: {
         ...generatedParams.backingInfo,
-        amount: -400_000_000n,
+        amount: -unbackAmount,
         backingUtxos,
         backerAddress: BACKER_ACCOUNT.address,
       },
@@ -425,13 +426,14 @@ describe("backing transactions", () => {
       availableTeiki
     );
 
-    const backingUtxo: UTxO = generateBackingUtxo({
-      milestoneBacked: current_project_milestone,
-      amount: 500_000_000n,
-      stakedAt: { timestamp: BigInt(getTime({ lucid })) },
-    });
-
-    const backingUtxos = [backingUtxo];
+    const backingUtxos = generateBackingUtxoList(10);
+    const totalBackedAmount = backingUtxos.reduce(
+      (total, utxo) => total + utxo.assets.lovelace,
+      0n
+    );
+    const unbackAmount = getRandomLovelaceAmount(
+      Number(totalBackedAmount - MIN_UTXO_LOVELACE)
+    );
 
     attachUtxos(emulator, backingUtxos);
 
@@ -441,7 +443,7 @@ describe("backing transactions", () => {
       ...generatedParams,
       backingInfo: {
         ...generatedParams.backingInfo,
-        amount: -400_000_000n,
+        amount: -unbackAmount,
         backingUtxos,
         backerAddress: BACKER_ACCOUNT.address,
       },
@@ -485,13 +487,14 @@ describe("backing transactions", () => {
       availableTeiki
     );
 
-    const backingUtxo: UTxO = generateBackingUtxo({
-      milestoneBacked: current_project_milestone,
-      amount: 500_000_000n,
-      stakedAt: { timestamp: BigInt(getTime({ lucid })) },
-    });
-
-    const backingUtxos = [backingUtxo];
+    const backingUtxos = generateBackingUtxoList(10);
+    const totalBackedAmount = backingUtxos.reduce(
+      (total, utxo) => total + utxo.assets.lovelace,
+      0n
+    );
+    const unbackAmount = getRandomLovelaceAmount(
+      Number(totalBackedAmount - MIN_UTXO_LOVELACE)
+    );
 
     attachUtxos(emulator, backingUtxos);
 
@@ -501,7 +504,7 @@ describe("backing transactions", () => {
       ...generatedParams,
       backingInfo: {
         ...generatedParams.backingInfo,
-        amount: -400_000_000n,
+        amount: -unbackAmount,
         backingUtxos,
         backerAddress: BACKER_ACCOUNT.address,
       },
@@ -545,23 +548,24 @@ describe("backing transactions", () => {
       availableTeiki
     );
 
-    const backingUtxo: UTxO = generateBackingUtxo({
-      milestoneBacked: current_project_milestone,
-      amount: 500_000_000n,
-      stakedAt: { timestamp: BigInt(getTime({ lucid })) },
-    });
-
-    const backingUtxos = [backingUtxo];
+    const backingUtxos = generateBackingUtxoList(10);
+    const totalBackedAmount = backingUtxos.reduce(
+      (total, utxo) => total + utxo.assets.lovelace,
+      0n
+    );
+    const unbackAmount = getRandomLovelaceAmount(
+      Number(totalBackedAmount - MIN_UTXO_LOVELACE)
+    );
 
     attachUtxos(emulator, backingUtxos);
 
-    emulator.awaitBlock(8);
+    emulator.awaitBlock(20);
 
     const plantParams: PlantParams = {
       ...generatedParams,
       backingInfo: {
         ...generatedParams.backingInfo,
-        amount: -400_000_000n,
+        amount: -unbackAmount,
         backingUtxos,
         backerAddress: BACKER_ACCOUNT.address,
       },
@@ -605,23 +609,24 @@ describe("backing transactions", () => {
       availableTeiki
     );
 
-    const backingUtxo: UTxO = generateBackingUtxo({
-      milestoneBacked: current_project_milestone,
-      amount: 500_000_000n,
-      stakedAt: { timestamp: BigInt(getTime({ lucid })) },
-    });
-
-    const backingUtxos = [backingUtxo];
+    const backingUtxos = generateBackingUtxoList(10);
+    const totalBackedAmount = backingUtxos.reduce(
+      (total, utxo) => total + utxo.assets.lovelace,
+      0n
+    );
+    const unbackAmount = getRandomLovelaceAmount(
+      Number(totalBackedAmount - MIN_UTXO_LOVELACE)
+    );
 
     attachUtxos(emulator, backingUtxos);
 
-    emulator.awaitBlock(8);
+    emulator.awaitBlock(20);
 
     const plantParams = {
       ...generatedParams,
       backingInfo: {
         ...generatedParams.backingInfo,
-        amount: -400_000_000n,
+        amount: -unbackAmount,
         backingUtxos,
         backerAddress: BACKER_ACCOUNT.address,
       },
@@ -645,11 +650,80 @@ describe("backing transactions", () => {
       true
     );
   });
+
+  it("claim teiki by flower", async () => {
+    expect.assertions(1);
+
+    lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
+
+    const flowers = generateFlowerList(1 + Math.floor(Math.random() * 20));
+
+    const flowerAssets: Assets = {};
+    for (const flower of flowers) {
+      const flowerHash = constructPlantHashUsingBlake2b(flower);
+      flowerAssets[proofOfBackingMph + flowerHash] = 1n;
+    }
+
+    const backerUtxo: UTxO = {
+      ...generateOutRef(),
+      address: await lucid.wallet.address(),
+      assets: {
+        ...flowerAssets,
+        lovelace: 2_000_000_000n,
+      },
+    };
+
+    attachUtxos(emulator, [backerUtxo]);
+
+    const governorTeiki = 1_000_000n;
+    const availableTeiki = 1_000_000_000n;
+
+    const sharedTreasuryDatum: SharedTreasuryDatum = {
+      projectId: { id: projectId },
+      governorTeiki,
+      projectTeiki: {
+        teikiCondition: "TeikiBurntPeriodically",
+        available: availableTeiki,
+        lastBurnAt: { timestamp: BigInt(getTime({ lucid })) },
+      },
+      tag: {
+        kind: "TagContinuation",
+        former: constructTxOutputId(generateOutRef()),
+      },
+    };
+
+    const generatedParams = generateBackingParams(
+      sharedTreasuryDatum,
+      projectId,
+      { type: "Active" },
+      governorTeiki,
+      availableTeiki
+    );
+
+    const params = {
+      protocolParamsUtxo,
+      projectUtxo: generatedParams.projectInfo.projectUtxo,
+      backingInfo: {
+        flowers,
+        proofOfBackingMpRefUtxo:
+          generatedParams.backingInfo.proofOfBackingMpRefUtxo,
+        proofOfBackingMph: generatedParams.backingInfo.proofOfBackingMph,
+      },
+      teikiMintingInfo: generatedParams.teikiMintingInfo,
+    };
+
+    emulator.awaitBlock(20);
+
+    const tx = claimRewardsByFlowerTx(lucid, params);
+
+    const txComplete = await tx.complete();
+
+    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+      true
+    );
+  });
 });
 
-// TODO: @sk-saru refine this function, backing UTxOs,
-// backing amount should be generated
-// benchmark
 function generateBackingParams(
   sharedTreasuryDatum: SharedTreasuryDatum,
   projectId: Hex,
@@ -660,7 +734,7 @@ function generateBackingParams(
   const projectDatum: ProjectDatum = {
     projectId: { id: projectId },
     ownerAddress: constructAddress(ownerAddress),
-    milestoneReached: current_project_milestone + 1n,
+    milestoneReached: initialProjectMilestone + 1n,
     isStakingDelegationManagedByProtocol: true,
     status: projectStatus,
   };
@@ -671,7 +745,7 @@ function generateBackingParams(
     ...generateOutRef(),
     address: sharedTreasuryAddress,
     assets: {
-      lovelace: 2_000_000n,
+      lovelace: MIN_UTXO_LOVELACE,
       [teikiUnit]: availableTeiki + governorTeiki,
     },
     datum: S.toCbor(S.toData(sharedTreasuryDatum, SharedTreasuryDatum)),
@@ -717,34 +791,69 @@ function generateProjectUtxo(projectDatum: ProjectDatum): UTxO {
   return {
     ...generateOutRef(),
     address: projectAddress,
-    assets: { lovelace: 2_000_000n, [projectATUnit]: 1n },
+    assets: { lovelace: MIN_UTXO_LOVELACE, [projectATUnit]: 1n },
     datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
   };
 }
 
-function generateBackingUtxo({
-  milestoneBacked,
-  amount,
-  stakedAt,
-}: {
-  milestoneBacked: bigint;
-  amount: bigint;
-  stakedAt: S.Time;
-}) {
+function generateBackingUtxo() {
   const backingDatum: BackingDatum = {
     projectId: { id: projectId },
     backerAddress: constructAddress(BACKER_ACCOUNT.address),
-    stakedAt,
-    milestoneBacked: milestoneBacked,
+    stakedAt: { timestamp: getRandomTime() },
+    milestoneBacked: initialProjectMilestone,
   };
 
   return {
     ...generateOutRef(),
     address: backingScriptAddress,
     assets: {
-      lovelace: amount,
+      lovelace: getRandomLovelaceAmount(),
       [proofOfBackingMph + PROOF_OF_BACKING_TOKEN_NAMES.SEED]: 1n,
     },
     datum: S.toCbor(S.toData(backingDatum, BackingDatum)),
   };
+}
+
+function generateBackingUtxoList(size: number): UTxO[] {
+  return [...Array(size)].map((_) => generateBackingUtxo());
+}
+
+function generateFlower(): Plant {
+  const stakedAt = {
+    timestamp: getRandomTime(),
+  };
+  const stakedEpochs = Math.floor(Math.random() * 100);
+  const unstakedAt = {
+    timestamp:
+      stakedAt.timestamp +
+      BigInt(
+        stakedEpochs * Number(protocolParamsDatum.epochLength.milliseconds)
+      ),
+  };
+  return {
+    isMatured: false,
+    backingOutputId: constructTxOutputId(generateOutRef()),
+    backingAmount: getRandomLovelaceAmount(),
+    unstakedAt,
+    projectId: { id: projectId },
+    backerAddress: constructAddress(BACKER_ACCOUNT.address),
+    stakedAt,
+    milestoneBacked: initialProjectMilestone,
+  };
+}
+
+function generateFlowerList(size: number): Plant[] {
+  return sortPlantByBackingOutputId(
+    [...Array(size)].map((_) => generateFlower())
+  );
+}
+
+function getRandomTime() {
+  return BigInt(getTime({ lucid }) + Math.floor(Math.random() * 200_000));
+}
+
+function getRandomLovelaceAmount(max?: number) {
+  const random = BigInt(Math.floor(Math.random() * (max ?? 1_000_000_000)));
+  return random > MIN_UTXO_LOVELACE ? random : MIN_UTXO_LOVELACE;
 }
