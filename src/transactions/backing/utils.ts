@@ -4,6 +4,7 @@ import { UTxO, Tx, Unit } from "lucid-cardano";
 
 import { TEIKI_TOKEN_NAME } from "@/contracts/common/constants";
 import * as S from "@/schema";
+import { Plant } from "@/schema/teiki/backing";
 import { TeikiMintingRedeemer } from "@/schema/teiki/meta-protocol";
 import { ProjectDatum } from "@/schema/teiki/project";
 import {
@@ -223,4 +224,14 @@ export function mintTeiki(
       { [teikiUnit]: teikiMint },
       S.toCbor(S.toData({ case: "Mint" }, TeikiMintingRedeemer))
     );
+}
+
+//https://www.hyperion-bt.org/helios-book/lang/builtins/txoutputid.html
+export function sortPlantByBackingOutputId(plants: Plant[]) {
+  return plants.sort((p1, p2) => {
+    if (p1.backingOutputId.txId == p2.backingOutputId.txId)
+      return p1.backingOutputId.index > p2.backingOutputId.index ? 1 : -1;
+
+    return p1.backingOutputId.txId > p2.backingOutputId.txId ? 1 : -1;
+  });
 }
