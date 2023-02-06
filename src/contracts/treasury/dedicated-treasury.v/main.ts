@@ -90,23 +90,31 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
           project_detail_redeemer_data: Data = tx.redeemers.get(script_purpose);
 
+          // This check is performed for batch processing purposes.
           own_output_txout: TxOutput =
-            tx.outputs_locked_by(ctx.get_current_validator_hash())
-              .head;
+            tx.outputs.find(
+              (output: TxOutput) -> Bool {
+                output.address == own_input_txinput.output.address
+                  && output.datum.switch{
+                    i: Inline => {
+                      output_datum: Datum = Datum::from_data(i.data);
 
-          own_output_datum: Datum =
-            own_output_txout.datum.switch{
-              i: Inline => Datum::from_data(i.data),
-              else => error("Invalid dedicated treasury UTxO: Missing inline datum")
-            };
+                      output_datum.project_id == datum.project_id
+                        && output_datum.tag.switch {
+                          tag: TagContinuation =>
+                            tag.former == own_input_txinput.output_id,
+                          else => false
+                        }
+                    },
+                    else => error("Invalid dedicated treasury UTxO: Missing inline datum")
+                  }
+              }
+            );
 
-          is_output_datum_valid: Bool =
-            own_output_datum.project_id == datum.project_id
-              && own_output_datum.tag.switch {
-                tag: TagContinuation =>
-                  tag.former == own_input_txinput.output_id,
-                else => false
-              };
+          own_output_datum: Datum = own_output_txout.datum.switch{
+            i: Inline => Datum::from_data(i.data),
+            else => error("Invalid dedicated treasury UTxO: Missing inline datum")
+          };
 
           N: Int =
             if (!collect_fees.split) { 0 }
@@ -177,20 +185,9 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               Update => true,
               else => false
             }
-            && is_output_datum_valid
             && are_statments_valid
         },
         WithdrawAda => {
-          own_output_txout: TxOutput =
-            tx.outputs_locked_by(ctx.get_current_validator_hash())
-              .head;
-
-          own_output_datum: Datum =
-            own_output_txout.datum.switch{
-              i: Inline => Datum::from_data(i.data),
-              else => error("Invalid dedicated treasury UTxO: Missing inline datum")
-            };
-
           does_tx_contain_project_utxo: Bool =
             ( tx.ref_inputs.map((input: TxInput) -> TxOutput{input.output})
                 + tx.outputs
@@ -215,6 +212,11 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               }
             );
 
+          assert(
+            does_tx_contain_project_utxo,
+            "Missing project utxo in inputs or reference inputs"
+          );
+
           min_remaining_ada: Int =
             (1 + pparams_datum.min_treasury_per_milestone_event) * TREASURY_UTXO_MIN_ADA;
 
@@ -224,45 +226,71 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           );
 
           is_own_output_valid: Bool =
-            own_output_txout.value.get_safe(AssetClass::ADA)
-              == own_input_txinput.output.value.get_safe(AssetClass::ADA) - withdrawn_ada
-              && own_output_datum.project_id == datum.project_id
-              && own_output_datum.governor_ada == datum.governor_ada - withdrawn_ada
-              && own_output_datum.tag.switch {
-                tag: TagContinuation => tag.former == own_input_txinput.output_id,
-                else => false
-              };
+            tx.outputs.any(
+              (output: TxOutput) -> Bool {
+                output.address == own_input_txinput.output.address
+                  && output.value.get_safe(AssetClass::ADA)
+                      == own_input_txinput.output.value.get_safe(AssetClass::ADA) - withdrawn_ada
+                  && output.datum.switch{
+                    i: Inline => {
+                      output_datum: Datum = Datum::from_data(i.data);
+
+                      output_datum.project_id == datum.project_id
+                        && output_datum.governor_ada == datum.governor_ada - withdrawn_ada
+                        && output_datum.tag.switch {
+                          tag: TagContinuation => tag.former == own_input_txinput.output_id,
+                          else => false
+                        }
+                    },
+                    else => error("Invalid dedicated treasury UTxO: Missing inline datum")
+                  }
+              }
+            );
+
+          assert(
+            is_own_output_valid,
+            "Invalid treasury output"
+          );
 
           is_tx_authorized: Bool =
             if(is_tx_authorized_by(tx, pparams_datum.governor_address.credential)){
               withdrawn_ada > 0
             } else {
-              withdrawn_ada >= TREASURY_MIN_WITHDRAWAL_ADA
-                && tx.outputs.any (
-                  (output: TxOutput) -> Bool {
-                    output.address == pparams_datum.governor_address
-                      && output.value
-                          == Value::lovelace(
-                            withdrawn_ada * (MULTIPLIER - TREASURY_WITHDRAWAL_DISCOUNT_RATIO) / MULTIPLIER
-                          )
-                      && output.datum.switch {
-                        i: Inline =>
-                          UserTag::from_data(i.data).switch {
-                            tag: TagTreasuryWithdrawal =>
-                              tag.treasury_output_id.unwrap() == own_input_txinput.output_id,
+              assert(
+                withdrawn_ada >= TREASURY_MIN_WITHDRAWAL_ADA,
+                "Withdraw ADA amount must be larger than min treasury ADA"
+              );
+
+              tx.outputs.any (
+                (output: TxOutput) -> Bool {
+                  output.address == pparams_datum.governor_address
+                    && output.value
+                        == Value::lovelace(
+                          withdrawn_ada * (MULTIPLIER - TREASURY_WITHDRAWAL_DISCOUNT_RATIO) / MULTIPLIER
+                        )
+                    && output.datum.switch {
+                      i: Inline =>
+                        UserTag::from_data(i.data).switch {
+                          tag: TagTreasuryWithdrawal =>
+                            tag.treasury_output_id.switch {
+                              s: Some => s.some == own_input_txinput.output_id,
                               else => false
-                          },
-                        else => false
-                      }
-                  }
-                )
+                            },
+                            else => false
+                        },
+                      else => false
+                    }
+                }
+              )
             };
+
+          assert(
+            is_tx_authorized,
+            "Transaction must be authorized or produce correct outputs"
+          );
 
           own_validator_hash
             == pparams_datum.registry.dedicated_treasury_validator.latest
-            && is_own_output_valid
-            && is_tx_authorized
-            && does_tx_contain_project_utxo
         },
         Revoke => {
           does_tx_contain_project_utxo: Bool =
