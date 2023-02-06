@@ -57,3 +57,10 @@ export function generateProtocolRegistry(
     ),
   };
 }
+
+export const MIN_UTXO_LOVELACE = 2_000_000n;
+
+export function getRandomLovelaceAmount(max?: number) {
+  const random = BigInt(Math.floor(Math.random() * (max ?? 1_000_000_000)));
+  return random > MIN_UTXO_LOVELACE ? random : MIN_UTXO_LOVELACE;
+}

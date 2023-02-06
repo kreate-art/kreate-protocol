@@ -27,7 +27,11 @@ export default function main({ protocolNftMph }: Params) {
       scriptHashToStakingCredential
     } from helpers
 
-    import { MULTIPLIER, TREASURY_MIN_WITHDRAWAL_ADA } from constants
+    import {
+      MULTIPLIER,
+      TREASURY_MIN_WITHDRAWAL_ADA,
+      TREASURY_WITHDRAWAL_DISCOUNT_RATIO
+    } from constants
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
@@ -154,12 +158,12 @@ export default function main({ protocolNftMph }: Params) {
                 else => false
               }
               && delta == in_g
-              && if(is_tx_authorized_by(tx, pparams_datum.governor_address.credential)){
+              && if(!is_tx_authorized_by(tx, pparams_datum.governor_address.credential)){
                 delta >= TREASURY_MIN_WITHDRAWAL_ADA
                   && tx.outputs.any(
                     (output: TxOutput) -> Bool {
                       output.address == pparams_datum.governor_address
-                        && output.value == Value::lovelace(delta)
+                        && output.value == Value::lovelace(delta * (MULTIPLIER - TREASURY_WITHDRAWAL_DISCOUNT_RATIO) / MULTIPLIER)
                         && output.datum.switch {
                           i: Inline =>
                             UserTag::from_data(i.data).switch {

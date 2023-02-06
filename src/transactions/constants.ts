@@ -13,7 +13,10 @@ export const PROJECT_SCRIPT_DELIST_DISCOUNT_CENTS = 50n;
 
 export const TREASURY_UTXO_MIN_ADA = 2_000_000n;
 export const TREAUSRY_MIN_WITHDRAWAL_ADA = 100_000_000n;
-export const TREASURY_WITHDRAWAL_DISCOUNT_RATIO = 100n;
+// Should be 100, however the current deploy is 10000;
+// export const TREASURY_WITHDRAWAL_DISCOUNT_RATIO = 100n;
+export const TREASURY_WITHDRAWAL_DISCOUNT_RATIO = 10_000n;
+
 export const TREASURY_REVOKE_DISCOUNT_CENTS = 50n;
 
 export const RATIO_MULTIPLIER = BigInt(1e6);
