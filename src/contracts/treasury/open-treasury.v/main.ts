@@ -103,14 +103,14 @@ export default function main({ protocolNftMph }: Params) {
                 }
               );
 
-          is_minimal_txinput: Bool =
+          is_not_min_txinput: Bool =
             treasury_txinputs.any(
               (input: TxInput) -> Bool {
                 input.output_id < own_input_txinput.output_id
               }
             );
 
-          if (is_minimal_txinput) {
+          if (is_not_min_txinput) {
             true
           } else {
             in_w: Int =
@@ -179,8 +179,6 @@ export default function main({ protocolNftMph }: Params) {
               } else {
                 delta > 0
               }
-              && own_validator_hash
-                  == pparams_datum.registry.open_treasury_validator.latest
           }
         },
         Migrate => {

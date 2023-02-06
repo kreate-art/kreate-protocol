@@ -50,6 +50,7 @@ export default function main({
     } from helpers
 
     import {
+      ADA_MINTING_POLICY_HASH,
       MULTIPLIER,
       PROJECT_AT_TOKEN_NAME,
       TEIKI_TOKEN_NAME
@@ -238,32 +239,44 @@ export default function main({
               }
             };
 
-          own_output_txout: TxOutput = tx.outputs_locked_by(own_validator_hash).head;
-          own_output_datum: Datum =
-            own_output_txout.datum.switch {
-              i: Inline => Datum::from_data(i.data),
-              else => error("Invalid Share treasury output UTxO: missing inline datum")
-            };
-
           is_output_txout_valid: Bool =
-            own_output_txout.address == own_input_txinput.output.address
-              && own_output_txout.value.get_safe(AssetClass::ADA)
-                  == own_input_txinput.output.value.get_safe(AssetClass::ADA)
-              && own_output_txout.value.get_safe(TEIKI_ASSET_CLASS)
-                  == own_input_txinput.output.value.get_safe(TEIKI_ASSET_CLASS)
-                      + update_teiki.rewards
-                      + burn_action_result.project_rewards
-                      - update_teiki.burn_amount
-              && own_output_datum.project_id == datum.project_id
-              && own_output_datum.governor_teiki ==
-                  datum.governor_teiki
-                    + update_teiki.rewards * pparams_datum.governor_share_ratio / MULTIPLIER
-              && own_output_datum.project_teiki ==
-                  burn_action_result.new_project_teiki
-              && own_output_datum.tag.switch {
-                tag: TagContinuation => tag.former == own_input_txinput.output_id,
-                else => false
-              };
+            tx.outputs.any(
+              (output: TxOutput) -> Bool {
+                output.address == own_input_txinput.output.address
+                  && output.value.to_map().all(
+                    (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                      if (mph == ADA_MINTING_POLICY_HASH) {
+                        output.value.get_safe(AssetClass::ADA)
+                          == own_input_txinput.output.value.get_safe(AssetClass::ADA)
+                      } else if (mph == TEIKI_MPH) {
+                        teiki_amount: Int =
+                          own_input_txinput.output.value.get_safe(TEIKI_ASSET_CLASS)
+                            + update_teiki.rewards
+                            + burn_action_result.project_rewards
+                            - update_teiki.burn_amount;
+
+                        tokens == Map[ByteArray]Int { TEIKI_TOKEN_NAME: teiki_amount }
+                      } else { false }
+                    }
+                  )
+                  && output.datum.switch {
+                    i: Inline => {
+                      output_datum: Datum = Datum::from_data(i.data);
+
+                      output_datum.project_id == datum.project_id
+                        && output_datum.governor_teiki ==
+                            datum.governor_teiki
+                              + update_teiki.rewards * pparams_datum.governor_share_ratio / MULTIPLIER
+                        && output_datum.project_teiki == burn_action_result.new_project_teiki
+                        && output_datum.tag.switch {
+                          tag: TagContinuation => tag.former == own_input_txinput.output_id,
+                          else => false
+                        }
+                    },
+                    else => error("Invalid Share treasury output UTxO: missing inline datum")
+                  }
+              }
+            );
 
           own_validator_hash
             == pparams_datum.registry.shared_treasury_validator.latest

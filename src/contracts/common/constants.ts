@@ -3,6 +3,7 @@ import { fromText } from "lucid-cardano";
 import {
   PROJECT_SCRIPT_UTXO_ADA,
   TREASURY_WITHDRAWAL_DISCOUNT_RATIO,
+  TREAUSRY_MIN_WITHDRAWAL_ADA,
 } from "@/transactions/constants";
 import { Hex } from "@/types";
 
@@ -99,7 +100,7 @@ export default helios("constants")`
   const INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS: Int = ${INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS.toString()}
 
   // Treasury
-  const TREASURY_MIN_WITHDRAWAL_ADA: Int = 100000000
+  const TREASURY_MIN_WITHDRAWAL_ADA: Int = ${TREAUSRY_MIN_WITHDRAWAL_ADA.toString()}
 
   const TREASURY_WITHDRAWAL_DISCOUNT_RATIO: Int = ${TREASURY_WITHDRAWAL_DISCOUNT_RATIO.toString()}
 

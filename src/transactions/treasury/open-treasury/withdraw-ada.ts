@@ -120,7 +120,7 @@ export function withdrawAdaTx(
     treasuryOutputId: spendingTxOutputId,
   };
 
-  return tx.payToContract(
+  return tx.payToAddressWithData(
     deconstructAddress(lucid, protocolParams.governorAddress),
     { inline: S.toCbor(S.toData(outputGovernorDatum, UserTag)) },
     {
