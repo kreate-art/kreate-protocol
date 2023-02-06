@@ -88,17 +88,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           tx.minted.get_safe(migration_asset_class) != 0
         },
         else => {
-          own_output_txout: TxOutput =
-            tx.outputs_locked_by(ctx.get_current_validator_hash())
-              .head;
-
-          own_output_datum: Datum =
-            own_output_txout.datum
-              .switch {
-                i:Inline => Datum::from_data(i.data),
-                else => error("Invalid project UTxO: missing inline datum")
-              };
-
           assert (
             own_validator_hash
               == pparams_datum.registry.project_validator.latest,
@@ -138,15 +127,25 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Wrong Project detail redeemer"
               );
 
-              own_output_txout.address == own_input_txout.address
-                && own_output_txout.value == own_input_txout.value
-                && own_output_datum.milestone_reached == record.new_milestone
-                && own_output_datum.project_id == datum.project_id
-                && own_output_datum.owner_address == datum.owner_address
-                && own_output_datum.status == datum.status
-                && own_output_datum.is_staking_delegation_managed_by_protocol
-                    == datum.is_staking_delegation_managed_by_protocol
+              tx.outputs.any(
+                (output: TxOutput) -> Bool {
+                  output.address == own_input_txout.address
+                    && output.value == own_input_txout.value
+                    && output.datum.switch {
+                      i:Inline => {
+                        output_datum: Datum = Datum::from_data(i.data);
 
+                        output_datum.milestone_reached == record.new_milestone
+                          && output_datum.project_id == datum.project_id
+                          && output_datum.owner_address == datum.owner_address
+                          && output_datum.status == datum.status
+                          && output_datum.is_staking_delegation_managed_by_protocol
+                              == datum.is_staking_delegation_managed_by_protocol
+                      },
+                      else => error("Invalid project UTxO: missing inline datum")
+                    }
+                }
+              )
             },
             allocate: AllocateStakingValidator => {
               new_staking_credential: StakingCredential =
@@ -167,16 +166,44 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Wrong project status"
               );
 
-              output_project_script: TxOutput = 
+              is_own_output_valid: Bool =
+                tx.outputs.any(
+                  (output: TxOutput) -> Bool {
+                    output.address == own_input_txout.address
+                      && output.datum.switch {
+                        i:Inline => Datum::from_data(i.data) == datum,
+                        else => error("Invalid project UTxO: missing inline datum")
+                      }
+                      && output.value.to_map().all(
+                        (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                          if (mph == ADA_MINTING_POLICY_HASH) {
+                            output.value.get_safe(AssetClass::ADA)
+                              >= own_input_txout.value.get_safe(AssetClass::ADA)
+                                  - pparams_datum.stake_key_deposit
+                                  - PROJECT_SCRIPT_UTXO_ADA
+                          }
+                          else if (mph == PROJECTS_AT_MPH) { tokens == Map[ByteArray]Int {PROJECT_AT_TOKEN_NAME: 1} }
+                          else { false }
+                        }
+                      )
+                  }
+                );
+
+              assert (
+                is_own_output_valid,
+                "Invalid output value"
+              );
+
+              output_project_script: TxOutput =
                 tx.outputs.find_safe(
                   (output: TxOutput) -> Bool {
                     output.value.to_map().all(
                       (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
-                        if (mph == ADA_MINTING_POLICY_HASH) { 
-                          own_output_txout.value.get_safe(AssetClass::ADA)
+                        if (mph == ADA_MINTING_POLICY_HASH) {
+                          output.value.get_safe(AssetClass::ADA)
                             == PROJECT_SCRIPT_UTXO_ADA
-                        } else if (mph == PROJECTS_AT_MPH) { 
-                          tokens == Map[ByteArray]Int {PROJECT_SCRIPT_AT_TOKEN_NAME: 1} 
+                        } else if (mph == PROJECTS_AT_MPH) {
+                          tokens == Map[ByteArray]Int {PROJECT_SCRIPT_AT_TOKEN_NAME: 1}
                         } else { false }
                       }
                     )
@@ -186,7 +213,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   None => error("Missing output project script"),
                   s: Some => s.some
                 };
-              
+
               assert (
                 output_project_script.address == Address::new(
                   Credential::new_validator(
@@ -218,34 +245,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Invalid output project script ref script hash"
               );
 
-              assert (
-                own_output_txout.address == own_input_txout.address,
-                "Invalid own output UTxO"
-              );
-              
-              assert (
-                own_output_datum == datum,
-                "Invalid own output address"
-              );
 
-              is_own_output_value_valid: Bool = 
-                own_output_txout.value.to_map().all(
-                  (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
-                    if (mph == ADA_MINTING_POLICY_HASH) { 
-                      own_output_txout.value.get_safe(AssetClass::ADA)
-                        >= own_input_txout.value.get_safe(AssetClass::ADA)
-                            - pparams_datum.stake_key_deposit
-                            - PROJECT_SCRIPT_UTXO_ADA 
-                    }
-                    else if (mph == PROJECTS_AT_MPH) { tokens == Map[ByteArray]Int {PROJECT_AT_TOKEN_NAME: 1} }
-                    else { false }
-                  }
-                );
-              
-              assert (
-                is_own_output_value_valid,
-                "Invalid output value"
-              );
 
               tx.dcerts
                 .any (
@@ -272,14 +272,27 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Staking delegation is not managed by protocol"
               );
 
+
+
               assert (
-                own_output_txout.value == own_input_txout.value
-                  && own_output_txout.address == own_input_txout.address
-                  && own_output_datum.milestone_reached == datum.milestone_reached
-                  && own_output_datum.project_id == datum.project_id
-                  && own_output_datum.owner_address == datum.owner_address
-                  && own_output_datum.status == datum.status
-                  && own_output_datum.is_staking_delegation_managed_by_protocol == false,
+                tx.outputs.any(
+                  (output: TxOutput) -> Bool {
+                    output.address == own_input_txout.address
+                      && output.value == own_input_txout.value
+                      && output.datum.switch {
+                        i:Inline => {
+                          output_datum: Datum = Datum::from_data(i.data);
+
+                          output_datum.milestone_reached == datum.milestone_reached
+                            && output_datum.project_id == datum.project_id
+                            && output_datum.owner_address == datum.owner_address
+                            && output_datum.status == datum.status
+                            && output_datum.is_staking_delegation_managed_by_protocol == false
+                        },
+                        else => error("Invalid project UTxO: missing inline datum")
+                      }
+                  }
+                ),
                 "Invalid own output UTxO"
               );
 
@@ -296,17 +309,28 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               );
 
               assert (
-                own_output_txout.value == own_input_txout.value
-                  && own_output_txout.address == own_input_txout.address
-                  && own_output_datum.milestone_reached == datum.milestone_reached
-                  && own_output_datum.project_id == datum.project_id
-                  && own_output_datum.owner_address == datum.owner_address
-                  && own_output_datum.status.switch {
-                      pre_closed: PreClosed => pre_closed.pending_until >= tx.time_range.end,
-                      else => false
-                    }
-                  && own_output_datum.is_staking_delegation_managed_by_protocol
-                      == datum.is_staking_delegation_managed_by_protocol,
+                tx.outputs.any(
+                  (output: TxOutput) -> Bool {
+                    output.address == own_input_txout.address
+                      && output.value == own_input_txout.value
+                      && output.datum.switch {
+                        i:Inline => {
+                          output_datum: Datum = Datum::from_data(i.data);
+
+                          output_datum.milestone_reached == datum.milestone_reached
+                            && output_datum.project_id == datum.project_id
+                            && output_datum.owner_address == datum.owner_address
+                            && output_datum.status.switch {
+                                pre_closed: PreClosed => pre_closed.pending_until >= tx.time_range.end,
+                                else => false
+                              }
+                            && output_datum.is_staking_delegation_managed_by_protocol
+                                == datum.is_staking_delegation_managed_by_protocol
+                        },
+                        else => error("Invalid project UTxO: missing inline datum")
+                      }
+                  }
+                ),
                 "Invalid own output UTxO"
               );
 
@@ -325,20 +349,31 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               );
 
               assert (
-                own_output_txout.value == own_input_txout.value
-                  && own_output_txout.address == own_input_txout.address
-                  && own_output_datum.milestone_reached == datum.milestone_reached
-                  && own_output_datum.project_id == datum.project_id
-                  && own_output_datum.owner_address == datum.owner_address
-                  && own_output_datum.status.switch {
-                      pre_delisted: PreDelisted => {
-                        pre_delisted.pending_until
-                          == tx.time_range.end + pparams_datum.project_delist_waiting_period
-                      },
-                      else => false
-                    }
-                  && own_output_datum.is_staking_delegation_managed_by_protocol
-                      == datum.is_staking_delegation_managed_by_protocol,
+                tx.outputs.any(
+                  (output: TxOutput) -> Bool {
+                    output.address == own_input_txout.address
+                      && output.value == own_input_txout.value
+                      && output.datum.switch {
+                        i:Inline => {
+                          output_datum: Datum = Datum::from_data(i.data);
+
+                          output_datum.milestone_reached == datum.milestone_reached
+                            && output_datum.project_id == datum.project_id
+                            && output_datum.owner_address == datum.owner_address
+                            && output_datum.status.switch {
+                                pre_delisted: PreDelisted => {
+                                  pre_delisted.pending_until
+                                    == tx.time_range.end + pparams_datum.project_delist_waiting_period
+                                },
+                                else => false
+                              }
+                            && output_datum.is_staking_delegation_managed_by_protocol
+                                == datum.is_staking_delegation_managed_by_protocol
+                        },
+                        else => error("Invalid project UTxO: missing inline datum")
+                      }
+                  }
+                ),
                 "Invalid own output UTxO"
               );
 
@@ -355,17 +390,28 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               );
 
               assert (
-                own_output_txout.value == own_input_txout.value
-                  && own_output_txout.address == own_input_txout.address
-                  && own_output_datum.milestone_reached == datum.milestone_reached
-                  && own_output_datum.project_id == datum.project_id
-                  && own_output_datum.owner_address == datum.owner_address
-                  && own_output_datum.status.switch {
-                      Active => true,
-                      else => false
-                    }
-                  && own_output_datum.is_staking_delegation_managed_by_protocol
-                      == datum.is_staking_delegation_managed_by_protocol,
+                tx.outputs.any(
+                  (output: TxOutput) -> Bool {
+                    output.address == own_input_txout.address
+                      && output.value == own_input_txout.value
+                      && output.datum.switch {
+                        i:Inline => {
+                          output_datum: Datum = Datum::from_data(i.data);
+
+                          output_datum.milestone_reached == datum.milestone_reached
+                            && output_datum.project_id == datum.project_id
+                            && output_datum.owner_address == datum.owner_address
+                            && output_datum.status.switch {
+                                Active => true,
+                                else => false
+                              }
+                            && output_datum.is_staking_delegation_managed_by_protocol
+                                == datum.is_staking_delegation_managed_by_protocol
+                        },
+                        else => error("Invalid project UTxO: missing inline datum")
+                      }
+                  }
+                ),
                 "Invalid own output UTxO"
               );
 
@@ -400,41 +446,44 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               );
 
               assert (
-                own_output_txout.address == Address::new(
-                  own_input_txout.address.credential,
-                  Option[StakingCredential]::Some{
-                    scriptHashToStakingCredential(
-                      pparams_datum.registry.protocol_staking_validator
-                    )
+                tx.outputs.any(
+                  (output: TxOutput) -> Bool {
+                    output.address == Address::new(
+                        own_input_txout.address.credential,
+                        Option[StakingCredential]::Some{
+                          scriptHashToStakingCredential(
+                            pparams_datum.registry.protocol_staking_validator
+                          )
+                        }
+                      )
+                      && output.value.to_map().all(
+                        (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                          if (mph == ADA_MINTING_POLICY_HASH) {
+                            tokens == Map[ByteArray]Int{ADA_TOKEN_NAME: INACTIVE_PROJECT_UTXO_ADA}
+                          } else {
+                            tokens == own_input_txout.value.to_map().get(mph)
+                          }
+                        }
+                      )
+                      && output.datum.switch {
+                        i:Inline => {
+                          output_datum: Datum = Datum::from_data(i.data);
+
+                          output_datum.milestone_reached == datum.milestone_reached
+                            && output_datum.project_id == datum.project_id
+                            && output_datum.owner_address == datum.owner_address
+                            && output_datum.status.switch {
+                                Closed => true,
+                                else => false
+                              }
+                            && output_datum.is_staking_delegation_managed_by_protocol
+                                == datum.is_staking_delegation_managed_by_protocol
+                        },
+                        else => error("Invalid project UTxO: missing inline datum")
+                      }
                   }
                 ),
-                "Invalid output txout address"
-              );
-
-              assert (
-                own_output_txout.value.to_map().all(
-                  (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
-                    if (mph == ADA_MINTING_POLICY_HASH) {
-                      tokens == Map[ByteArray]Int{ADA_TOKEN_NAME: INACTIVE_PROJECT_UTXO_ADA}
-                    } else {
-                      tokens == own_input_txout.value.to_map().get(mph)
-                    }
-                  }
-                ),
-                "Invalid own output txout value"
-              );
-
-              assert (
-                own_output_datum.milestone_reached == datum.milestone_reached
-                  && own_output_datum.project_id == datum.project_id
-                  && own_output_datum.owner_address == datum.owner_address
-                  && own_output_datum.status.switch {
-                      Closed => true,
-                      else => false
-                    }
-                  && own_output_datum.is_staking_delegation_managed_by_protocol
-                      == datum.is_staking_delegation_managed_by_protocol,
-                "Invalid own output datum"
+                "Invalid output txout"
               );
 
               if (is_tx_authorized_by(tx, datum.owner_address.credential)){
@@ -518,42 +567,45 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Wrong consumed Project detail redeemer"
               );
 
-              assert (
-                own_output_txout.address == Address::new(
-                  own_input_txout.address.credential,
-                  Option[StakingCredential]::Some{
-                    scriptHashToStakingCredential(
-                      pparams_datum.registry.protocol_staking_validator
-                    )
+              assert(
+                tx.outputs.any(
+                  (output: TxOutput) -> Bool {
+                    output.address == Address::new(
+                        own_input_txout.address.credential,
+                        Option[StakingCredential]::Some{
+                          scriptHashToStakingCredential(
+                            pparams_datum.registry.protocol_staking_validator
+                          )
+                        }
+                      )
+                      && output.value.to_map().all(
+                        (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                          if (mph == ADA_MINTING_POLICY_HASH) {
+                            tokens == Map[ByteArray]Int{ADA_TOKEN_NAME: INACTIVE_PROJECT_UTXO_ADA}
+                          } else {
+                            tokens == own_input_txout.value.to_map().get(mph)
+                          }
+                        }
+                      )
+                      && output.datum.switch {
+                        i:Inline => {
+                          output_datum: Datum = Datum::from_data(i.data);
+
+                          output_datum.milestone_reached == datum.milestone_reached
+                            && output_datum.project_id == datum.project_id
+                            && output_datum.owner_address == datum.owner_address
+                            && output_datum.status.switch {
+                                Delisted => true,
+                                else => false
+                              }
+                            && output_datum.is_staking_delegation_managed_by_protocol
+                                == datum.is_staking_delegation_managed_by_protocol
+                        },
+                        else => error("Invalid project UTxO: missing inline datum")
+                      }
                   }
                 ),
-                "Invalid own output txout address"
-              );
-
-              assert (
-                own_output_txout.value.to_map().all(
-                  (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
-                    if (mph == ADA_MINTING_POLICY_HASH) {
-                      tokens == Map[ByteArray]Int{ADA_TOKEN_NAME: INACTIVE_PROJECT_UTXO_ADA}
-                    } else {
-                      tokens == own_input_txout.value.to_map().get(mph)
-                    }
-                  }
-                ),
-                "Invalid own output txout value"
-              );
-
-              assert (
-                own_output_datum.milestone_reached == datum.milestone_reached
-                  && own_output_datum.project_id == datum.project_id
-                  && own_output_datum.owner_address == datum.owner_address
-                  && own_output_datum.status.switch {
-                      Delisted => true,
-                      else => false
-                    }
-                  && own_output_datum.is_staking_delegation_managed_by_protocol
-                      == datum.is_staking_delegation_managed_by_protocol,
-                "Invalid own output datum"
+                "Invalid output txout"
               );
 
               if (ada_to_treasury > 0){

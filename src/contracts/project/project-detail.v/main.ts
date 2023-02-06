@@ -138,11 +138,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
       redeemer.switch {
         WithdrawFunds => {
-          own_output_txout: TxOutput =
-            tx.outputs_locked_by(ctx.get_current_validator_hash())
-              .head;
-
-          own_output_datum: Datum = get_own_output_datum(own_output_txout);
 
           project_txinput: TxInput = get_project_txinput(tx.ref_inputs + tx.inputs);
 
@@ -184,6 +179,27 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             project_script_input_withdrawals + project_script_ref_input_withdrawals;
 
           new_withdrawn_funds: Int = datum.withdrawn_funds + total_withdrawal;
+
+          is_own_output_valid: Bool =
+            tx.outputs.any(
+              (output: TxOutput) -> Bool {
+                output.address == own_input_txout.address
+                  && output.value == own_input_txout.value
+                  && output.datum.switch {
+                    i:Inline => {
+                      output_datum: Datum = Datum::from_data(i.data);
+
+                      datum.project_id == output_datum.project_id
+                        && output_datum.withdrawn_funds == new_withdrawn_funds
+                        && datum.sponsored_until == output_datum.sponsored_until
+                        && datum.information_cid == output_datum.information_cid
+                        && datum.last_community_update_cid
+                            == output_datum.last_community_update_cid
+                    },
+                    else => error("Invalid project detail UTxO: missing inline datum")
+                  }
+              }
+            );
 
           milestone: Int =
             pparams_datum.project_milestones.fold(
@@ -292,16 +308,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               true
             };
 
-          is_own_output_valid: Bool =
-            own_input_txout.value == own_output_txout.value
-              && own_input_txout.address == own_output_txout.address
-              && datum.project_id == own_output_datum.project_id
-              && own_output_datum.withdrawn_funds == new_withdrawn_funds
-              && datum.sponsored_until == own_output_datum.sponsored_until
-              && datum.information_cid == own_output_datum.information_cid
-              && datum.last_community_update_cid
-                  == own_output_datum.last_community_update_cid;
-
           check_latest_script_version(own_validator_hash, pparams_datum);
 
           is_project_status_valid
@@ -311,12 +317,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             && is_own_output_valid
         },
         Update => {
-          own_output_txout: TxOutput =
-            tx.outputs_locked_by(ctx.get_current_validator_hash())
-              .head;
-
-          own_output_datum: Datum = get_own_output_datum(own_output_txout);
-
           project_txinput: TxInput = get_project_txinput(tx.ref_inputs + tx.inputs);
 
           project_datum: ProjectDatum =
@@ -330,17 +330,30 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               else => false
             };
 
-          is_output_datum_valid: Bool =
-            own_input_txout.address == own_output_txout.address
-              && own_input_txout.value == own_output_txout.value
-              && datum.project_id == own_output_datum.project_id
-              && datum.withdrawn_funds == own_output_datum.withdrawn_funds
-              && (
-                datum.sponsored_until != own_output_datum.sponsored_until
-                  || datum.information_cid != own_output_datum.information_cid
-                  || datum.last_community_update_cid
-                      != own_output_datum.last_community_update_cid
-              );
+          own_output_txout: TxOutput =
+            tx.outputs.find(
+              (output: TxOutput) -> Bool {
+                own_input_txout.address == output.address
+                  && own_input_txout.value == output.value
+                  && output.datum.switch {
+                    i:Inline => {
+                      output_datum: Datum = Datum::from_data(i.data);
+
+                      datum.project_id == output_datum.project_id
+                        && datum.withdrawn_funds == output_datum.withdrawn_funds
+                        && (
+                          datum.sponsored_until != output_datum.sponsored_until
+                            || datum.information_cid != output_datum.information_cid
+                            || datum.last_community_update_cid
+                                != output_datum.last_community_update_cid
+                        )
+                    },
+                    else => error("Invalid project detail UTxO: missing inline datum")
+                  }
+              }
+            );
+
+          own_output_datum: Datum = get_own_output_datum(own_output_txout);
 
           update_sponsor_fee: Int =
             if (datum.sponsored_until != own_output_datum.sponsored_until){
@@ -438,31 +451,29 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
           is_tx_authorized_by(tx, project_datum.owner_address.credential)
             && is_project_status_valid
-            && own_input_txout.value == own_output_txout.value
-            && own_input_txout.address == own_output_txout.address
-            && is_output_datum_valid
             && does_consume_treasury_correctly
         },
         Close => {
-          own_output_txout: TxOutput =
-            tx.outputs_locked_by(ctx.get_current_validator_hash())
-              .head;
-
-          own_output_datum: Datum = get_own_output_datum(own_output_txout);
-
           project_txinput: TxInput = get_project_txinput(tx.ref_inputs + tx.inputs);
 
           is_producing_utxo_valid: Bool =
-            own_output_txout.address == Address::new(
-              own_input_txout.address.credential,
-              Option[StakingCredential]::Some{
-                scriptHashToStakingCredential(
-                  pparams_datum.registry.protocol_staking_validator
+            tx.outputs.any(
+              (output: TxOutput) -> Bool {
+                output.address == Address::new(
+                  own_input_txout.address.credential,
+                  Option[StakingCredential]::Some{
+                    scriptHashToStakingCredential(
+                      pparams_datum.registry.protocol_staking_validator
+                    )
+                  }
                 )
+                && output.value == own_input_txout.value
+                && output.datum.switch {
+                  i:Inline => Datum::from_data(i.data) == datum,
+                  else => error("Invalid project detail UTxO: missing inline datum")
+                }
               }
-            )
-              && own_output_txout.value == own_input_txout.value
-              && own_output_datum == datum;
+            );
 
           project_script_purpose: ScriptPurpose =
             ScriptPurpose::new_spending(project_txinput.output_id);
@@ -485,25 +496,26 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
         },
         Delist => {
-          own_output_txout: TxOutput =
-            tx.outputs_locked_by(ctx.get_current_validator_hash())
-              .head;
-
-          own_output_datum: Datum = get_own_output_datum(own_output_txout);
-
           project_txinput: TxInput = get_project_txinput(tx.ref_inputs + tx.inputs);
 
           is_producing_utxo_valid: Bool =
-            own_output_txout.address == Address::new(
-              own_input_txout.address.credential,
-              Option[StakingCredential]::Some{
-                scriptHashToStakingCredential(
-                  pparams_datum.registry.protocol_staking_validator
+            tx.outputs.any(
+              (output: TxOutput) -> Bool {
+                output.address == Address::new(
+                  own_input_txout.address.credential,
+                  Option[StakingCredential]::Some{
+                    scriptHashToStakingCredential(
+                      pparams_datum.registry.protocol_staking_validator
+                    )
+                  }
                 )
+                && output.value == own_input_txout.value
+                && output.datum.switch {
+                  i:Inline => Datum::from_data(i.data) == datum,
+                  else => error("Invalid project detail UTxO: missing inline datum")
+                }
               }
-            )
-              && own_output_txout.value == own_input_txout.value
-              && own_output_datum == datum;
+            );
 
           project_script_purpose: ScriptPurpose =
             ScriptPurpose::new_spending(project_txinput.output_id);
