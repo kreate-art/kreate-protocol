@@ -1,6 +1,9 @@
 import { fromText } from "lucid-cardano";
 
-import { PROJECT_SCRIPT_UTXO_ADA } from "@/transactions/constants";
+import {
+  PROJECT_SCRIPT_UTXO_ADA,
+  TREASURY_WITHDRAWAL_DISCOUNT_RATIO,
+} from "@/transactions/constants";
 import { Hex } from "@/types";
 
 import { helios } from "../program";
@@ -98,7 +101,7 @@ export default helios("constants")`
   // Treasury
   const TREASURY_MIN_WITHDRAWAL_ADA: Int = 100000000
 
-  const TREASURY_WITHDRAWAL_DISCOUNT_RATIO: Int = 10000
+  const TREASURY_WITHDRAWAL_DISCOUNT_RATIO: Int = ${TREASURY_WITHDRAWAL_DISCOUNT_RATIO.toString()}
 
   const TREASURY_REVOKE_DISCOUNT_CENTS: Int = 500000
 `;

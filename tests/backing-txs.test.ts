@@ -50,13 +50,16 @@ import {
   generateWalletAddress,
   scriptHashToAddress,
 } from "./emulator";
-import { generateProtocolRegistry } from "./utils";
+import {
+  MIN_UTXO_LOVELACE,
+  generateProtocolRegistry,
+  getRandomLovelaceAmount,
+} from "./utils";
 
 // NOTE: Becareful with global emulator, one test fails may lead to others fails
 const BACKER_ACCOUNT = await generateAccount();
 const emulator = new Emulator([BACKER_ACCOUNT]);
 const lucid = await Lucid.new(emulator);
-const MIN_UTXO_LOVELACE = 2_000_000n;
 
 // Context
 
@@ -850,10 +853,5 @@ function generateFlowerList(size: number): Plant[] {
 }
 
 function getRandomTime() {
-  return BigInt(getTime({ lucid }) + Math.floor(Math.random() * 200_000));
-}
-
-function getRandomLovelaceAmount(max?: number) {
-  const random = BigInt(Math.floor(Math.random() * (max ?? 1_000_000_000)));
-  return random > MIN_UTXO_LOVELACE ? random : MIN_UTXO_LOVELACE;
+  return BigInt(getTime({ lucid }) + Math.floor(Math.random() * 100_000));
 }
