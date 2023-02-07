@@ -45,7 +45,7 @@ export function getProtocolRegistryScript(
   );
 
   const teikiMph = lucid.utils.validatorToScriptHash(
-    exportScript(compileTeikiMpScript(teikiPlantNftMph))
+    exportScript(compileTeikiMpScript({ teikiPlantNftMph }))
   );
 
   const proofOfBackingMph = lucid.utils.validatorToScriptHash(

@@ -541,6 +541,7 @@ describe("protocol transactions", () => {
     const protocolScriptVScript = exportScript(
       compileProtocolScriptVScript({ protocolNftMph })
     );
+
     const protocolScriptVScriptHash = lucid.utils.validatorToScriptHash(
       protocolScriptVScript
     );

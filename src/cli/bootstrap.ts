@@ -77,7 +77,7 @@ const metaProtocolScripts = {
   TEIKI_PLANT_V_SCRIPT_HASH: exportScript(
     compileTeikiPlantVScript({ teikiPlantNftMph })
   ),
-  TEIKI_MPH: exportScript(compileTeikiMpScript(teikiPlantNftMph)),
+  TEIKI_MPH: exportScript(compileTeikiMpScript({ teikiPlantNftMph })),
 };
 
 const protocolScripts = {
@@ -209,7 +209,7 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
   const seedUtxo = (await lucid.wallet.getUtxos())[0];
 
   const teikiMintingPolicy = exportScript(
-    compileTeikiMpScript(teikiPlantNftMph)
+    compileTeikiMpScript({ teikiPlantNftMph })
   );
   const teikiMph = lucid.utils.validatorToScriptHash(teikiMintingPolicy);
 

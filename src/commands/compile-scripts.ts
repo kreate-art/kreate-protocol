@@ -123,8 +123,12 @@ export function compileTeikiPlantNftScript(
   return compile(getTeikiPlantNft({ teikiPlantSeed }));
 }
 
-export function compileTeikiMpScript(nftTeikiPlantMph: Hex): UplcProgram {
-  return compile(getTeikiMp({ nftTeikiPlantMph }));
+export function compileTeikiMpScript({
+  teikiPlantNftMph,
+}: {
+  teikiPlantNftMph: Hex;
+}): UplcProgram {
+  return compile(getTeikiMp({ teikiPlantNftMph }));
 }
 
 export function compileProofOfBackingMpScript(

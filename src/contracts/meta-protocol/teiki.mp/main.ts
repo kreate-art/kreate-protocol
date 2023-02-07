@@ -3,10 +3,10 @@ import { Hex } from "@/types";
 import { HeliosSource, helios } from "../../program";
 
 export type Params = {
-  nftTeikiPlantMph: Hex;
+  teikiPlantNftMph: Hex;
 };
 
-export default function main({ nftTeikiPlantMph }: Params): HeliosSource {
+export default function main({ teikiPlantNftMph }: Params): HeliosSource {
   return helios("mp__teiki", [
     "constants",
     "helpers",
@@ -33,7 +33,7 @@ export default function main({ nftTeikiPlantMph }: Params): HeliosSource {
 
     const TEIKI_PLANT_NFT_ASSET_CLASS: AssetClass =
       AssetClass::new(
-        MintingPolicyHash::new(#${nftTeikiPlantMph}),
+        MintingPolicyHash::new(#${teikiPlantNftMph}),
         TEIKI_PLANT_NFT_TOKEN_NAME
       )
 
