@@ -80,9 +80,11 @@ const projectScriptATUnit: Unit =
   projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
 
 const protocolNftMph = generateBlake2b224Hash();
-const nftTeikiPlantMph = generateBlake2b224Hash();
+const teikiPlantNftMph = generateBlake2b224Hash();
 
-const teikiMintingPolicy = exportScript(compileTeikiMpScript(nftTeikiPlantMph));
+const teikiMintingPolicy = exportScript(
+  compileTeikiMpScript({ teikiPlantNftMph })
+);
 const teikiMph = lucid.utils.validatorToScriptHash(teikiMintingPolicy);
 const teikiUnit: Unit = teikiMph + TEIKI_TOKEN_NAME;
 
@@ -174,7 +176,7 @@ const teikiPlantVRefUtxo: UTxO = {
   ...generateOutRef(),
   address: generateScriptAddress(lucid),
   assets: {
-    [nftTeikiPlantMph + TEIKI_PLANT_NFT_TOKEN_NAME]: 1n,
+    [teikiPlantNftMph + TEIKI_PLANT_NFT_TOKEN_NAME]: 1n,
     lovelace: 10_000_000n,
   },
   datum: S.toCbor(S.toData(teikiPlantDatum, TeikiPlantDatum)),
