@@ -41,7 +41,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
     } from helpers
 
     import {
-      MULTIPLIER,
+      RATIO_MULTIPLIER,
       PROJECT_AT_TOKEN_NAME,
       PROJECT_FUNDS_WITHDRAWAL_DISCOUNT_RATIO,
       PROJECT_NEW_MILESTONE_DISCOUNT_CENTS,
@@ -247,7 +247,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             tx.redeemers.get(dedicated_treasury_script_purpose);
 
           fees: Int =
-            total_withdrawal * pparams_datum.protocol_funds_share_ratio / MULTIPLIER;
+            total_withdrawal * pparams_datum.protocol_funds_share_ratio / RATIO_MULTIPLIER;
 
           does_consume_treasury_correctly: Bool =
             DedicatedTreasuryRedeemer::from_data(dedicated_treasury_redeemer_data).switch {
@@ -276,7 +276,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           does_send_rewards_correctly: Bool =
             if (!is_tx_authorized_by(tx, project_datum.owner_address.credential)) {
               discount: Int =
-                total_withdrawal * PROJECT_FUNDS_WITHDRAWAL_DISCOUNT_RATIO / MULTIPLIER
+                total_withdrawal * PROJECT_FUNDS_WITHDRAWAL_DISCOUNT_RATIO / RATIO_MULTIPLIER
                 + if (is_new_milestone_reached) {
                   pparams_datum.discount_cent_price * PROJECT_NEW_MILESTONE_DISCOUNT_CENTS
                 } else {

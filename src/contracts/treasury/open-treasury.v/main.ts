@@ -28,7 +28,7 @@ export default function main({ protocolNftMph }: Params) {
     } from helpers
 
     import {
-      MULTIPLIER,
+      RATIO_MULTIPLIER,
       TREASURY_MIN_WITHDRAWAL_ADA,
       TREASURY_WITHDRAWAL_DISCOUNT_RATIO
     } from constants
@@ -81,7 +81,7 @@ export default function main({ protocolNftMph }: Params) {
               own_input_txinput.output.value.get_safe(AssetClass::ADA) + total_withdrawals
             )
             && own_output_datum.governor_ada
-                == datum.governor_ada + total_withdrawals * pparams_datum.governor_share_ratio / MULTIPLIER
+                == datum.governor_ada + total_withdrawals * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER
             && own_output_datum.tag.switch {
               tag: TagProjectDelayedStakingRewards =>
                 tag.staking_validator.switch {
@@ -163,7 +163,7 @@ export default function main({ protocolNftMph }: Params) {
                   && tx.outputs.any(
                     (output: TxOutput) -> Bool {
                       output.address == pparams_datum.governor_address
-                        && output.value == Value::lovelace(delta * (MULTIPLIER - TREASURY_WITHDRAWAL_DISCOUNT_RATIO) / MULTIPLIER)
+                        && output.value == Value::lovelace(delta * (RATIO_MULTIPLIER - TREASURY_WITHDRAWAL_DISCOUNT_RATIO) / RATIO_MULTIPLIER)
                         && output.datum.switch {
                           i: Inline =>
                             UserTag::from_data(i.data).switch {

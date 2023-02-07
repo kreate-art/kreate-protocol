@@ -43,7 +43,7 @@ export default function main({ protocolNftMph }: Params) {
       PROJECT_SCRIPT_AT_TOKEN_NAME,
       PROJECT_SCRIPT_UTXO_ADA,
       PROJECT_DETAIL_UTXO_ADA,
-      MULTIPLIER
+      RATIO_MULTIPLIER
     } from constants
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
@@ -235,7 +235,7 @@ export default function main({ protocolNftMph }: Params) {
                         DedicatedTreasuryDatum::from_data(i.data);
 
                       dedicated_treasury_datum.governor_ada ==
-                        output.value.get_safe(AssetClass::ADA) * pparams_datum.governor_share_ratio / MULTIPLIER
+                        output.value.get_safe(AssetClass::ADA) * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER
                         && dedicated_treasury_datum.project_id == project_id
                         && dedicated_treasury_datum.tag.switch {
                           tag: TagOriginated => tag.seed == project_seed,

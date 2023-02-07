@@ -40,7 +40,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
     } from helpers
 
     import {
-      MULTIPLIER,
+      RATIO_MULTIPLIER,
       TREASURY_UTXO_MIN_ADA,
       PROJECT_AT_TOKEN_NAME,
       PROJECT_DETAIL_AT_TOKEN_NAME,
@@ -240,7 +240,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                                 open_treasury_datum: OpenTreasuryDatum = OpenTreasuryDatum::from_data(i.data);
 
                                 open_treasury_datum.governor_ada
-                                    == withdrawn_rewards * pparams_datum.governor_share_ratio / MULTIPLIER
+                                    == withdrawn_rewards * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER
                                   && open_treasury_datum.tag.switch {
                                     tag: TagProjectDelayedStakingRewards => {
                                       tag.staking_validator.unwrap() == staking_validator_hash
@@ -329,7 +329,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
                           open_treasury_datum.governor_ada
                               == output.value.get(AssetClass::ADA)
-                                  * pparams_datum.governor_share_ratio / MULTIPLIER
+                                  * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER
                             && open_treasury_datum.tag.switch {
                                   tag: TagProjectScriptDelisted =>
                                     tag.project_id == datum.project_id

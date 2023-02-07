@@ -42,7 +42,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
     } from helpers
 
     import {
-      MULTIPLIER,
+      RATIO_MULTIPLIER,
       PROJECT_AT_TOKEN_NAME,
       PROJECT_DETAIL_AT_TOKEN_NAME,
       TREASURY_UTXO_MIN_ADA,
@@ -175,7 +175,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           are_statments_valid: Bool =
             0 <= out_g && out_g <= out_w
               && fee >= collect_fees.min_fees
-              && fee_g == fee * pparams_datum.governor_share_ratio / MULTIPLIER;
+              && fee_g == fee * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER;
 
           own_validator_hash
             == pparams_datum.registry.dedicated_treasury_validator.latest
@@ -266,7 +266,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   output.address == pparams_datum.governor_address
                     && output.value
                         == Value::lovelace(
-                          withdrawn_ada * (MULTIPLIER - TREASURY_WITHDRAWAL_DISCOUNT_RATIO) / MULTIPLIER
+                          withdrawn_ada * (RATIO_MULTIPLIER - TREASURY_WITHDRAWAL_DISCOUNT_RATIO) / RATIO_MULTIPLIER
                         )
                     && output.datum.switch {
                       i: Inline =>
@@ -293,10 +293,30 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             == pparams_datum.registry.dedicated_treasury_validator.latest
         },
         Revoke => {
-          does_tx_contain_project_utxo: Bool =
-            ( tx.ref_inputs.map((input: TxInput) -> TxOutput{input.output})
-                + tx.outputs
-            ).any(
+          does_tx_reference_project_utxo: Bool =
+            tx.ref_inputs.any(
+              (input: TxInput) -> Bool {
+                input.output.value.get_safe(PROJECT_AT_ASSET_CLASS) == 1
+                  && input.output.datum
+                      .switch {
+                        i: Inline => {
+                          project_datum: ProjectDatum = ProjectDatum::from_data(i.data);
+
+                          project_datum.project_id == datum.project_id
+                            && project_datum.status.switch {
+                              Closed => true,
+                              Delisted => true,
+                              else => false
+                            }
+                        },
+                        else => false
+                      }
+              }
+            );
+
+
+          does_tx_consume_project_utxo: Bool =
+            tx.outputs.any(
               (output: TxOutput) -> Bool {
                 output.value.get_safe(PROJECT_AT_ASSET_CLASS) == 1
                   && output.datum
@@ -316,9 +336,15 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               }
             );
 
+          assert(
+            does_tx_reference_project_utxo
+              || does_tx_consume_project_utxo,
+            "Missing project utxo in transaction"
+          );
+
           ada_to_treasury: Int =
             own_input_txinput.output.value.get_safe(AssetClass::ADA)
-              - pparams_datum.discount_cent_price * (MULTIPLIER - TREASURY_REVOKE_DISCOUNT_CENTS) / MULTIPLIER;
+              - pparams_datum.discount_cent_price * TREASURY_REVOKE_DISCOUNT_CENTS;
 
           does_produce_open_treasury_utxo_correctly: Bool =
             tx.outputs.any(
@@ -340,7 +366,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                       treasury_ada: Int = output.value.get_safe(AssetClass::ADA);
 
                       open_treasury_datum.governor_ada
-                          == treasury_ada * pparams_datum.governor_share_ratio / MULTIPLIER
+                          == treasury_ada * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER
                         && open_treasury_datum.tag.switch {
                           tag: TagContinuation => tag.former == own_input_txinput.output_id,
                           else => false
@@ -353,7 +379,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
           own_validator_hash
             == pparams_datum.registry.dedicated_treasury_validator.latest
-            && does_tx_contain_project_utxo
             && if (ada_to_treasury > 0 ) {
               does_produce_open_treasury_utxo_correctly
             } else {

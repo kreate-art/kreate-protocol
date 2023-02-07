@@ -15,7 +15,7 @@ export default helios("helpers", [
   } from v__teiki_plant__types
 
   import {
-    MULTIPLIER,
+    RATIO_MULTIPLIER,
     PROTOCOL_PARAMS_NFT_TOKEN_NAME
   } from constants
 

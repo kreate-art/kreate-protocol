@@ -49,7 +49,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       PROJECT_DELIST_DISCOUNT_CENTS,
       PROJECT_DETAIL_AT_TOKEN_NAME,
       PROJECT_SCRIPT_AT_TOKEN_NAME,
-      MULTIPLIER
+      RATIO_MULTIPLIER
     } from constants
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
@@ -502,7 +502,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 ada_to_owner: Int =
                   own_input_txout.value.get_safe(AssetClass::ADA)
                     - INACTIVE_PROJECT_UTXO_ADA
-                    - pparams_datum.discount_cent_price * PROJECT_CLOSE_DISCOUNT_CENTS / MULTIPLIER;
+                    - pparams_datum.discount_cent_price * PROJECT_CLOSE_DISCOUNT_CENTS / RATIO_MULTIPLIER;
 
                 is_status_valid
                   && if (ada_to_owner > 0) {
@@ -630,7 +630,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                         i: Inline => {
                           open_treasury_datum: OpenTreasuryDatum = OpenTreasuryDatum::from_data(i.data);
 
-                          open_treasury_datum.governor_ada == treasury_ada * pparams_datum.governor_share_ratio / MULTIPLIER
+                          open_treasury_datum.governor_ada == treasury_ada * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER
                             && open_treasury_datum.tag.switch {
                               tag_delisted: TagProjectDelisted => tag_delisted.project_id == datum.project_id,
                               else => false
