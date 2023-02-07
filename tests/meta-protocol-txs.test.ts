@@ -31,6 +31,10 @@ import {
   CancelMetaProtocolTxParams,
 } from "@/transactions/meta-protocol/cancel";
 import {
+  evolveTeikiTx,
+  Params as EvolveTeikiParams,
+} from "@/transactions/meta-protocol/evolve-teiki";
+import {
   proposeMetaProtocolProposalTx,
   ProposeMetaProtocolTxParams,
 } from "@/transactions/meta-protocol/propose";
@@ -385,26 +389,88 @@ describe("meta-protocol transactions", () => {
       scriptRef: teikiMpScript,
     };
 
-    const availableTeiki = getRandomTeikiAmount();
-    const userUtxo: UTxO = {
-      ...generateOutRef(),
-      address: await lucid.wallet.address(),
-      assets: {
-        lovelace: getRandomLovelaceAmount(),
-        [teikiUnit]: availableTeiki,
-      },
-    };
+    const userAddress = await lucid.wallet.address();
+    const numOfUtxos = 5;
+    const userUtxos: UTxO[] = [...Array(numOfUtxos)].map((_) => {
+      return {
+        ...generateOutRef(),
+        address: userAddress,
+        assets: {
+          lovelace: getRandomLovelaceAmount(),
+          [teikiUnit]: getRandomTeikiAmount(),
+        },
+      };
+    });
 
-    attachUtxos(emulator, [teikiMpRefScriptUtxo, userUtxo]);
+    attachUtxos(emulator, [teikiMpRefScriptUtxo, ...userUtxos]);
 
     emulator.awaitBlock(10);
 
+    const availableTeiki = userUtxos.reduce(
+      (acc, utxo: UTxO) => acc + utxo.assets[teikiUnit],
+      0n
+    );
     const params: BurnTeikiParams = {
       teikiMpRefScriptUtxo,
       burnAmount: getRandomTeikiAmount(Number(availableTeiki)),
     };
 
     const tx = burnTeikiTx(lucid, params);
+
+    const txComplete = await tx.complete();
+    const txHash = await signAndSubmit(txComplete);
+
+    await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+  });
+
+  it("evolve teiki tx", async () => {
+    expect.assertions(1);
+
+    lucid.selectWalletFromSeed(ANYONE_ACCOUNT.seedPhrase);
+
+    const teikiPlantNftMph = generateBlake2b224Hash();
+    const teikiMpScript = exportScript(
+      compileTeikiMpScript({ teikiPlantNftMph })
+    );
+
+    const teikiMph = lucid.utils.validatorToScriptHash(teikiMpScript);
+    const teikiUnit: Unit = teikiMph + TEIKI_TOKEN_NAME;
+
+    const teikiMpRefScriptUtxo: UTxO = {
+      ...generateOutRef(),
+      address: generateScriptAddress(lucid),
+      assets: { lovelace: MIN_UTXO_LOVELACE },
+      scriptRef: teikiMpScript,
+    };
+
+    const userAddress = await lucid.wallet.address();
+    const numOfUtxos = 5;
+    const userUtxos: UTxO[] = [...Array(numOfUtxos)].map((_) => {
+      return {
+        ...generateOutRef(),
+        address: userAddress,
+        assets: {
+          lovelace: getRandomLovelaceAmount(),
+          [teikiUnit]: getRandomTeikiAmount(),
+        },
+      };
+    });
+
+    attachUtxos(emulator, [teikiMpRefScriptUtxo, ...userUtxos]);
+
+    emulator.awaitBlock(10);
+
+    const availableTeiki = userUtxos.reduce(
+      (acc, utxo: UTxO) => acc + utxo.assets[teikiUnit],
+      0n
+    );
+
+    const params: EvolveTeikiParams = {
+      teikiMpRefScriptUtxo,
+      totalTeikiAmount: availableTeiki,
+    };
+
+    const tx = evolveTeikiTx(lucid, params);
 
     const txComplete = await tx.complete();
     const txHash = await signAndSubmit(txComplete);
