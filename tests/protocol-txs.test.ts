@@ -1,9 +1,10 @@
-import { Data, Emulator, Lucid, Unit, UTxO } from "lucid-cardano";
+import { Address, Data, Emulator, Lucid, Unit, UTxO } from "lucid-cardano";
 
 import {
   compileProtocolNftScript,
   compileProtocolParamsVScript,
   compileProtocolProposalVScript,
+  compileProtocolScriptVScript,
   compileProtocolSvScript,
 } from "@/commands/compile-scripts";
 import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
@@ -33,6 +34,10 @@ import {
   proposeProtocolProposalTx,
   ProposeProtocolTxParams,
 } from "@/transactions/protocol/propose";
+import {
+  reclaimProtocolScriptTx,
+  Params as ReclaimScriptUtxoParams,
+} from "@/transactions/protocol/reclaim-scripts";
 import { withdrawProtocolRewardTx } from "@/transactions/protocol/withdraw";
 
 import {
@@ -40,8 +45,15 @@ import {
   generateAccount,
   generateBlake2b224Hash,
   generateOutRef,
+  generateScriptAddress,
+  generateWalletAddress,
+  scriptHashToAddress,
 } from "./emulator";
-import { generateProtocolRegistry } from "./utils";
+import {
+  generateProtocolRegistry,
+  getRandomLovelaceAmount,
+  MIN_UTXO_LOVELACE,
+} from "./utils";
 
 const BOOTSTRAP_ACCOUNT = await generateAccount();
 const emulator = new Emulator([BOOTSTRAP_ACCOUNT]);
@@ -493,4 +505,99 @@ describe("protocol transactions", () => {
 
     await expect(lucid.awaitTx(withdrawTxHash)).resolves.toBe(true);
   });
+
+  it("reclaim scripts tx", async () => {
+    expect.assertions(1);
+
+    lucid.selectWalletFromSeed(BOOTSTRAP_ACCOUNT.seedPhrase);
+
+    const protocolSvHash = generateBlake2b224Hash();
+    const protocolNftMph = generateBlake2b224Hash();
+
+    const registry = generateProtocolRegistry(protocolSvHash);
+    const governorAddress = await lucid.wallet.address();
+    const stakingManagerAddress = generateWalletAddress(lucid);
+    const refScriptAddress = generateScriptAddress(lucid);
+
+    const protocolParamsAddress = generateScriptAddress(lucid);
+
+    const protocolParamsDatum: ProtocolParamsDatum = {
+      registry,
+      governorAddress: constructAddress(governorAddress),
+      stakingManager: constructAddress(stakingManagerAddress).paymentCredential,
+      ...SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
+    };
+
+    const protocolParamsNftUnit: Unit =
+      protocolNftMph + PROTOCOL_NFT_TOKEN_NAMES.PARAMS;
+
+    const protocolParamsUtxo: UTxO = {
+      ...generateOutRef(),
+      address: protocolParamsAddress,
+      assets: { lovelace: MIN_UTXO_LOVELACE, [protocolParamsNftUnit]: 1n },
+      datum: S.toCbor(S.toData(protocolParamsDatum, ProtocolParamsDatum)),
+    };
+
+    const protocolScriptVScript = exportScript(
+      compileProtocolScriptVScript({ protocolNftMph })
+    );
+    const protocolScriptVScriptHash = lucid.utils.validatorToScriptHash(
+      protocolScriptVScript
+    );
+
+    const protocolScriptVScriptAddress = scriptHashToAddress(
+      lucid,
+      protocolScriptVScriptHash
+    );
+
+    const protocolScriptVRefScriptUtxo: UTxO = {
+      ...generateOutRef(),
+      address: refScriptAddress,
+      assets: { lovelace: MIN_UTXO_LOVELACE },
+      scriptRef: protocolScriptVScript,
+    };
+
+    const protocolScriptUtxos: UTxO[] = generateProtocolScriptUtxoList(
+      protocolScriptVScriptAddress,
+      30
+    );
+
+    attachUtxos(emulator, [
+      protocolParamsUtxo,
+      protocolScriptVRefScriptUtxo,
+      ...protocolScriptUtxos,
+    ]);
+
+    emulator.awaitBlock(10);
+
+    const params: ReclaimScriptUtxoParams = {
+      protocolParamsUtxo,
+      protocolScriptVRefScriptUtxo,
+      reclaimUtxos: protocolScriptUtxos,
+    };
+
+    const tx = reclaimProtocolScriptTx(lucid, params);
+
+    const txComplete = await tx.complete();
+
+    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+      true
+    );
+  });
 });
+
+function generateProtocolScriptUtxo(scriptAddress: Address) {
+  return {
+    ...generateOutRef(),
+    address: scriptAddress,
+    assets: { lovelace: getRandomLovelaceAmount() },
+    datum: Data.void(),
+  };
+}
+
+function generateProtocolScriptUtxoList(
+  scriptAddress: Address,
+  size: number
+): UTxO[] {
+  return [...Array(size)].map((_) => generateProtocolScriptUtxo(scriptAddress));
+}
