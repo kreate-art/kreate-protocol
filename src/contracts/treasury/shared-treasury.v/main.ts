@@ -51,7 +51,7 @@ export default function main({
 
     import {
       ADA_MINTING_POLICY_HASH,
-      MULTIPLIER,
+      RATIO_MULTIPLIER,
       PROJECT_AT_TOKEN_NAME,
       TEIKI_TOKEN_NAME
     } from constants
@@ -81,7 +81,7 @@ export default function main({
       epochs: Int
     ) -> Int {
       r: Fraction =
-        Fraction { numerator: burn_rate_inv, denominator: MULTIPLIER }
+        Fraction { numerator: burn_rate_inv, denominator: RATIO_MULTIPLIER }
           .exponential(epochs);
 
       (r.denominator - r.numerator) * available / r.denominator
@@ -168,7 +168,7 @@ export default function main({
                           error("Unsupported TeikiEmpty with burn_amount != 0")
                         }
                       } else {
-                        burn_rate_inv: Int = MULTIPLIER - pparams_datum.project_teiki_burn_rate;
+                        burn_rate_inv: Int = RATIO_MULTIPLIER - pparams_datum.project_teiki_burn_rate;
 
                         remaining: Int =
                           calculate_teiki_remaining (
@@ -266,7 +266,7 @@ export default function main({
                       output_datum.project_id == datum.project_id
                         && output_datum.governor_teiki ==
                             datum.governor_teiki
-                              + update_teiki.rewards * pparams_datum.governor_share_ratio / MULTIPLIER
+                              + update_teiki.rewards * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER
                         && output_datum.project_teiki == burn_action_result.new_project_teiki
                         && output_datum.tag.switch {
                           tag: TagContinuation => tag.former == own_input_txinput.output_id,

@@ -15,7 +15,7 @@ export default function main({ protocolNftMph }: Params): HeliosSource {
   ])`
     staking sv__protocol
 
-    import { MULTIPLIER } from constants
+    import { RATIO_MULTIPLIER } from constants
     import { Datum as OpenTreasuryDatum } from v__open_treasury__types
     import { Datum as PParamsDatum } from v__protocol_params__types
 
@@ -67,7 +67,7 @@ export default function main({ protocolNftMph }: Params): HeliosSource {
           own_staking_validator_hash: StakingValidatorHash =
             stakingCredentialToSVH(own_staking_credential);
 
-          open_treasury_datum.governor_ada == withdraw_amount * pparams_datum.governor_share_ratio / MULTIPLIER
+          open_treasury_datum.governor_ada == withdraw_amount * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER
             && open_treasury_datum.tag.switch {
               tag: TagProtocolStakingRewards => tag.staking_validator == own_staking_validator_hash,
               else => false
