@@ -17,9 +17,13 @@ import * as S from "@/schema";
 import { ProjectDatum } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
-import { TREAUSRY_MIN_WITHDRAWAL_ADA } from "@/transactions/constants";
+import { TREASURY_MIN_WITHDRAWAL_ADA } from "@/transactions/constants";
 import {
-  Params,
+  Params as RevokeParams,
+  revokeTx,
+} from "@/transactions/treasury/dedicated-treasury/revoke";
+import {
+  Params as WithdrawAdaParams,
   withdrawAdaTx,
 } from "@/transactions/treasury/dedicated-treasury/withdraw-ada";
 import {
@@ -122,7 +126,7 @@ describe("dedicated treasury transactions", () => {
       ...dedicatedTreasuryUtxos,
     ]);
 
-    const params: Params = {
+    const params: WithdrawAdaParams = {
       protocolParamsUtxo,
       projectUtxo,
       dedicatedTreasuryUtxos,
@@ -154,7 +158,7 @@ describe("dedicated treasury transactions", () => {
       ...dedicatedTreasuryUtxos,
     ]);
 
-    const params: Params = {
+    const params: WithdrawAdaParams = {
       protocolParamsUtxo,
       projectUtxo,
       dedicatedTreasuryUtxos,
@@ -172,12 +176,96 @@ describe("dedicated treasury transactions", () => {
       true
     );
   });
+
+  it("revoke tx - closed project", async () => {
+    expect.assertions(1);
+
+    lucid.selectWalletFromSeed(GOVERNOR_ACCOUNT.seedPhrase);
+
+    const dedicatedTreasuryUtxos = generateDedicatedTreasuryUtxoList(5);
+
+    const closedProjectDatum: ProjectDatum = {
+      projectId: { id: projectId },
+      ownerAddress: constructAddress(ownerAddress),
+      milestoneReached: 0n,
+      isStakingDelegationManagedByProtocol: true,
+      status: { type: "Closed" },
+    };
+
+    const closedProjectUtxo: UTxO = generateProjectUtxo(closedProjectDatum);
+
+    attachUtxos(emulator, [
+      protocolParamsUtxo,
+      closedProjectUtxo,
+      dedicatedTreasuryVRefScriptUtxo,
+      ...dedicatedTreasuryUtxos,
+    ]);
+
+    const params: RevokeParams = {
+      protocolParamsUtxo,
+      projectUtxo: closedProjectUtxo,
+      dedicatedTreasuryUtxos,
+      dedicatedTreasuryVRefScriptUtxo,
+    };
+
+    emulator.awaitBlock(10);
+
+    const tx = revokeTx(lucid, params);
+
+    const txComplete = await tx.complete();
+
+    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+      true
+    );
+  });
+
+  it("revoke tx - delisted project", async () => {
+    expect.assertions(1);
+
+    lucid.selectWalletFromSeed(GOVERNOR_ACCOUNT.seedPhrase);
+
+    const dedicatedTreasuryUtxos = generateDedicatedTreasuryUtxoList(5);
+
+    const delistedProjectDatum: ProjectDatum = {
+      projectId: { id: projectId },
+      ownerAddress: constructAddress(ownerAddress),
+      milestoneReached: 0n,
+      isStakingDelegationManagedByProtocol: true,
+      status: { type: "Delisted" },
+    };
+
+    const delistedProjectUtxo: UTxO = generateProjectUtxo(delistedProjectDatum);
+
+    attachUtxos(emulator, [
+      protocolParamsUtxo,
+      delistedProjectUtxo,
+      dedicatedTreasuryVRefScriptUtxo,
+      ...dedicatedTreasuryUtxos,
+    ]);
+
+    const params: RevokeParams = {
+      protocolParamsUtxo,
+      projectUtxo: delistedProjectUtxo,
+      dedicatedTreasuryUtxos,
+      dedicatedTreasuryVRefScriptUtxo,
+    };
+
+    emulator.awaitBlock(10);
+
+    const tx = revokeTx(lucid, params);
+
+    const txComplete = await tx.complete();
+
+    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+      true
+    );
+  });
 });
 
 function generateDedicatedTreasuryUtxo() {
   const datum: DedicatedTreasuryDatum = {
     projectId: { id: projectId },
-    governorAda: TREAUSRY_MIN_WITHDRAWAL_ADA + getRandomLovelaceAmount(),
+    governorAda: TREASURY_MIN_WITHDRAWAL_ADA + getRandomLovelaceAmount(),
     tag: {
       kind: "TagContinuation",
       former: constructTxOutputId(generateOutRef()),
