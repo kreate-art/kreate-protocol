@@ -14,8 +14,6 @@ import { assert } from "@/utils";
 import { scriptHashToAddress } from "tests/emulator";
 import { MIN_UTXO_LOVELACE } from "tests/utils";
 
-export type Actor = "protocol-governor" | "anyone";
-
 export type Params = {
   protocolParamsUtxo: UTxO;
   // Not need to reference project UTxO in case of initiate or cancel delist

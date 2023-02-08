@@ -17,9 +17,8 @@ import {
   TREASURY_UTXO_MIN_ADA,
   TREASURY_WITHDRAWAL_DISCOUNT_RATIO,
 } from "@/transactions/constants";
+import { Actor } from "@/types";
 import { assert } from "@/utils";
-
-export type Actor = "protocol-governor" | "anyone";
 
 export type Params = {
   protocolParamsUtxo: UTxO;

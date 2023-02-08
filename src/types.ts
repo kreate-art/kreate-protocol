@@ -3,6 +3,12 @@ import { Constr, type Data, type OutRef } from "lucid-cardano";
 
 export { type Data, type OutRef };
 
+export type Actor =
+  | "protocol-governor"
+  | "staking-manager"
+  | "project-owner"
+  | "anyone";
+
 export type Hex = string;
 export type Cid = string;
 

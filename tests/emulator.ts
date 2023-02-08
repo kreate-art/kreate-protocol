@@ -13,6 +13,7 @@ import {
   UTxO,
 } from "lucid-cardano";
 
+import { Hex } from "@/types";
 import { assert } from "@/utils";
 
 type Crypto = {
@@ -113,6 +114,10 @@ export function generateBlake2b224Hash(): KeyHash | ScriptHash {
 }
 
 export function generateBlake2b256Hash(): KeyHash | ScriptHash {
+  return toHex(loadCrypto().getRandomValues(new Uint8Array(32)));
+}
+
+export function generateStakingSeed(): Hex {
   return toHex(loadCrypto().getRandomValues(new Uint8Array(32)));
 }
 

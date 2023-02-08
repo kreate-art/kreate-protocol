@@ -19,9 +19,9 @@ export type CloseImmediatelyParams = {
   protocolParamsUtxo: UTxO;
   projectUtxo: UTxO;
   projectDetailUtxo: UTxO;
-  projectVScriptUtxo: UTxO;
+  projectVRefScriptUtxo: UTxO;
   projectDetailVScriptUtxo: UTxO;
-  projectScriptVScriptUtxo: UTxO;
+  projectScriptVRefScriptUtxo: UTxO;
   projectScriptUtxos: UTxO[];
   projectAtPolicyId: PolicyId;
   projectAtScriptUtxo: UTxO;
@@ -33,16 +33,16 @@ export function closeImmediatelyTx(
     protocolParamsUtxo,
     projectUtxo,
     projectDetailUtxo,
-    projectVScriptUtxo,
+    projectVRefScriptUtxo,
     projectDetailVScriptUtxo,
-    projectScriptVScriptUtxo,
+    projectScriptVRefScriptUtxo,
     projectScriptUtxos,
     projectAtPolicyId,
     projectAtScriptUtxo,
   }: CloseImmediatelyParams
 ) {
   assert(
-    projectVScriptUtxo.scriptRef != null,
+    projectVRefScriptUtxo.scriptRef != null,
     "Invalid project script UTxO: Missing script reference"
   );
 
@@ -111,9 +111,9 @@ export function closeImmediatelyTx(
     .newTx()
     .readFrom([
       protocolParamsUtxo,
-      projectVScriptUtxo,
+      projectVRefScriptUtxo,
       projectDetailVScriptUtxo,
-      projectScriptVScriptUtxo,
+      projectScriptVRefScriptUtxo,
       projectAtScriptUtxo,
     ])
     .collectFrom(
