@@ -1,75 +1,146 @@
-import { Data, Lucid, PolicyId, Script, Unit, UTxO } from "lucid-cardano";
+import { Lucid, Script, UTxO } from "lucid-cardano";
 
 import { PROJECT_AT_TOKEN_NAMES } from "@/contracts/common/constants";
-import { ProjectDatum } from "@/schema/teiki/project";
+import * as S from "@/schema";
+import {
+  ProjectDatum,
+  ProjectMintingRedeemer,
+  ProjectRedeemer,
+  ProjectScriptDatum,
+} from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { assert } from "@/utils";
+import { scriptHashToAddress } from "tests/emulator";
 
 import { PROJECT_SCRIPT_UTXO_ADA } from "../constants";
 
-type Actor = "protocol-governor" | "project-owner";
-
-type AllocateStakingParams = {
-  protocolParamsDatum: ProtocolParamsDatum;
-  protocolParamsUtxo: UTxO;
-  projectDatum: ProjectDatum;
+export type ProjectInfo = {
   projectUtxo: UTxO;
-  stakingValidatorSeed: string;
-  actor: Actor;
-  projectATPolicyId: PolicyId;
-  projectStakeValidator: Script;
+  newStakeValidator: Script;
 };
 
-// TODO: @sk-umiuma: Add the commented params
+export type Params = {
+  protocolParamsUtxo: UTxO;
+  projectInfoList: ProjectInfo[];
+  projectVRefScriptUtxo: UTxO;
+  projectAtMpRefScriptUtxo: UTxO;
+};
+
 export function allocateStakingTx(
   lucid: Lucid,
   {
-    protocolParamsDatum,
     protocolParamsUtxo,
-    projectUtxo,
-    // stakingValidatorSeed,
-    // actor,
-    projectATPolicyId,
-    projectStakeValidator,
-  }: AllocateStakingParams
+    projectInfoList,
+    projectVRefScriptUtxo,
+    projectAtMpRefScriptUtxo,
+  }: Params
 ) {
-  assert(projectUtxo.datum, "Invalid project UTxO: Missing inline datum");
+  assert(
+    protocolParamsUtxo.datum != null,
+    "Invalid protocol params UTxO: Missing inline datum"
+  );
+  const protocolParams = S.fromData(
+    S.fromCbor(protocolParamsUtxo.datum),
+    ProtocolParamsDatum
+  );
 
-  const projectATUnit: Unit =
-    projectATPolicyId + PROJECT_AT_TOKEN_NAMES.PROJECT;
-  const projectScriptATUnit: Unit =
-    projectATPolicyId + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
+  assert(
+    projectAtMpRefScriptUtxo.scriptRef != null,
+    "Invalid project AT minting policy reference UTxO: must reference project AT minting policy script"
+  );
 
-  const actorPkh = ""; // FIXME:
+  const projectAtMph = lucid.utils.validatorToScriptHash(
+    projectAtMpRefScriptUtxo.scriptRef
+  );
+  const projectScriptAtUnit =
+    projectAtMph + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
+  const projectMintingRedeemer: ProjectMintingRedeemer = {
+    case: "AllocateStaking",
+  };
 
-  // TODO: sk-umiuma: Implement this
-  const projectRedeemer = Data.void();
-  // TODO: sk-umiuma: Implement this
-  const projectScriptATRedeemer = Data.void();
-
-  return lucid
+  let tx = lucid
     .newTx()
-    .collectFrom([projectUtxo], projectRedeemer)
-    .readFrom([protocolParamsUtxo])
-    .mintAssets({ [projectScriptATUnit]: 1n }, projectScriptATRedeemer)
-    .payToContract(
-      projectUtxo.address,
-      {
-        scriptRef: projectStakeValidator,
-        inline: Data.void(), // FIXME:
+    .readFrom([
+      protocolParamsUtxo,
+      projectVRefScriptUtxo,
+      projectAtMpRefScriptUtxo,
+    ])
+    .mintAssets(
+      { [projectScriptAtUnit]: BigInt(projectInfoList.length) },
+      S.toCbor(S.toData(projectMintingRedeemer, ProjectMintingRedeemer))
+    );
+
+  for (const projectInfo of projectInfoList) {
+    const projectUtxo = projectInfo.projectUtxo;
+    assert(
+      projectUtxo.datum != null,
+      "Invalid project UTxO: Missing inline datum"
+    );
+
+    const projectDatum = S.fromData(
+      S.fromCbor(projectUtxo.datum),
+      ProjectDatum
+    );
+
+    const newStakingValidatorHash = lucid.utils.validatorToScriptHash(
+      projectInfo.newStakeValidator
+    );
+    const projectScriptUtxoAddress = scriptHashToAddress(
+      lucid,
+      protocolParams.registry.projectScriptValidator.latest.script.hash,
+      newStakingValidatorHash
+    );
+
+    const projectScriptDatum: ProjectScriptDatum = {
+      projectId: projectDatum.projectId,
+      stakingKeyDeposit: protocolParams.stakeKeyDeposit,
+    };
+
+    const projectRedeemer: ProjectRedeemer = {
+      case: "AllocateStakingValidator",
+      newStakingValidator: {
+        script: {
+          hash: newStakingValidatorHash,
+        },
       },
-      {
-        [projectScriptATUnit]: 1n,
-        lovelace: PROJECT_SCRIPT_UTXO_ADA,
-      }
-    )
-    .payToContract(projectUtxo.address, projectUtxo.datum, {
-      [projectATUnit]: 1n,
-      lovelace:
-        projectUtxo.assets.lovelace -
-        protocolParamsDatum.stakeKeyDeposit -
-        PROJECT_SCRIPT_UTXO_ADA,
-    })
-    .attachCertificateValidator(projectStakeValidator)
-    .addSignerKey(actorPkh);
+    };
+
+    const newStakeCredential = lucid.utils.scriptHashToCredential(
+      lucid.utils.validatorToScriptHash(projectInfo.newStakeValidator)
+    );
+
+    const newProjectStakeAddress =
+      lucid.utils.credentialToRewardAddress(newStakeCredential);
+
+    tx = tx
+      .collectFrom(
+        [projectUtxo],
+        S.toCbor(S.toData(projectRedeemer, ProjectRedeemer))
+      )
+      .payToContract(
+        projectUtxo.address,
+        { inline: projectUtxo.datum },
+        {
+          ...projectUtxo.assets,
+          lovelace:
+            BigInt(projectUtxo.assets.lovelace) -
+            protocolParams.stakeKeyDeposit -
+            PROJECT_SCRIPT_UTXO_ADA,
+        }
+      )
+      .payToContract(
+        projectScriptUtxoAddress,
+        {
+          inline: S.toCbor(S.toData(projectScriptDatum, ProjectScriptDatum)),
+          scriptRef: projectInfo.newStakeValidator,
+        },
+        {
+          lovelace: PROJECT_SCRIPT_UTXO_ADA,
+          [projectScriptAtUnit]: 1n,
+        }
+      )
+      .registerStake(newProjectStakeAddress);
+  }
+
+  return tx;
 }

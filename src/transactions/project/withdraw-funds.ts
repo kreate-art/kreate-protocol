@@ -15,6 +15,7 @@ import {
   DedicatedTreasuryRedeemer,
   SharedTreasuryDatum,
 } from "@/schema/teiki/treasury";
+import { Actor } from "@/types";
 import { assert } from "@/utils";
 
 import {
@@ -24,14 +25,12 @@ import {
   TREASURY_UTXO_MIN_ADA,
 } from "../constants";
 
-export type Actor = "project-owner" | "anyone";
-
 export type WithdrawFundsParams = {
   protocolParamsUtxo: UTxO;
   projectUtxo: UTxO;
   projectDetailUtxo: UTxO;
   dedicatedTreasuryUtxo: UTxO;
-  projectVScriptUtxo: UTxO;
+  projectVRefScriptUtxo: UTxO;
   projectDetailVScriptUtxo: UTxO;
   projectScriptUtxos: UTxO[];
   rewardAddressAndAmount: [RewardAddress, bigint][];
@@ -47,7 +46,7 @@ export function withdrawFundsTx(
     projectUtxo,
     projectDetailUtxo,
     dedicatedTreasuryUtxo,
-    projectVScriptUtxo,
+    projectVRefScriptUtxo,
     projectDetailVScriptUtxo,
     projectScriptUtxos,
     rewardAddressAndAmount,
@@ -133,7 +132,7 @@ export function withdrawFundsTx(
     .readFrom([
       ...projectScriptUtxos,
       protocolParamsUtxo,
-      projectVScriptUtxo,
+      projectVRefScriptUtxo,
       projectDetailVScriptUtxo,
       dedicatedTreasuryVScriptUtxo,
     ])

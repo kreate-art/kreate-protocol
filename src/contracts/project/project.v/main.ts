@@ -191,7 +191,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
               assert (
                 is_own_output_valid,
-                "Invalid output value"
+                "Invalid own output"
               );
 
               output_project_script: TxOutput =

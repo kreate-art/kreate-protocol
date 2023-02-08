@@ -17,10 +17,8 @@ import {
   TREASURY_UTXO_MIN_ADA,
   TREASURY_WITHDRAWAL_DISCOUNT_RATIO,
 } from "@/transactions/constants";
+import { Actor } from "@/types";
 import { assert } from "@/utils";
-
-// TODO: @sk-saru should it be a util type
-export type Actor = "protocol-governor" | "anyone";
 
 export type Params = {
   protocolParamsUtxo: UTxO;

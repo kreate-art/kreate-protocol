@@ -12,7 +12,7 @@ export type DelegateProjectParams = {
 
 export type DelegateProjectStaking = {
   projectUtxo: UTxO;
-  projectScriptVScriptUtxo: UTxO;
+  projectScriptUtxo: UTxO;
 };
 
 export function delegateProjectTx(
@@ -28,12 +28,12 @@ export function delegateProjectTx(
 
   for (const project of allDelegatedProjects) {
     assert(
-      project.projectScriptVScriptUtxo.scriptRef != null,
+      project.projectScriptUtxo.scriptRef != null,
       "Invalid project script UTxO"
     );
 
     const projectSvScriptHash = lucid.utils.validatorToScriptHash(
-      project.projectScriptVScriptUtxo.scriptRef
+      project.projectScriptUtxo.scriptRef
     );
 
     const projectStakingCredential =
@@ -44,7 +44,7 @@ export function delegateProjectTx(
 
     tx = tx
       .addSigner(authorizedAddress)
-      .readFrom([project.projectUtxo, project.projectScriptVScriptUtxo])
+      .readFrom([project.projectUtxo, project.projectScriptUtxo])
       .delegateTo(rewardAddress, poolId, Data.void());
   }
 
