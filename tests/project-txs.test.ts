@@ -58,6 +58,10 @@ import {
   updateProjectTx,
 } from "@/transactions/project/update";
 import {
+  Params as UpdateStakingDelegationManagementParams,
+  updateStakingDelegationManagement,
+} from "@/transactions/project/update-staking-delegation-management";
+import {
   WithdrawFundsParams,
   withdrawFundsTx,
 } from "@/transactions/project/withdraw-funds";
@@ -398,7 +402,57 @@ describe("project transactions", () => {
     expect.assertions(1);
     await testAllocateStaking("protocol-governor");
   });
+
+  it("update staking delegation management tx - project owner", async () => {
+    expect.assertions(1);
+    await testUpdateStakingDelegationManagementTx();
+  });
 });
+
+async function testUpdateStakingDelegationManagementTx() {
+  lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
+
+  const projectDatum: ProjectDatum = {
+    projectId: { id: projectId },
+    ownerAddress: constructAddress(projectOwnerAddress),
+    status: { type: "Active" },
+    milestoneReached: 0n,
+    isStakingDelegationManagedByProtocol: true,
+  };
+
+  const projectUtxo: UTxO = {
+    ...generateOutRef(),
+    address: projectAddress,
+    assets: {
+      lovelace:
+        SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS.projectPledge +
+        getRandomLovelaceAmount(),
+      [projectAtUnit]: 1n,
+    },
+    datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
+  };
+
+  attachUtxos(emulator, [
+    protocolParamsUtxo,
+    projectUtxo,
+    projectVRefScriptUtxo,
+  ]);
+
+  emulator.awaitBlock(10);
+
+  const params: UpdateStakingDelegationManagementParams = {
+    protocolParamsUtxo,
+    projectUtxo,
+    projectVRefScriptUtxo,
+  };
+
+  const tx = updateStakingDelegationManagement(lucid, params).addSigner(
+    PROJECT_OWNER_ACCOUNT.address
+  );
+  const txComplete = await tx.complete();
+  const txHash = await signAndSubmit(txComplete);
+  await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+}
 
 async function testAllocateStaking(actor: Actor) {
   let signerAddress: Address;
