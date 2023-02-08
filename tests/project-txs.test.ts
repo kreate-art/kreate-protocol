@@ -319,8 +319,6 @@ describe("project transactions", () => {
   it("withdraw funds tx - active - milestone does reach - non-owner", async () => {
     expect.assertions(2);
 
-    lucid.selectWalletFromSeed(ANYONE_ACCOUNT.seedPhrase);
-
     const txHash = await testWithdrawFunds(9_000_000_000n, "anyone", {
       type: "Active",
     });
@@ -331,8 +329,6 @@ describe("project transactions", () => {
   it("withdraw funds tx - active - milestone does not reach - project owner", async () => {
     expect.assertions(2);
 
-    lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
-
     const txHash = await testWithdrawFunds(900_000n, "project-owner", {
       type: "Active",
     });
@@ -342,8 +338,6 @@ describe("project transactions", () => {
 
   it("withdraw funds tx - active - milestone does reach - project owner", async () => {
     expect.assertions(2);
-
-    lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
 
     const txHash = await testWithdrawFunds(9_000_000_000n, "project-owner", {
       type: "Active",
@@ -643,11 +637,11 @@ async function testWithdrawFunds(
     lucid.utils.validatorToRewardAddress(projectSvScript);
 
   const projectScriptAddress = lucid.utils.credentialToAddress(
-    lucid.utils.scriptHashToCredential(generateBlake2b224Hash()),
+    lucid.utils.scriptHashToCredential(projectScriptVScriptHash),
     lucid.utils.scriptHashToCredential(projectSvScriptHash)
   );
 
-  const projectScriptVScriptUtxo: UTxO = {
+  const projectScriptUtxo: UTxO = {
     ...generateOutRef(),
     address: projectScriptAddress,
     assets: { lovelace: 2_000_000n, [projectScriptAtUnit]: 1n },
@@ -678,7 +672,7 @@ async function testWithdrawFunds(
     protocolParamsUtxo,
     projectDetailVScriptUtxo,
     projectVRefScriptUtxo,
-    projectScriptVScriptUtxo,
+    projectScriptUtxo,
     dedicatedTreasuryUtxo,
     projectUtxo,
     projectDetailUtxo,
@@ -687,9 +681,11 @@ async function testWithdrawFunds(
 
   const poolId = "pool1ve7vhcyde2d342wmqcwcudd906jk749t37y7fmz5e6mvgghrwh3";
 
+  lucid.selectWalletFromSeed(STAKING_MANAGER_ACCOUNT.seedPhrase);
+
   const delegateTx = await lucid
     .newTx()
-    .readFrom([protocolParamsUtxo, projectScriptVScriptUtxo, projectUtxo])
+    .readFrom([protocolParamsUtxo, projectScriptUtxo, projectUtxo])
     .addSigner(stakingManagerAddress)
     .registerStake(projectStakeAddress)
     .delegateTo(projectStakeAddress, poolId, Data.void())
@@ -707,7 +703,7 @@ async function testWithdrawFunds(
     dedicatedTreasuryUtxo,
     projectVRefScriptUtxo,
     projectDetailVScriptUtxo,
-    projectScriptUtxos: [projectScriptVScriptUtxo],
+    projectScriptUtxos: [projectScriptUtxo],
     rewardAddressAndAmount: [[projectRewardAddress, rewardAmount]],
     dedicatedTreasuryVScriptUtxo,
     sharedTreasuryAddress,
@@ -716,6 +712,15 @@ async function testWithdrawFunds(
 
   emulator.awaitSlot(100);
 
+  switch (actor) {
+    case "anyone":
+      lucid.selectWalletFromSeed(ANYONE_ACCOUNT.seedPhrase);
+      break;
+    case "project-owner":
+      lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
+      break;
+  }
+
   const tx = withdrawFundsTx(lucid, params);
   const txComplete = await tx.complete();
   const txHash = await signAndSubmit(txComplete);
@@ -723,6 +728,8 @@ async function testWithdrawFunds(
 }
 
 async function testDelegateProject(poolId: PoolId) {
+  lucid.selectWalletFromSeed(STAKING_MANAGER_ACCOUNT.seedPhrase);
+
   const projectSvScript = exportScript(
     compileProjectSvScript({
       projectId,
@@ -777,7 +784,7 @@ async function testDelegateProject(poolId: PoolId) {
 
   const params: DelegateProjectParams = {
     protocolParamsUtxo,
-    authorizedAddress: governorAddress,
+    authorizedAddress: STAKING_MANAGER_ACCOUNT.address,
     allDelegatedProjects: [
       {
         projectUtxo,
@@ -873,6 +880,8 @@ async function testFinalizeCloseProject() {
     projectAtMpRefScriptUtxo,
   ]);
 
+  lucid.selectWalletFromSeed(STAKING_MANAGER_ACCOUNT.seedPhrase);
+
   const delegateTx = await lucid
     .newTx()
     .readFrom([protocolParamsUtxo, projectUtxo])
@@ -882,6 +891,8 @@ async function testFinalizeCloseProject() {
 
   const delegateTxHash = await signAndSubmit(delegateTx);
   await expect(lucid.awaitTx(delegateTxHash)).resolves.toBe(true);
+
+  lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
 
   const tx = closeImmediatelyTx(lucid, params);
   const txComplete = await tx.complete();
