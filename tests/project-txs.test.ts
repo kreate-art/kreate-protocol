@@ -24,7 +24,7 @@ import {
   PROTOCOL_NFT_TOKEN_NAMES,
 } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
-import { signAndSubmit } from "@/helpers/lucid";
+import { switchWallet, signAndSubmit } from "@/helpers/lucid";
 import {
   constructAddress,
   constructProjectIdUsingBlake2b,
@@ -371,6 +371,7 @@ describe("project transactions", () => {
   it("delegate project tx", async () => {
     expect.assertions(2);
 
+    lucid.selectWalletFromSeed(STAKING_MANAGER_ACCOUNT.seedPhrase);
     // EUSKL pool
     await testDelegateProject(
       "pool1l5u4zh84na80xr56d342d32rsdw62qycwaw97hy9wwsc6axdwla"
@@ -687,16 +688,18 @@ async function testWithdrawFunds(
 
   const poolId = "pool1ve7vhcyde2d342wmqcwcudd906jk749t37y7fmz5e6mvgghrwh3";
 
-  const delegateTx = await lucid
-    .newTx()
-    .readFrom([protocolParamsUtxo, projectScriptVScriptUtxo, projectUtxo])
-    .addSigner(stakingManagerAddress)
-    .registerStake(projectStakeAddress)
-    .delegateTo(projectStakeAddress, poolId, Data.void())
-    .complete();
-
-  const delegateTxHash = await signAndSubmit(delegateTx);
-  await expect(lucid.awaitTx(delegateTxHash)).resolves.toBe(true);
+  await switchWallet(lucid, async () => {
+    lucid.selectWalletFromSeed(STAKING_MANAGER_ACCOUNT.seedPhrase);
+    const delegateTx = await lucid
+      .newTx()
+      .readFrom([protocolParamsUtxo, projectScriptVScriptUtxo, projectUtxo])
+      .addSigner(stakingManagerAddress)
+      .registerStake(projectStakeAddress)
+      .delegateTo(projectStakeAddress, poolId, Data.void())
+      .complete();
+    const delegateTxHash = await signAndSubmit(delegateTx);
+    await expect(lucid.awaitTx(delegateTxHash)).resolves.toBe(true);
+  });
 
   emulator.distributeRewards(rewardAmount);
 
@@ -777,7 +780,7 @@ async function testDelegateProject(poolId: PoolId) {
 
   const params: DelegateProjectParams = {
     protocolParamsUtxo,
-    authorizedAddress: governorAddress,
+    authorizedAddress: stakingManagerAddress,
     allDelegatedProjects: [
       {
         projectUtxo,
@@ -873,15 +876,17 @@ async function testFinalizeCloseProject() {
     projectAtMpRefScriptUtxo,
   ]);
 
-  const delegateTx = await lucid
-    .newTx()
-    .readFrom([protocolParamsUtxo, projectUtxo])
-    .addSigner(stakingManagerAddress)
-    .registerStake(projectStakeAddress)
-    .complete();
-
-  const delegateTxHash = await signAndSubmit(delegateTx);
-  await expect(lucid.awaitTx(delegateTxHash)).resolves.toBe(true);
+  await switchWallet(lucid, async () => {
+    lucid.selectWalletFromSeed(STAKING_MANAGER_ACCOUNT.seedPhrase);
+    const delegateTx = await lucid
+      .newTx()
+      .readFrom([protocolParamsUtxo, projectUtxo])
+      .addSigner(stakingManagerAddress)
+      .registerStake(projectStakeAddress)
+      .complete();
+    const delegateTxHash = await signAndSubmit(delegateTx);
+    await expect(lucid.awaitTx(delegateTxHash)).resolves.toBe(true);
+  });
 
   const tx = closeImmediatelyTx(lucid, params);
   const txComplete = await tx.complete();

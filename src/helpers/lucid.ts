@@ -2,7 +2,9 @@ import {
   Address,
   AddressDetails,
   getAddressDetails,
+  Lucid,
   TxComplete,
+  Wallet,
 } from "lucid-cardano";
 
 import { Hex } from "@/types";
@@ -28,5 +30,17 @@ export function getAddressDetailsSafe(address: Address): AddressDetails | null {
     if (e instanceof Error && e.message.includes("No address type matched for"))
       return null;
     throw e;
+  }
+}
+
+export async function switchWallet(
+  lucid: Lucid,
+  fn: (original: Wallet) => void | Promise<void>
+): Promise<void> {
+  const original = lucid.wallet;
+  try {
+    await fn(original);
+  } finally {
+    lucid.wallet = original;
   }
 }
