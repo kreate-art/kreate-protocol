@@ -30,7 +30,7 @@ import {
 export type CreateProjectParams = {
   protocolParamsUtxo: UTxO;
   informationCid: IpfsCid;
-  isSponsored: boolean;
+  sponsorshipAmount: bigint;
   ownerAddress: Address;
   projectAtScriptRefUtxo: UTxO;
   projectATPolicyId: PolicyId;
@@ -44,7 +44,7 @@ export function createProjectTx(
   {
     protocolParamsUtxo,
     informationCid,
-    isSponsored,
+    sponsorshipAmount,
     ownerAddress,
     projectAtScriptRefUtxo,
     projectATPolicyId,
@@ -107,18 +107,9 @@ export function createProjectTx(
 
   const projectId = constructProjectIdUsingBlake2b(seedUtxo);
 
-  const minTotalFees =
-    protocolParams.projectCreationFee +
-    (isSponsored ? protocolParams.projectSponsorshipFee : 0n);
+  const totalFees = protocolParams.projectCreationFee + sponsorshipAmount;
 
   const txTimeStart = getTime({ lucid }) - txTimePadding;
-  const sponsoredUntil = isSponsored
-    ? {
-        timestamp:
-          protocolParams.projectSponsorshipDuration.milliseconds +
-          BigInt(txTimeStart),
-      }
-    : null;
 
   const projectScriptDatum: ProjectScriptDatum = {
     projectId: { id: projectId },
@@ -128,7 +119,17 @@ export function createProjectTx(
   const projectDetailDatum: ProjectDetailDatum = {
     projectId: { id: projectId },
     withdrawnFunds: 0n,
-    sponsoredUntil,
+    sponsorship:
+      sponsorshipAmount > 0n
+        ? {
+            amount: sponsorshipAmount,
+            until: {
+              timestamp:
+                BigInt(txTimeStart) +
+                protocolParams.projectSponsorshipDuration.milliseconds,
+            },
+          }
+        : null,
     informationCid: informationCid,
     lastAnnouncementCid: null,
   };
@@ -146,7 +147,7 @@ export function createProjectTx(
   const dedicatedTreasuryDatum: DedicatedTreasuryDatum = {
     projectId: { id: projectId },
     governorAda:
-      (protocolParams.governorShareRatio * minTotalFees) / RATIO_MULTIPLIER,
+      (protocolParams.governorShareRatio * totalFees) / RATIO_MULTIPLIER,
     tag: { kind: "TagOriginated", seed: seedTxOutputId },
   };
 
@@ -155,7 +156,7 @@ export function createProjectTx(
     projectSeed: seedTxOutputId,
   };
 
-  let tx = lucid
+  return lucid
     .newTx()
     .readFrom([protocolParamsUtxo, projectAtScriptRefUtxo])
     .collectFrom([seedUtxo])
@@ -205,12 +206,8 @@ export function createProjectTx(
           S.toData(dedicatedTreasuryDatum, DedicatedTreasuryDatum)
         ),
       },
-      { lovelace: minTotalFees }
+      { lovelace: totalFees }
     )
-    .registerStake(projectStakeAddress);
-  if (isSponsored) {
-    tx = tx.validFrom(txTimeStart);
-  }
-
-  return tx;
+    .registerStake(projectStakeAddress)
+    .validFrom(txTimeStart);
 }

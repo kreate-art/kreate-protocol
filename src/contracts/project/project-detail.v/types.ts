@@ -11,10 +11,15 @@ export default helios("v__project_detail__types")`
     Migrate
   }
 
+  struct Sponsorship {
+    amount: Int
+    until: Time
+  }
+
   struct Datum {
     project_id: ByteArray
     withdrawn_funds: Int
-    sponsored_until: Option[Time]
+    sponsorship: Option[Sponsorship]
     information_cid: String
     last_announcement_cid: Option[String]
   }

@@ -14,7 +14,7 @@ export const DedicatedTreasuryDatum = Struct({
 export type DedicatedTreasuryDatum = Static<typeof DedicatedTreasuryDatum>;
 
 export const DedicatedTreasuryRedeemer = Enum("case", {
-  CollectFees: { minFees: Int, split: Bool },
+  CollectFees: { fees: Int, split: Bool },
   WithdrawAda: Void,
   Revoke: Void,
   Migrate: Void,

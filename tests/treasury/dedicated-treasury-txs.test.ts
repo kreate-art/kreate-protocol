@@ -13,6 +13,7 @@ import {
   constructProjectIdUsingBlake2b,
   constructTxOutputId,
 } from "@/helpers/schema";
+import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import { ProjectDatum } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
@@ -188,7 +189,10 @@ describe("dedicated treasury transactions", () => {
       ownerAddress: constructAddress(ownerAddress),
       milestoneReached: 0n,
       isStakingDelegationManagedByProtocol: true,
-      status: { type: "Closed" },
+      status: {
+        type: "Closed",
+        closedAt: { timestamp: BigInt(getTime({ lucid })) },
+      },
     };
 
     const closedProjectUtxo: UTxO = generateProjectUtxo(closedProjectDatum);
@@ -230,7 +234,10 @@ describe("dedicated treasury transactions", () => {
       ownerAddress: constructAddress(ownerAddress),
       milestoneReached: 0n,
       isStakingDelegationManagedByProtocol: true,
-      status: { type: "Delisted" },
+      status: {
+        type: "Delisted",
+        delistedAt: { timestamp: BigInt(getTime({ lucid })) },
+      },
     };
 
     const delistedProjectUtxo: UTxO = generateProjectUtxo(delistedProjectDatum);

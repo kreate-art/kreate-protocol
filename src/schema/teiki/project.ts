@@ -9,10 +9,19 @@ export const ProjectStatus = Enum("type", {
   Active: Void,
   PreClosed: { pendingUntil: Time },
   PreDelisted: { pendingUntil: Time },
+  Closed: { closedAt: Time },
+  Delisted: { delistedAt: Time },
+});
+export type ProjectStatus = Static<typeof ProjectStatus>;
+
+export const LegacyProjectStatus = Enum("type", {
+  Active: Void,
+  PreClosed: { pendingUntil: Time },
+  PreDelisted: { pendingUntil: Time },
   Closed: Void,
   Delisted: Void,
 });
-export type ProjectStatus = Static<typeof ProjectStatus>;
+export type LegacyProjectStatus = Static<typeof LegacyProjectStatus>;
 
 export const ProjectDatum = Struct({
   projectId: ProjectId,
@@ -23,24 +32,14 @@ export const ProjectDatum = Struct({
 });
 export type ProjectDatum = Static<typeof ProjectDatum>;
 
-// TODO: These types are going to replace the current ones in the next update
-export const NextProjectStatus = Enum("type", {
-  Active: Void,
-  PreClosed: { pendingUntil: Time },
-  PreDelisted: { pendingUntil: Time },
-  Closed: { closedAt: Time },
-  Delisted: { delistedAt: Time },
-});
-export type NextProjectStatus = Static<typeof NextProjectStatus>;
-
-export const NextProjectDatum = Struct({
+export const LegacyProjectDatum = Struct({
   projectId: ProjectId,
   ownerAddress: Address,
-  status: NextProjectStatus,
+  status: LegacyProjectStatus,
   milestoneReached: Int,
   isStakingDelegationManagedByProtocol: Bool,
 });
-export type NextProjectDatum = Static<typeof NextProjectDatum>;
+export type LegacyProjectDatum = Static<typeof LegacyProjectDatum>;
 
 export const ProjectRedeemer = Enum("case", {
   RecordNewMilestone: { newMilestone: Int },
@@ -57,14 +56,29 @@ export type ProjectRedeemer = Static<typeof ProjectRedeemer>;
 
 // ==================== V | Project Detail ====================
 
+export const Sponsorship = Struct({
+  amount: Int,
+  until: Time,
+});
+export type Sponsorship = Static<typeof Sponsorship>;
+
 export const ProjectDetailDatum = Struct({
   projectId: ProjectId,
   withdrawnFunds: Int,
-  sponsoredUntil: Option(Time),
+  sponsorship: Option(Sponsorship),
   informationCid: IpfsCid,
   lastAnnouncementCid: Option(IpfsCid),
 });
 export type ProjectDetailDatum = Static<typeof ProjectDetailDatum>;
+
+export const LegacyProjectDetailDatum = Struct({
+  projectId: ProjectId,
+  withdrawnFunds: Int,
+  sponsorshipUntil: Option(Time),
+  informationCid: IpfsCid,
+  lastAnnouncementCid: Option(IpfsCid),
+});
+export type LegacyProjectDetailDatum = Static<typeof LegacyProjectDetailDatum>;
 
 export const ProjectDetailRedeemer = Enum("case", {
   WithdrawFunds: Void,
@@ -96,5 +110,7 @@ export const ProjectMintingRedeemer = Enum("case", {
   NewProject: { projectSeed: TxOutputId },
   AllocateStaking: Void,
   DeallocateStaking: Void,
+  MigrateOut: Void,
+  MigrateIn: Void,
 });
 export type ProjectMintingRedeemer = Static<typeof ProjectMintingRedeemer>;

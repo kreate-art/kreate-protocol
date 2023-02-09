@@ -1,3 +1,4 @@
+// TODO: @sk-saru refine this file please, more tests needed here
 /* eslint-disable jest/max-expects */
 import {
   Emulator,
@@ -17,6 +18,7 @@ import {
   compileProjectsAtMpScript,
   compileDedicatedTreasuryVScript,
   compileProjectScriptVScript,
+  compileOpenTreasuryVScript,
 } from "@/commands/compile-scripts";
 import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
 import {
@@ -24,7 +26,7 @@ import {
   PROTOCOL_NFT_TOKEN_NAMES,
 } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
-import { signAndSubmit } from "@/helpers/lucid";
+import { addressFromScriptHashes, signAndSubmit } from "@/helpers/lucid";
 import {
   constructAddress,
   constructProjectIdUsingBlake2b,
@@ -38,21 +40,24 @@ import {
   ProjectStatus,
 } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
-import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
+import {
+  DedicatedTreasuryDatum,
+  OpenTreasuryDatum,
+} from "@/schema/teiki/treasury";
 import {
   Params as AllocateStakingParams,
   ProjectInfo,
   allocateStakingTx,
 } from "@/transactions/project/allocate-staking";
-import {
-  CloseImmediatelyParams,
-  closeImmediatelyTx,
-} from "@/transactions/project/close-immediately";
 import { createProjectTx } from "@/transactions/project/create";
 import {
   DelegateProjectParams,
   delegateProjectTx,
 } from "@/transactions/project/delegate";
+import {
+  Params as FinalizeCloseParams,
+  finalizeCloseTx,
+} from "@/transactions/project/finalize-close";
 import {
   UpdateProjectParams,
   updateProjectTx,
@@ -72,9 +77,12 @@ import {
   generateAccount,
   generateBlake2b224Hash,
   generateOutRef,
+  generateScriptAddress,
   generateStakingSeed,
 } from "./emulator";
 import { generateProtocolRegistry, getRandomLovelaceAmount } from "./utils";
+
+const poolId = "pool1ve7vhcyde2d342wmqcwcudd906jk749t37y7fmz5e6mvgghrwh3";
 
 const PROJECT_OWNER_ACCOUNT = await generateAccount();
 const GOVERNOR_ACCOUNT = await generateAccount();
@@ -136,6 +144,10 @@ const sharedTreasuryVScript = exportScript(
   })
 );
 
+const openTreasuryVScript = exportScript(
+  compileOpenTreasuryVScript({ protocolNftMph })
+);
+
 const projectVScriptHash = lucid.utils.validatorToScriptHash(projectVScript);
 
 const projectDetailVScriptHash =
@@ -150,6 +162,9 @@ const projectScriptVScriptHash =
 const sharedTreasuryVScriptHash = lucid.utils.validatorToScriptHash(
   sharedTreasuryVScript
 );
+
+const openTreasuryVScriptHash =
+  lucid.utils.validatorToScriptHash(openTreasuryVScript);
 
 const projectAddress = lucid.utils.credentialToAddress(
   lucid.utils.scriptHashToCredential(projectVScriptHash)
@@ -177,6 +192,7 @@ const registry = generateProtocolRegistry(protocolSvScriptHash, {
   projectScript: projectScriptVScriptHash,
   dedicatedTreasury: dedicatedTreasuryVScriptHash,
   sharedTreasury: sharedTreasuryVScriptHash,
+  openTreasury: openTreasuryVScriptHash,
 });
 
 const protocolParamsDatum: ProtocolParamsDatum = {
@@ -204,7 +220,7 @@ const projectScriptDeployAddress = lucid.utils.credentialToAddress(
 const projectDetailDatum: ProjectDetailDatum = {
   projectId: { id: projectId },
   withdrawnFunds: 0n,
-  sponsoredUntil: null,
+  sponsorship: null,
   informationCid: { cid: generateBlake2b224Hash() },
   lastAnnouncementCid: null,
 };
@@ -238,17 +254,26 @@ const projectVRefScriptUtxo: UTxO = {
   assets: { lovelace: 2_000_000n },
   scriptRef: projectVScript,
 };
-const projectDetailVScriptUtxo: UTxO = {
+
+const projectDetailVRefScriptUtxo: UTxO = {
   ...generateOutRef(),
   address: projectScriptDeployAddress,
   assets: { lovelace: 2_000_000n },
   scriptRef: projectDetailVScript,
 };
-const dedicatedTreasuryVScriptUtxo: UTxO = {
+
+const dedicatedTreasuryVRefScriptUtxo: UTxO = {
   ...generateOutRef(),
-  address: projectScriptDeployAddress,
+  address: generateScriptAddress(lucid),
   assets: { lovelace: 2_000_000n },
   scriptRef: dedicatedTreasuryVScript,
+};
+
+const openTreasuryVRefScriptUtxo: UTxO = {
+  ...generateOutRef(),
+  address: generateScriptAddress(lucid),
+  assets: { lovelace: 2_000_000n },
+  scriptRef: openTreasuryVScript,
 };
 
 const projectAtMpRefScriptUtxo: UTxO = {
@@ -273,7 +298,8 @@ describe("project transactions", () => {
     expect(seedUtxo).toBeTruthy();
 
     const createProjectParams = generateCreateProjectParams({
-      isSponsored: true,
+      sponsorshipAmount:
+        protocolParamsDatum.projectSponsorshipFee + getRandomLovelaceAmount(),
       seedUtxo,
       ownerAddress,
     });
@@ -300,7 +326,7 @@ describe("project transactions", () => {
     expect(seedUtxo).toBeTruthy();
 
     const createProjectParams = generateCreateProjectParams({
-      isSponsored: false,
+      sponsorshipAmount: 0n,
       seedUtxo,
       ownerAddress,
     });
@@ -346,12 +372,33 @@ describe("project transactions", () => {
     await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
   });
 
-  it("update project tx", async () => {
+  it("update project tx - non extend sponsorship", async () => {
     expect.assertions(1);
 
     lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
 
-    const updateProjectParams = generateUpdateProjectParams();
+    const updateProjectParams = generateUpdateProjectParams({
+      sponsorshipAmount: 0n,
+    });
+
+    const tx = updateProjectTx(lucid, updateProjectParams);
+
+    const txComplete = await tx.complete();
+
+    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+      true
+    );
+  });
+
+  it("update project tx - extend sponsorship", async () => {
+    expect.assertions(1);
+
+    lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
+
+    const updateProjectParams = generateUpdateProjectParams({
+      sponsorshipAmount:
+        protocolParamsDatum.projectSponsorshipFee + getRandomLovelaceAmount(),
+    });
 
     const tx = updateProjectTx(lucid, updateProjectParams);
 
@@ -371,10 +418,16 @@ describe("project transactions", () => {
     );
   });
 
-  it("finalize close project tx - close immediately", async () => {
+  it("finalize close project tx - close immediately - not consume open treasury", async () => {
     expect.assertions(2);
 
-    await testFinalizeCloseProject();
+    await testFinalizeCloseProject({ rewardAmount: getRandomLovelaceAmount() });
+  });
+
+  it("finalize close project tx - close immediately - consume open treasury", async () => {
+    expect.assertions(2);
+
+    await testFinalizeCloseProject({ rewardAmount: 1_000_000n });
   });
 
   it("allocate staking validator tx - any one", async () => {
@@ -533,13 +586,13 @@ async function testAllocateStaking(actor: Actor) {
 }
 
 type GenerateParams = {
-  isSponsored: boolean;
+  sponsorshipAmount: bigint;
   seedUtxo: UTxO;
   ownerAddress: Address;
 };
 
 function generateCreateProjectParams({
-  isSponsored,
+  sponsorshipAmount,
   seedUtxo,
   ownerAddress,
 }: GenerateParams) {
@@ -560,7 +613,7 @@ function generateCreateProjectParams({
 
   return {
     informationCid: { cid: "QmaMS3jikf7ZACHaGpUVD2wn3jFv1SaeVBChhkNDit5XQy" },
-    isSponsored,
+    sponsorshipAmount,
     ownerAddress,
     projectAtScriptRefUtxo: projectAtMpRefScriptUtxo,
     projectATPolicyId: projectAtMph,
@@ -570,7 +623,11 @@ function generateCreateProjectParams({
   };
 }
 
-function generateUpdateProjectParams(): UpdateProjectParams {
+function generateUpdateProjectParams({
+  sponsorshipAmount = 0n,
+}: {
+  sponsorshipAmount: bigint;
+}): UpdateProjectParams {
   const projectDatum: ProjectDatum = {
     projectId: { id: projectId },
     ownerAddress: constructAddress(projectOwnerAddress),
@@ -591,8 +648,8 @@ function generateUpdateProjectParams(): UpdateProjectParams {
     projectUtxo,
     projectDetailUtxo,
     dedicatedTreasuryUtxo,
-    projectDetailVScriptUtxo,
-    dedicatedTreasuryVScriptUtxo,
+    projectDetailVRefScriptUtxo,
+    dedicatedTreasuryVRefScriptUtxo,
   ]);
 
   // NOTE: When building transactions have start_time before the current time,
@@ -603,9 +660,9 @@ function generateUpdateProjectParams(): UpdateProjectParams {
     protocolParamsUtxo,
     projectUtxo,
     projectDetailUtxo,
-    projectDetailVScriptUtxo,
-    dedicatedTreasuryVScriptUtxo,
-    shouldExtendSponsorship: true,
+    projectDetailVRefScriptUtxo,
+    dedicatedTreasuryVRefScriptUtxo,
+    extendSponsorshipAmount: sponsorshipAmount,
     newInformationCid: {
       cid: "QmaMS3jikf86AC1aGpUVD2wn3jFv1SaeVBChhkNDit5XQy",
     },
@@ -670,16 +727,14 @@ async function testWithdrawFunds(
 
   attachUtxos(emulator, [
     protocolParamsUtxo,
-    projectDetailVScriptUtxo,
+    projectDetailVRefScriptUtxo,
     projectVRefScriptUtxo,
     projectScriptUtxo,
     dedicatedTreasuryUtxo,
     projectUtxo,
     projectDetailUtxo,
-    dedicatedTreasuryVScriptUtxo,
+    dedicatedTreasuryVRefScriptUtxo,
   ]);
-
-  const poolId = "pool1ve7vhcyde2d342wmqcwcudd906jk749t37y7fmz5e6mvgghrwh3";
 
   lucid.selectWalletFromSeed(STAKING_MANAGER_ACCOUNT.seedPhrase);
 
@@ -702,10 +757,10 @@ async function testWithdrawFunds(
     projectDetailUtxo,
     dedicatedTreasuryUtxo,
     projectVRefScriptUtxo,
-    projectDetailVScriptUtxo,
+    projectDetailVRefScriptUtxo,
     projectScriptUtxos: [projectScriptUtxo],
     rewardAddressAndAmount: [[projectRewardAddress, rewardAmount]],
-    dedicatedTreasuryVScriptUtxo,
+    dedicatedTreasuryVRefScriptUtxo,
     sharedTreasuryAddress,
     actor,
   };
@@ -802,7 +857,11 @@ async function testDelegateProject(poolId: PoolId) {
   await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
 }
 
-async function testFinalizeCloseProject() {
+async function testFinalizeCloseProject({
+  rewardAmount,
+}: {
+  rewardAmount: bigint;
+}) {
   const projectSvScript = exportScript(
     compileProjectSvScript({
       projectId,
@@ -857,14 +916,41 @@ async function testFinalizeCloseProject() {
     datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
   };
 
-  const params: CloseImmediatelyParams = {
+  const openTreasuryDatum: OpenTreasuryDatum = {
+    governorAda: getRandomLovelaceAmount(),
+    tag: {
+      kind: "TagProjectDelayedStakingRewards",
+      stakingValidator: null,
+    },
+  };
+
+  const openTreasuryScriptAddress = addressFromScriptHashes(
+    lucid,
+    protocolParamsDatum.registry.openTreasuryValidator.latest.script.hash,
+    protocolParamsDatum.registry.protocolStakingValidator.script.hash
+  );
+
+  const openTreasuryUtxo: UTxO = {
+    ...generateOutRef(),
+    address: openTreasuryScriptAddress,
+    assets: {
+      lovelace: openTreasuryDatum.governorAda + getRandomLovelaceAmount(),
+    },
+    datum: S.toCbor(S.toData(openTreasuryDatum, OpenTreasuryDatum)),
+  };
+
+  const params: FinalizeCloseParams = {
     protocolParamsUtxo,
     projectUtxo,
     projectDetailUtxo,
     projectVRefScriptUtxo,
-    projectDetailVScriptUtxo,
+    projectDetailVRefScriptUtxo,
     projectScriptVRefScriptUtxo,
-    projectScriptUtxos: [projectScriptUtxo],
+    projectScriptInfoList: [{ projectScriptUtxo, rewardAmount }],
+    openTreasuryInfo: {
+      openTreasuryUtxo,
+      openTreasuryVRefScriptUtxo,
+    },
     projectAtPolicyId: projectAtMph,
     projectAtScriptUtxo: projectAtMpRefScriptUtxo,
   };
@@ -874,19 +960,22 @@ async function testFinalizeCloseProject() {
     projectUtxo,
     projectDetailUtxo,
     projectVRefScriptUtxo,
-    projectDetailVScriptUtxo,
+    projectDetailVRefScriptUtxo,
     projectScriptVRefScriptUtxo,
     projectScriptUtxo,
     projectAtMpRefScriptUtxo,
+    openTreasuryUtxo,
+    openTreasuryVRefScriptUtxo,
   ]);
 
   lucid.selectWalletFromSeed(STAKING_MANAGER_ACCOUNT.seedPhrase);
 
   const delegateTx = await lucid
     .newTx()
-    .readFrom([protocolParamsUtxo, projectUtxo])
+    .readFrom([protocolParamsUtxo, projectUtxo, projectScriptUtxo])
     .addSigner(stakingManagerAddress)
     .registerStake(projectStakeAddress)
+    .delegateTo(projectStakeAddress, poolId, Data.void())
     .complete();
 
   const delegateTxHash = await signAndSubmit(delegateTx);
@@ -894,7 +983,10 @@ async function testFinalizeCloseProject() {
 
   lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
 
-  const tx = closeImmediatelyTx(lucid, params);
+  emulator.distributeRewards(rewardAmount);
+  emulator.awaitBlock(100);
+
+  const tx = finalizeCloseTx(lucid, params);
   const txComplete = await tx.complete();
   const txHash = await signAndSubmit(txComplete);
 

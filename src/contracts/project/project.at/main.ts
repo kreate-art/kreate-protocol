@@ -21,47 +21,34 @@ export default function main({ protocolNftMph }: Params) {
     minting at__project
 
     import { Redeemer } from at__project__types
-    import { Redeemer as ProjectRedeemer } from v__project__types
+    import { Datum as DedicatedTreasuryDatum } from v__dedicated_treasury__types
     import { Datum as ProjectDetailDatum } from v__project_detail__types
     import { Datum as ProjectScriptDatum } from v__project_script__types
-    import { Datum as ProjectDatum } from v__project__types
+    import { Datum as ProjectDatum, Redeemer as ProjectRedeemer } from v__project__types
     import { Datum as PParamsDatum } from v__protocol_params__types
-    import { Datum as DedicatedTreasuryDatum } from v__dedicated_treasury__types
 
     import {
       does_consume_input_with_output_id,
+      find_pparams_datum_from_inputs,
       find_tx_input_with_value,
-      scriptHashToStakingCredential,
       is_tx_authorized_by,
-      find_pparams_datum_from_inputs
+      scriptHashToStakingCredential
     } from helpers
 
     import {
       ADA_MINTING_POLICY_HASH,
+      ADA_TOKEN_NAME,
+      PROJECT_AT_MIGRATE_IN,
       PROJECT_AT_TOKEN_NAME,
       PROJECT_DETAIL_AT_TOKEN_NAME,
+      PROJECT_DETAIL_UTXO_ADA,
       PROJECT_SCRIPT_AT_TOKEN_NAME,
       PROJECT_SCRIPT_UTXO_ADA,
-      PROJECT_DETAIL_UTXO_ADA,
       RATIO_MULTIPLIER
     } from constants
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
-
-    func does_value_contain_only_one_token(
-      value: Value,
-      token_mph: MintingPolicyHash,
-      token_name: ByteArray
-    ) -> Bool {
-      value.to_map().all(
-        (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
-          if (mph == ADA_MINTING_POLICY_HASH) { true }
-          else if (mph == token_mph) { tokens == Map[ByteArray]Int {token_name: 1} }
-          else { false }
-        }
-      )
-    }
 
     func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
@@ -111,9 +98,16 @@ export default function main({ protocolNftMph }: Params) {
                           ),
                           Option[StakingCredential]::Some{staking_validator}
                         )
-                      && does_value_contain_only_one_token(
-                          output.value, own_mph,
-                          PROJECT_SCRIPT_AT_TOKEN_NAME
+                      && output.value.to_map().all(
+                        (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                          if (mph == ADA_MINTING_POLICY_HASH) {
+                            tokens == Map[ByteArray]Int {ADA_TOKEN_NAME: PROJECT_SCRIPT_UTXO_ADA}
+                          }
+                          else if (mph == own_mph) {
+                            tokens == Map[ByteArray]Int {PROJECT_SCRIPT_AT_TOKEN_NAME: 1}
+                          }
+                          else { false }
+                        }
                       )
                       && output.datum.switch {
                         i: Inline =>
@@ -143,6 +137,35 @@ export default function main({ protocolNftMph }: Params) {
                       ),
                       Option[StakingCredential]::Some{staking_validator}
                     )
+                  && output.value.to_map().all(
+                    (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                      if (mph == ADA_MINTING_POLICY_HASH) {
+                        tokens == Map[ByteArray]Int{ADA_TOKEN_NAME: PROJECT_DETAIL_UTXO_ADA}
+                      }
+                      else if (mph == own_mph) {
+                        tokens == Map[ByteArray]Int{PROJECT_DETAIL_AT_TOKEN_NAME: 1}
+                      }
+                      else { false }
+                    }
+                  )
+                  && output.datum.switch {
+                    i: Inline => {
+                      output_datum: ProjectDetailDatum = ProjectDetailDatum::from_data(i.data);
+
+                      output_datum.project_id == project_id
+                        && output_datum.withdrawn_funds == 0
+                        && output_datum.information_cid != ""
+                        && output_datum.last_announcement_cid == Option[String]::None
+                        && output_datum.sponsorship.switch {
+                          None => true,
+                          s: Some => {
+                            s.some.amount >= pparams_datum.project_sponsorship_fee
+                              && s.some.until == tx.time_range.start + pparams_datum.project_sponsorship_duration
+                          }
+                        }
+                    },
+                    else => error("Invalid project detail UTxO: missing inline datum")
+                  }
               }
             );
 
@@ -152,21 +175,11 @@ export default function main({ protocolNftMph }: Params) {
               else => error("Invalid project detail UTxO: missing inline datum")
             };
 
-          does_produce_project_detail_correctly: Bool =
-            does_value_contain_only_one_token(
-              project_detail_txout.value,
-              own_mph,
-              PROJECT_DETAIL_AT_TOKEN_NAME
-            )
-              && project_detail_txout.value.get_safe(AssetClass::ADA) == PROJECT_DETAIL_UTXO_ADA
-              && project_detail_datum.project_id == project_id
-              && project_detail_datum.withdrawn_funds == 0
-              && project_detail_datum.information_cid != ""
-              && project_detail_datum.last_announcement_cid == Option[String]::None
-              && project_detail_datum.sponsored_until.switch {
-                None => true,
-                s: Some => s.some == tx.time_range.start + pparams_datum.project_sponsorship_duration
-              };
+          sponsorship_fee: Int =
+            project_detail_datum.sponsorship.switch {
+              None => 0,
+              s: Some => s.some.amount
+            };
 
           does_produce_exactly_one_project: Bool =
             tx.outputs.any(
@@ -178,10 +191,20 @@ export default function main({ protocolNftMph }: Params) {
                       ),
                       Option[StakingCredential]::Some{staking_validator}
                     )
-                  && does_value_contain_only_one_token(
-                    output.value,
-                    own_mph,
-                    PROJECT_AT_TOKEN_NAME
+                  && output.value.to_map().all(
+                    (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                      if (mph == ADA_MINTING_POLICY_HASH) {
+                        amount: Int =
+                          pparams_datum.project_pledge
+                            - pparams_datum.stake_key_deposit
+                            - PROJECT_DETAIL_UTXO_ADA
+                            - PROJECT_SCRIPT_UTXO_ADA;
+
+                        tokens == Map[ByteArray]Int{ ADA_TOKEN_NAME: amount }
+                      }
+                      else if (mph == own_mph) { tokens == Map[ByteArray]Int {PROJECT_AT_TOKEN_NAME: 1} }
+                      else { false }
+                    }
                   )
                   && output.value.get_safe(AssetClass::ADA)
                       == pparams_datum.project_pledge
@@ -205,13 +228,7 @@ export default function main({ protocolNftMph }: Params) {
               }
             );
 
-          min_total_fees: Int =
-            pparams_datum.project_creation_fee
-              + if (project_detail_datum.sponsored_until != Option[Time]::None){
-                  pparams_datum.project_sponsorship_fee
-                } else {
-                  0
-                };
+          total_fees: Int = pparams_datum.project_creation_fee + sponsorship_fee;
 
           does_produce_exactly_one_treasury: Bool =
             tx.outputs.any(
@@ -227,8 +244,14 @@ export default function main({ protocolNftMph }: Params) {
                       )
                     }
                   )
-                  && output.value.to_map().length == 1
-                  && output.value.get_safe(AssetClass::ADA) >= min_total_fees
+                  && output.value.to_map().all(
+                    (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> Bool {
+                      if (mph == ADA_MINTING_POLICY_HASH) {
+                        tokens.get(ADA_TOKEN_NAME) == total_fees
+                      }
+                      else { false }
+                    }
+                  )
                   && output.datum.switch {
                     i: Inline => {
                       dedicated_treasury_datum: DedicatedTreasuryDatum =
@@ -260,7 +283,6 @@ export default function main({ protocolNftMph }: Params) {
 
           does_consume_input_with_output_id(tx, project_seed)
             && does_mint_at_correctly
-            && does_produce_project_detail_correctly
             && does_produce_exactly_one_project
             && does_produce_exactly_one_treasury
             && does_register_staking_validator_correctly
@@ -318,12 +340,20 @@ export default function main({ protocolNftMph }: Params) {
             }
           ) && tx.minted <= Value::new(project_script_at_asset_class, 0 - 1)
         },
-        Migrate => {
+        MigrateOut => {
           tx.outputs.all(
             (output: TxOutput) -> Bool {
-              output.value.get_policy(own_mph).length == 0
+              !output.value.contains_policy(own_mph)
             }
           )
+        },
+        MigrateIn => {
+          PROJECT_AT_MIGRATE_IN.switch {
+            None => error("Unable to migrate in!"),
+            s: Some => {
+              tx.minted.contains_policy(s.some)
+            }
+          }
         }
       }
     }

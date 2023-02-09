@@ -94,6 +94,9 @@ export function finalizeDelistTx(
       ...projectDatum,
       status: {
         type: "Delisted",
+        delistedAt: {
+          timestamp: BigInt(txTimeStart),
+        },
       },
     };
 
