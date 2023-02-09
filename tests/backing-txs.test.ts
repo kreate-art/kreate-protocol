@@ -1,5 +1,5 @@
 // TODO: @sk-saru refactor this file please!!!
-import { Assets, Emulator, Lucid, UTxO, Unit } from "lucid-cardano";
+import { Assets, Emulator, Lucid, Unit, UTxO } from "lucid-cardano";
 
 import {
   compileBackingVScript,
@@ -20,9 +20,9 @@ import { exportScript } from "@/contracts/compile";
 import { addressFromScriptHashes, signAndSubmit } from "@/helpers/lucid";
 import {
   constructAddress,
+  constructPlantHashUsingBlake2b,
   constructProjectIdUsingBlake2b,
   constructTxOutputId,
-  constructPlantHashUsingBlake2b,
 } from "@/helpers/schema";
 import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
@@ -45,9 +45,9 @@ import { Hex } from "@/types";
 import {
   attachUtxos,
   generateAccount,
-  generateScriptAddress,
   generateBlake2b224Hash,
   generateOutRef,
+  generateScriptAddress,
   generateWalletAddress,
 } from "./emulator";
 import { generateProtocolRegistry, getRandomLovelaceAmount } from "./utils";

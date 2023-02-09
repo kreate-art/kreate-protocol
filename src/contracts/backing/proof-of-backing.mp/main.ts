@@ -81,11 +81,11 @@ export default function main({
       tx: Tx = ctx.tx;
       own_mph: MintingPolicyHash = ctx.get_current_minting_policy_hash();
 
-      seed_asset_class: AssetClass = AssetClass::new(own_mph, SEED_TOKEN_NAME);
-
       redeemer.switch {
         plant: Plant => {
           cleanup: Bool = plant.cleanup;
+
+          seed_asset_class: AssetClass = AssetClass::new(own_mph, SEED_TOKEN_NAME);
 
           pparams_datum: PParamsDatum =
             find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
@@ -388,7 +388,7 @@ export default function main({
                   does_update_teiki_reward_correctly: Bool =
                     share_treasury_update_teiki_redeemer.rewards == total_teiki_rewards;
 
-                  teiki_mint: Int =
+                  teiki_to_mint: Int =
                     project_datum.status.switch {
                       Delisted => share_treasury_update_teiki_redeemer.burn_action.switch {
                         BurnEntirely => 2 * total_teiki_rewards - share_treasury_update_teiki_redeemer.burn_amount,
@@ -404,8 +404,7 @@ export default function main({
 
                   teiki_minted: Int = tx.minted.get_safe(TEIKI_ASSET_CLASS);
 
-                  does_update_teiki_reward_correctly
-                    && ( teiki_minted == teiki_mint || teiki_minted == 0 - teiki_mint)
+                  does_update_teiki_reward_correctly && teiki_minted == teiki_to_mint
                 } else {
                   tx.minted.to_map().get_safe(TEIKI_MPH).switch {
                       None => true,
@@ -545,7 +544,7 @@ export default function main({
           pparams_datum: PParamsDatum =
             find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
 
-          project_id: ByteArray = claim_rewards.flowers.head.project_id;
+          project_id: ByteArray = flowers.head.project_id;
 
           project_txout: TxOutput =
             tx.ref_inputs
@@ -574,43 +573,33 @@ export default function main({
           are_flowers_valid: Bool =
             flowers.all(
               (flower: Plant) -> Bool {
-                flower.project_id == project_datum.project_id
+                flower.project_id == project_id
                   && flower.milestone_backed < project_datum.milestone_reached
               }
             );
 
           assert(are_flowers_valid, "Invalid flowers");
 
-          are_flowers_sorted: Bool =
+          _end_output_id: TxOutputId =
             flowers.fold(
-              (acc: []Plant, flower: Plant) -> []Plant {
-                if (acc.length == 0) {
-                  []Plant{flower} + acc
-                } else {
-                  if(flower.backing_output_id > acc.head.backing_output_id) {
-                    []Plant{flower} + acc
-                  } else {
-                    acc
-                  }
-                }
+              (last_id: TxOutputId, flower: Plant) -> TxOutputId {
+                current_id: TxOutputId = flower.backing_output_id;
+                assert(current_id > last_id, "Flowers are not sorted");
+                current_id
               },
-              []Plant{}
-            )
-            .length == flowers.length;
+              TxOutputId::new(TxId::new(#), 0)
+            );
 
-          assert(are_flowers_sorted, "Flowers are not sorted");
+          assert(_end_output_id.index >= 0, "dummy");
 
           plant_minting_map: Map[ByteArray]Int =
             flowers.fold(
               (acc: Map[ByteArray]Int, flower: Plant) -> Map[ByteArray]Int {
-                fruit: Plant = to_fruit(flower);
-
-                acc + Map[ByteArray]Int{
-                  flower.serialize().blake2b(): 0 - 1,
-                  fruit.serialize().blake2b(): 1
-                }
+                acc
+                  .prepend(flower.serialize().blake2b(), -1)
+                  .prepend(to_fruit(flower).serialize().blake2b(), 1)
               },
-              Map[ByteArray]Int{}
+              Map[ByteArray]Int {}
             );
 
           total_teiki_rewards: Int =
@@ -661,7 +650,7 @@ export default function main({
               else => error("Invalid share treasury redeemer")
             };
 
-          teiki_mint: Int =
+          teiki_to_mint: Int =
             project_datum.status.switch {
               Delisted => share_treasury_update_teiki_redeemer.burn_action.switch {
                 BurnEntirely => 2 * total_teiki_rewards - share_treasury_update_teiki_redeemer.burn_amount,
@@ -677,10 +666,7 @@ export default function main({
 
           teiki_minted: Int = tx.minted.get_safe(TEIKI_ASSET_CLASS);
 
-          does_mint_teiki_reward_correctly: Bool =
-            teiki_minted == teiki_mint || teiki_minted == 0 - teiki_mint;
-
-          assert(does_mint_teiki_reward_correctly, "Mint incorrect Teiki amount");
+          assert(teiki_minted == teiki_to_mint, "Mint incorrect Teiki amount");
 
           tx.minted.to_map().get(own_mph).all(
             (token_name: ByteArray, amount: Int) -> Bool {
