@@ -24,9 +24,9 @@ export type UpdateProjectParams = {
   projectUtxo: UTxO;
   projectDetailUtxo: UTxO;
   dedicatedTreasuryUtxo: UTxO;
-  projectDetailVScriptUtxo: UTxO;
-  dedicatedTreasuryVScriptUtxo: UTxO;
-  shouldExtendSponsorship: boolean;
+  projectDetailVRefScriptUtxo: UTxO;
+  dedicatedTreasuryVRefScriptUtxo: UTxO;
+  extendSponsorshipAmount: bigint;
   newInformationCid?: IpfsCid;
   newAnnouncementCid?: IpfsCid;
   txTimePadding?: TimeDifference;
@@ -40,21 +40,21 @@ export function updateProjectTx(
     projectUtxo,
     projectDetailUtxo,
     dedicatedTreasuryUtxo,
-    projectDetailVScriptUtxo,
-    dedicatedTreasuryVScriptUtxo,
-    shouldExtendSponsorship,
+    projectDetailVRefScriptUtxo,
+    dedicatedTreasuryVRefScriptUtxo,
+    extendSponsorshipAmount,
     newInformationCid,
     newAnnouncementCid,
     txTimePadding = 20000,
   }: UpdateProjectParams
 ) {
   assert(
-    projectDetailVScriptUtxo.scriptRef != null,
+    projectDetailVRefScriptUtxo.scriptRef != null,
     "Invalid project detail script UTxO: Missing script reference"
   );
 
   assert(
-    dedicatedTreasuryVScriptUtxo.scriptRef != null,
+    dedicatedTreasuryVRefScriptUtxo.scriptRef != null,
     "Invalid dedicated treasury script UTxO: Missing script reference"
   );
 
@@ -91,41 +91,37 @@ export function updateProjectTx(
     DedicatedTreasuryDatum
   );
 
-  let minTotalFees = 0n;
-
-  if (shouldExtendSponsorship) {
-    minTotalFees += protocolParams.projectSponsorshipFee;
-  }
+  let totalFees = extendSponsorshipAmount;
 
   if (
     newInformationCid?.cid &&
     newInformationCid.cid !== projectDetail.informationCid.cid
   ) {
-    minTotalFees += protocolParams.projectInformationUpdateFee;
+    totalFees += protocolParams.projectInformationUpdateFee;
   }
 
   if (
     newAnnouncementCid?.cid &&
     newAnnouncementCid.cid !== projectDetail.lastAnnouncementCid?.cid
   ) {
-    minTotalFees += protocolParams.projectAnnouncementFee;
+    totalFees += protocolParams.projectAnnouncementFee;
   }
 
-  const txTime = getTime({ lucid }) - txTimePadding;
+  const txTimeStart = getTime({ lucid }) - txTimePadding;
 
   const newProjectDetail: ProjectDetailDatum = {
     ...projectDetail,
-    sponsoredUntil: shouldExtendSponsorship
-      ? {
-          timestamp:
-            BigInt(
-              Math.max(
-                Number(projectDetail.sponsoredUntil?.timestamp ?? 0),
-                txTime
-              )
-            ) + protocolParams.projectSponsorshipDuration.milliseconds,
-        }
-      : projectDetail.sponsoredUntil,
+    sponsorship:
+      extendSponsorshipAmount > 0n
+        ? {
+            amount: extendSponsorshipAmount,
+            until: {
+              timestamp:
+                BigInt(txTimeStart) +
+                protocolParams.projectSponsorshipDuration.milliseconds,
+            },
+          }
+        : projectDetail.sponsorship,
     informationCid: newInformationCid ?? projectDetail.informationCid,
     lastAnnouncementCid:
       newAnnouncementCid ?? projectDetail.lastAnnouncementCid,
@@ -135,20 +131,20 @@ export function updateProjectTx(
     projectId: dedicatedTreasury.projectId,
     governorAda:
       dedicatedTreasury.governorAda +
-      (minTotalFees * protocolParams.governorShareRatio) / RATIO_MULTIPLIER,
+      (totalFees * protocolParams.governorShareRatio) / RATIO_MULTIPLIER,
     tag: {
       kind: "TagContinuation",
       former: constructTxOutputId(dedicatedTreasuryUtxo),
     },
   };
 
-  let tx = lucid
+  return lucid
     .newTx()
     .readFrom([
       protocolParamsUtxo,
       projectUtxo,
-      dedicatedTreasuryVScriptUtxo,
-      projectDetailVScriptUtxo,
+      dedicatedTreasuryVRefScriptUtxo,
+      projectDetailVRefScriptUtxo,
     ])
     .addSigner(deconstructAddress(lucid, project.ownerAddress))
     .collectFrom(
@@ -159,7 +155,7 @@ export function updateProjectTx(
       [dedicatedTreasuryUtxo],
       S.toCbor(
         S.toData(
-          { case: "CollectFees", minFees: minTotalFees, split: false },
+          { case: "CollectFees", fees: totalFees, split: false },
           DedicatedTreasuryRedeemer
         )
       )
@@ -176,12 +172,7 @@ export function updateProjectTx(
           S.toData(newDedicatedTreasury, DedicatedTreasuryDatum)
         ),
       },
-      { lovelace: BigInt(dedicatedTreasuryUtxo.assets.lovelace) + minTotalFees }
-    );
-
-  if (shouldExtendSponsorship) {
-    tx = tx.validFrom(txTime);
-  }
-
-  return tx;
+      { lovelace: BigInt(dedicatedTreasuryUtxo.assets.lovelace) + totalFees }
+    )
+    .validFrom(txTimeStart);
 }

@@ -158,7 +158,7 @@ export function plantTx(
     const backingDatum: BackingDatum = {
       projectId: { id: projectInfo.id },
       backerAddress: constructAddress(backingInfo.backerAddress),
-      backedAt: { timestamp: BigInt(txTimeEnd) },
+      backedAt: { timestamp: BigInt(txTimeStart) },
       milestoneBacked: projectInfo.currentMilestone,
     };
 

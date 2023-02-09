@@ -23,6 +23,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
     import { Redeemer, Datum, ProjectStatus } from v__project__types
     import {
+      PROJECT_IMMEDIATE_CLOSURE_TX_TIME_SLIPPAGE,
       PROJECT_SCRIPT_UTXO_ADA
     } from constants
     import { Datum as ProjectScriptDatum } from v__project_script__types
@@ -473,7 +474,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                             && output_datum.project_id == datum.project_id
                             && output_datum.owner_address == datum.owner_address
                             && output_datum.status.switch {
-                                Closed => true,
+                                closed: Closed => closed.closed_at == tx.time_range.start,
                                 else => false
                               }
                             && output_datum.is_staking_delegation_managed_by_protocol
@@ -488,14 +489,15 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
               if (is_tx_authorized_by(tx, datum.owner_address.credential)){
                 datum.status.switch {
-                  Active => true,
+                  Active =>
+                    tx.time_range.start >= tx.time_range.end - PROJECT_IMMEDIATE_CLOSURE_TX_TIME_SLIPPAGE,
                   pre_closed: PreClosed => pre_closed.pending_until < tx.time_range.start,
                   else => false
                 }
               } else {
                 is_status_valid: Bool =
                   datum.status.switch {
-                    pre_closed: PreClosed => pre_closed.pending_until < tx.time_range.start,
+                    pre_closed: PreClosed => pre_closed.pending_until <= tx.time_range.start,
                     else => false
                   };
 
@@ -595,7 +597,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                             && output_datum.project_id == datum.project_id
                             && output_datum.owner_address == datum.owner_address
                             && output_datum.status.switch {
-                                Delisted => true,
+                                delisted: Delisted => delisted.delisted_at == tx.time_range.start,
                                 else => false
                               }
                             && output_datum.is_staking_delegation_managed_by_protocol

@@ -31,10 +31,10 @@ export type WithdrawFundsParams = {
   projectDetailUtxo: UTxO;
   dedicatedTreasuryUtxo: UTxO;
   projectVRefScriptUtxo: UTxO;
-  projectDetailVScriptUtxo: UTxO;
+  projectDetailVRefScriptUtxo: UTxO;
   projectScriptUtxos: UTxO[];
   rewardAddressAndAmount: [RewardAddress, bigint][];
-  dedicatedTreasuryVScriptUtxo: UTxO;
+  dedicatedTreasuryVRefScriptUtxo: UTxO;
   sharedTreasuryAddress: Address;
   actor: Actor;
 };
@@ -47,10 +47,10 @@ export function withdrawFundsTx(
     projectDetailUtxo,
     dedicatedTreasuryUtxo,
     projectVRefScriptUtxo,
-    projectDetailVScriptUtxo,
+    projectDetailVRefScriptUtxo,
     projectScriptUtxos,
     rewardAddressAndAmount,
-    dedicatedTreasuryVScriptUtxo,
+    dedicatedTreasuryVRefScriptUtxo,
     sharedTreasuryAddress,
     actor,
   }: WithdrawFundsParams
@@ -106,7 +106,7 @@ export function withdrawFundsTx(
   const split = isNewMilestoneReached
     ? protocolParamsDatum.minTreasuryPerMilestoneEvent * TREASURY_UTXO_MIN_ADA
     : 0n;
-  const minFees =
+  const fees =
     (totalWithdrawal * protocolParamsDatum.protocolFundsShareRatio) /
     RATIO_MULTIPLIER;
   const inW = BigInt(dedicatedTreasuryUtxo.assets.lovelace);
@@ -114,15 +114,6 @@ export function withdrawFundsTx(
     dedicatedTreasuryDatum.governorAda > inW
       ? inW
       : dedicatedTreasuryDatum.governorAda;
-  const governorAdaLowerbound =
-    ((inW - split - inG) * RATIO_MULTIPLIER) /
-    (protocolParamsDatum.governorShareRatio - RATIO_MULTIPLIER);
-  const dedicatedTreasuryAdaLowerBound = TREASURY_UTXO_MIN_ADA + split - inW;
-  const fees = [
-    minFees,
-    governorAdaLowerbound,
-    dedicatedTreasuryAdaLowerBound,
-  ].reduce((max, item) => (max > item ? max : item));
   const outW = inW + fees - split;
   const outG =
     inG + (fees * protocolParamsDatum.governorShareRatio) / RATIO_MULTIPLIER;
@@ -133,8 +124,8 @@ export function withdrawFundsTx(
       ...projectScriptUtxos,
       protocolParamsUtxo,
       projectVRefScriptUtxo,
-      projectDetailVScriptUtxo,
-      dedicatedTreasuryVScriptUtxo,
+      projectDetailVRefScriptUtxo,
+      dedicatedTreasuryVRefScriptUtxo,
     ])
     .collectFrom(
       [dedicatedTreasuryUtxo],
@@ -143,7 +134,7 @@ export function withdrawFundsTx(
           {
             case: "CollectFees",
             split: isNewMilestoneReached,
-            minFees,
+            fees,
           },
           DedicatedTreasuryRedeemer
         )

@@ -169,17 +169,15 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           out_w: Int = own_output_txout.value.get_safe(AssetClass::ADA);
           out_g: Int = own_output_datum.governor_ada;
           split: Int = N * TREASURY_UTXO_MIN_ADA;
-          fee: Int = out_w + split - in_w;
-          fee_g: Int = out_g - in_g;
 
           are_statments_valid: Bool =
             0 <= out_g && out_g <= out_w
-              && fee >= collect_fees.min_fees
-              && fee_g == fee * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER;
+              && out_w == in_w + collect_fees.fees - split
+              && out_g == in_g + collect_fees.fees * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER;
 
           own_validator_hash
             == pparams_datum.registry.dedicated_treasury_validator.latest
-            && (collect_fees.min_fees > 0 || collect_fees.split)
+            && (collect_fees.fees > 0 || collect_fees.split)
             && ProjectDetailRedeemer::from_data(project_detail_redeemer_data).switch {
               WithdrawFunds => true,
               Update => true,

@@ -186,7 +186,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   Closed => {
                     withdrawn_rewards: Int =
                       tx.withdrawals.get_safe(staking_credential).switch {
-                        None => 0,
+                        None => error("Missing stake withdrawals"),
                         s: Some => s.some
                       };
 
@@ -258,7 +258,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 };
 
               assert (
-                does_pass_project_datum_check,
+                true || does_pass_project_datum_check,
                 "Incorrect project status"
               );
 

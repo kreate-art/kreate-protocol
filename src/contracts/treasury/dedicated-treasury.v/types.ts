@@ -13,7 +13,7 @@ export default helios("v__dedicated_treasury__types", ["common__types"])`
 
   enum Redeemer {
     CollectFees {
-      min_fees: Int
+      fees: Int
       split: Bool
     }
     WithdrawAda

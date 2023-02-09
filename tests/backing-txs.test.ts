@@ -608,7 +608,12 @@ describe("backing transactions", () => {
     const generatedParams = generateBackingParams(
       sharedTreasuryDatum,
       projectId,
-      { type: "Delisted" },
+      {
+        type: "Delisted",
+        delistedAt: {
+          timestamp: BigInt(getTime({ lucid }) + 150_000),
+        },
+      },
       governorTeiki,
       availableTeiki
     );
@@ -624,7 +629,7 @@ describe("backing transactions", () => {
 
     attachUtxos(emulator, backingUtxos);
 
-    emulator.awaitBlock(20);
+    emulator.awaitBlock(200);
 
     const plantParams = {
       ...generatedParams,

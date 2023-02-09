@@ -17,7 +17,8 @@ export default helios("mp__proof_of_backing__types")`
   enum Redeemer {
     Plant { cleanup: Bool }
     ClaimRewards { flowers: []Plant}
-    Migrate
+    MigrateOut
+    MigrateIn
   }
 
   func to_fruit(flower: Plant) -> Plant {

@@ -12,7 +12,12 @@ import {
 
 import * as S from "@/schema";
 import { Plant } from "@/schema/teiki/backing";
-import { NextProjectDatum, ProjectDatum } from "@/schema/teiki/project";
+import {
+  LegacyProjectDatum,
+  LegacyProjectDetailDatum,
+  ProjectDatum,
+  ProjectDetailDatum,
+} from "@/schema/teiki/project";
 import {
   MigratableScript,
   ProtocolParamsDatum,
@@ -153,13 +158,35 @@ export function parseProtocolParams(
 export function parseProjectDatum(
   data: Data
 ):
-  | { next: false; project: ProjectDatum }
-  | { next: true; project: NextProjectDatum } {
+  | { legacy: false; project: ProjectDatum }
+  | { legacy: true; project: LegacyProjectDatum } {
   try {
-    return { next: true, project: S.fromData(data, NextProjectDatum) };
+    return { legacy: false, project: S.fromData(data, ProjectDatum) };
   } catch (e) {
     try {
-      return { next: false, project: S.fromData(data, ProjectDatum) };
+      return { legacy: true, project: S.fromData(data, LegacyProjectDatum) };
+    } catch {
+      throw e;
+    }
+  }
+}
+
+export function parseProjectDetailDatum(
+  data: Data
+):
+  | { legacy: false; projectDetail: ProjectDetailDatum }
+  | { legacy: true; projectDetail: LegacyProjectDetailDatum } {
+  try {
+    return {
+      legacy: false,
+      projectDetail: S.fromData(data, ProjectDetailDatum),
+    };
+  } catch (e) {
+    try {
+      return {
+        legacy: true,
+        projectDetail: S.fromData(data, LegacyProjectDetailDatum),
+      };
     } catch {
       throw e;
     }

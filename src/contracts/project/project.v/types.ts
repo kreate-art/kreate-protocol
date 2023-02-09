@@ -5,10 +5,10 @@ export default helios("v__project__types")`
 
   enum ProjectStatus {
     Active
-    PreClosed{ pending_until: Time }
-    PreDelisted{ pending_until: Time }
-    Closed
-    Delisted
+    PreClosed { pending_until: Time }
+    PreDelisted { pending_until: Time }
+    Closed { closed_at: Time }
+    Delisted { delisted_at: Time }
   }
 
   struct Datum {

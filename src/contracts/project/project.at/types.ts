@@ -7,6 +7,7 @@ export default helios("at__project__types")`
     NewProject{ project_seed: TxOutputId}
     AllocateStaking
     DeallocateStaking
-    Migrate
+    MigrateOut
+    MigrateIn
   }
 `;

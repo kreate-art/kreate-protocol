@@ -46,7 +46,8 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       PROJECT_FUNDS_WITHDRAWAL_DISCOUNT_RATIO,
       PROJECT_NEW_MILESTONE_DISCOUNT_CENTS,
       PROJECT_MIN_FUNDS_WITHDRAWAL_ADA,
-      PROJECT_SCRIPT_AT_TOKEN_NAME
+      PROJECT_SCRIPT_AT_TOKEN_NAME,
+      PROJECT_SPONSORSHIP_RESOLUTION
     } from constants
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
@@ -155,10 +156,12 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
           project_script_input_withdrawals: Int =
             tx.inputs
-              .filter((input: TxInput) -> Bool { is_project_script_valid(input, datum.project_id) })
               .fold(
                 (acc: Int, input: TxInput) -> Int {
-                  acc + withdrawals.get(input.output.address.staking_credential.unwrap())
+                  if (is_project_script_valid(input, datum.project_id)) {
+                    acc + withdrawals.get(input.output.address.staking_credential.unwrap())
+                  }
+                  else { acc }
                 },
                 0
               );
@@ -191,7 +194,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
                       datum.project_id == output_datum.project_id
                         && output_datum.withdrawn_funds == new_withdrawn_funds
-                        && datum.sponsored_until == output_datum.sponsored_until
+                        && datum.sponsorship == output_datum.sponsorship
                         && datum.information_cid == output_datum.information_cid
                         && datum.last_announcement_cid
                             == output_datum.last_announcement_cid
@@ -253,7 +256,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             DedicatedTreasuryRedeemer::from_data(dedicated_treasury_redeemer_data).switch {
               collect_fees: CollectFees => {
                 collect_fees.split == is_new_milestone_reached
-                  && collect_fees.min_fees == fees
+                  && collect_fees.fees == fees
               },
               else => false
             };
@@ -342,7 +345,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                       datum.project_id == output_datum.project_id
                         && datum.withdrawn_funds == output_datum.withdrawn_funds
                         && (
-                          datum.sponsored_until != output_datum.sponsored_until
+                          datum.sponsorship != output_datum.sponsorship
                             || datum.information_cid != output_datum.information_cid
                             || datum.last_announcement_cid
                                 != output_datum.last_announcement_cid
@@ -356,32 +359,61 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           own_output_datum: Datum = get_own_output_datum(own_output_txout);
 
           update_sponsor_fee: Int =
-            if (datum.sponsored_until != own_output_datum.sponsored_until){
-              initial_sponsored: Time =
-                datum.sponsored_until.switch {
-                  None => tx.time_range.start,
-                  else => {
-                    input_sponsored_until: Time = datum.sponsored_until.unwrap();
+            if (datum.sponsorship == own_output_datum.sponsorship){ 0 }
+            else {
+              own_output_datum.sponsorship.switch {
+                None => {
+                  assert (
+                    datum.sponsorship.switch {
+                      None => error("Unreachable"),
+                      o: Some => o.some.until <= tx.time_range.start
+                    },
+                    "Invalid time range to update sponsorship"
+                  );
 
-                    if (input_sponsored_until > tx.time_range.start) {
-                      input_sponsored_until
-                    } else {
-                      tx.time_range.start
+                  0
+                },
+                s: Some => {
+                  amount: Int = s.some.amount;
+                  until: Time = s.some.until;
+
+                  assert (
+                    amount >= pparams_datum.project_sponsorship_fee,
+                    "Invalid sponsorship amount"
+                  );
+
+                  assert (
+                    until == tx.time_range.start + pparams_datum.project_sponsorship_duration,
+                    "Invalid sponsorship until"
+                  );
+
+                  datum.sponsorship.switch {
+                    None => amount,
+                    os: Some => {
+                      o_amount: Int = os.some.amount;
+                      o_until: Time = os.some.until;
+
+                      now: Time = tx.time_range.start;
+                      duration: Duration = pparams_datum.project_sponsorship_duration;
+                      resolution: Duration = PROJECT_SPONSORSHIP_RESOLUTION;
+
+                      delta_duration: Duration = o_until - now;
+
+                      leftover: Duration =
+                        if (delta_duration < Duration::new(0)) { Duration::new(0) }
+                        else {
+                          if (duration > delta_duration) { delta_duration }
+                          else { duration }
+                        };
+
+                      discount: Int = o_amount * (leftover / resolution) / (duration / resolution);
+
+                      if (amount  > discount) { amount - discount }
+                      else { 0 }
                     }
                   }
-                };
-
-              is_output_sponsored_until_valid: Bool =
-                own_output_datum.sponsored_until.unwrap() ==
-                  initial_sponsored + pparams_datum.project_sponsorship_duration;
-
-              if (is_output_sponsored_until_valid) {
-                pparams_datum.project_sponsorship_fee
-              } else {
-                error("Invalid sponsored until")
+                }
               }
-            } else {
-              0
             };
 
           update_info_fee: Int =
@@ -406,46 +438,50 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               0
             };
 
-          min_total_fees: Int = update_sponsor_fee + update_info_fee + update_announcement_fee;
-
-          dedicated_treasury_credential: Credential =
-            Credential::new_validator(
-              pparams_datum.registry
-                .dedicated_treasury_validator
-                .latest
-            );
-
-          dedicated_treasury_input: TxInput =
-            tx.inputs.find(
-              (input: TxInput) -> Bool {
-                input_credential: Credential = input.output.address.credential;
-
-                if (input_credential == dedicated_treasury_credential) {
-                    input.output.datum.switch {
-                      i: Inline =>
-                        DedicatedTreasuryDatum::from_data(i.data).project_id == datum.project_id,
-                      else => false
-                    }
-                } else {
-                  false
-                }
-              }
-            );
-
-          dedicated_treasury_script_purpose: ScriptPurpose =
-            ScriptPurpose::new_spending(dedicated_treasury_input.output_id);
-
-          dedicated_treasury_redeemer_data: Data =
-            tx.redeemers.get(dedicated_treasury_script_purpose);
+          total_fees: Int = update_sponsor_fee + update_info_fee + update_announcement_fee;
 
           does_consume_treasury_correctly: Bool =
-            DedicatedTreasuryRedeemer::from_data(dedicated_treasury_redeemer_data).switch {
-              collect_fees: CollectFees => {
-                collect_fees.split == false
-                  && collect_fees.min_fees == min_total_fees
-              },
-              else => false
-            };
+            if (total_fees > 0) {
+              dedicated_treasury_credential: Credential =
+                Credential::new_validator(
+                  pparams_datum.registry
+                    .dedicated_treasury_validator
+                    .latest
+                );
+
+              dedicated_treasury_input: TxInput =
+                tx.inputs.find(
+                  (input: TxInput) -> Bool {
+                    input_credential: Credential = input.output.address.credential;
+
+                    if (input_credential == dedicated_treasury_credential) {
+                        input.output.datum.switch {
+                          i: Inline =>
+                            DedicatedTreasuryDatum::from_data(i.data).project_id == datum.project_id,
+                          else => false
+                        }
+                    } else {
+                      false
+                    }
+                  }
+                );
+
+              dedicated_treasury_script_purpose: ScriptPurpose =
+                ScriptPurpose::new_spending(dedicated_treasury_input.output_id);
+
+              dedicated_treasury_redeemer_data: Data =
+                tx.redeemers.get(dedicated_treasury_script_purpose);
+
+
+              DedicatedTreasuryRedeemer::from_data(dedicated_treasury_redeemer_data).switch {
+                collect_fees: CollectFees => {
+                  collect_fees.split == false
+                    && collect_fees.fees == total_fees
+                },
+                else => false
+              }
+          }
+          else { true };
 
           check_latest_script_version(own_validator_hash, pparams_datum);
 
@@ -483,7 +519,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           does_consume_project_correctly: Bool =
             ProjectRedeemer::from_data(project_redeemer_data).switch {
               FinalizeClose => true,
-              FinalizeDelist => true,
               else => false
             };
 
@@ -524,7 +559,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
           does_consume_project_correctly: Bool =
             ProjectRedeemer::from_data(project_redeemer_data).switch {
-              FinalizeClose => true,
               FinalizeDelist => true,
               else => false
             };

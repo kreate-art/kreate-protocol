@@ -50,9 +50,12 @@ export default function main({
     } from helpers
 
     import {
+      ADA_MINTING_POLICY_HASH,
       INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS,
       PROJECT_AT_TOKEN_NAME,
       PROJECT_SCRIPT_AT_TOKEN_NAME,
+      PROOF_OF_BACKING_MIGRATE_IN,
+      PROOF_OF_BACKING_PLANT_TX_TIME_SLIPPAGE,
       TEIKI_TOKEN_NAME
     } from constants
 
@@ -83,6 +86,11 @@ export default function main({
 
       redeemer.switch {
         plant: Plant => {
+          assert (
+            tx.time_range.start >= tx.time_range.end - PROOF_OF_BACKING_PLANT_TX_TIME_SLIPPAGE,
+            "Invalid time range"
+          );
+
           cleanup: Bool = plant.cleanup;
 
           seed_asset_class: AssetClass = AssetClass::new(own_mph, SEED_TOKEN_NAME);
@@ -94,7 +102,13 @@ export default function main({
             tx.inputs
               .filter(
                 (input: TxInput) -> Bool {
-                  input.output.value.get_safe(seed_asset_class) >= 1
+                  amount: Int = input.output.value.get_safe(seed_asset_class);
+
+                  if (amount <= 0) { false }
+                  else if (amount == 1) { true }
+                  else {
+                    error("Backing UTxO contains more than one seed token")
+                  }
                 }
               );
 
@@ -178,7 +192,6 @@ export default function main({
                 project_datum.project_id == project_id
                   && if (cleanup) {
                     project_datum.status.switch {
-                      PreClosed => true,
                       Closed => true,
                       Delisted => true,
                       else => error("Invalid project datum: wrong project status")
@@ -194,6 +207,17 @@ export default function main({
                   pparams_datum.discount_cent_price * INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS
                 } else {
                   0
+                };
+
+              unbacked_at: Time =
+                project_datum.status.switch {
+                  closed: Closed =>
+                    if (closed.closed_at < tx.time_range.start) { closed.closed_at }
+                    else { tx.time_range.start },
+                  delisted: Delisted =>
+                    if (delisted.delisted_at < tx.time_range.start) { delisted.delisted_at }
+                    else { tx.time_range.start },
+                  else => tx.time_range.start
                 };
 
               init_plant_accumulator: PlantAccumulator =
@@ -234,7 +258,6 @@ export default function main({
 
                       assert(is_backing_datum_valid, "Invalid backing datum");
 
-                      unbacked_at: Time = tx.time_range.start;
                       time_passed: Duration = unbacked_at - backing_datum.backed_at;
 
                       is_unbacked_valid: Bool =
@@ -496,7 +519,7 @@ export default function main({
                   produced_backing_datums.all(
                     (produced_backing_datum: BackingDatum) -> Bool {
                       produced_backing_datum.backer_address == produced_backer_address
-                        && produced_backing_datum.backed_at == tx.time_range.end
+                        && produced_backing_datum.backed_at == tx.time_range.start
                         && produced_backing_datum.milestone_backed == project_datum.milestone_reached
                     }
                   );
@@ -678,12 +701,21 @@ export default function main({
           )
 
         },
-        Migrate => {
-          tx.outputs.all(
-            (output: TxOutput) -> Bool {
-              !output.value.contains_policy(own_mph)
+        MigrateOut => {
+          tx.minted.get_safe(TEIKI_ASSET_CLASS) <= 0
+          && tx.outputs.all(
+              (output: TxOutput) -> Bool {
+                !output.value.contains_policy(own_mph)
+              }
+            )
+        },
+        MigrateIn => {
+          PROOF_OF_BACKING_MIGRATE_IN.switch {
+            None => error("Unable to migrate in!"),
+            s: Some => {
+              tx.minted.contains_policy(s.some)
             }
-          )
+          }
         }
       }
     }

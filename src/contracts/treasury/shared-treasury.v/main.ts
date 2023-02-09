@@ -128,8 +128,9 @@ export default function main({
 
               is_pob_redeemer_valid: Bool =
                 PoBRedeemer::from_data(pob_redeemer_data).switch {
-                  Migrate => false,
-                  else => true
+                  Plant => true,
+                  ClaimRewards => true,
+                  else => false
                 };
 
               update_teiki.rewards > 0

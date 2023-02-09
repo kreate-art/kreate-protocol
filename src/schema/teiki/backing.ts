@@ -36,7 +36,8 @@ export type Plant = Static<typeof Plant>;
 export const ProofOfBackingMintingRedeemer = Enum("case", {
   Plant: { cleanup: Bool },
   ClaimRewards: { flowers: List(Plant) },
-  Migrate: Void,
+  MigrateOut: Void,
+  MigrateIn: Void,
 });
 export type ProofOfBackingMintingRedeemer = Static<
   typeof ProofOfBackingMintingRedeemer
