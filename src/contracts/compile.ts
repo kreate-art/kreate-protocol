@@ -40,7 +40,6 @@ export function setDefaultOptions(
   else defaultOptions = { ...defaultOptions, ...options };
 }
 
-// Note: simplify=true in production
 setDefaultOptions({ simplify: true });
 
 const HELIOS_MODULES = heliosModules([
