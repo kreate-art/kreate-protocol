@@ -1,5 +1,6 @@
 import { Lucid, UTxO } from "lucid-cardano";
 
+import { addressFromScriptHashes } from "@/helpers/lucid";
 import { constructTxOutputId, parseProtocolParams } from "@/helpers/schema";
 import * as S from "@/schema";
 import {
@@ -7,12 +8,11 @@ import {
   OpenTreasuryDatum,
 } from "@/schema/teiki/treasury";
 import {
+  MIN_UTXO_LOVELACE,
   RATIO_MULTIPLIER,
   TREASURY_REVOKE_DISCOUNT_CENTS,
 } from "@/transactions/constants";
 import { assert } from "@/utils";
-import { scriptHashToAddress } from "tests/emulator";
-import { MIN_UTXO_LOVELACE } from "tests/utils";
 
 export type Params = {
   protocolParamsUtxo: UTxO;
@@ -53,7 +53,7 @@ export function revokeTx(
     S.toData({ case: "Revoke" }, DedicatedTreasuryRedeemer)
   );
 
-  const openTreasuryVScriptAddress = scriptHashToAddress(
+  const openTreasuryVScriptAddress = addressFromScriptHashes(
     lucid,
     protocolParams.registry.openTreasuryValidator.latest.script.hash,
     protocolParams.registry.protocolStakingValidator.script.hash

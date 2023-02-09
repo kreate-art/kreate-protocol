@@ -1,5 +1,6 @@
 import { getMigratableScript } from "@/commands/generate-protocol-params";
 import { Registry } from "@/schema/teiki/protocol";
+import { MIN_UTXO_LOVELACE } from "@/transactions/constants";
 import { Hex } from "@/types";
 
 import { generateBlake2b224Hash } from "./emulator";
@@ -57,8 +58,6 @@ export function generateProtocolRegistry(
     ),
   };
 }
-
-export const MIN_UTXO_LOVELACE = 2_000_000n;
 
 export function getRandomLovelaceAmount(max?: number) {
   const random = BigInt(Math.floor(Math.random() * (max ?? 1_000_000_000)));

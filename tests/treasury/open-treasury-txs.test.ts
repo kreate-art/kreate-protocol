@@ -4,15 +4,17 @@ import { compileOpenTreasuryVScript } from "@/commands/compile-scripts";
 import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
 import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
-import { signAndSubmit } from "@/helpers/lucid";
+import { addressFromScriptHashes, signAndSubmit } from "@/helpers/lucid";
 import { constructAddress, constructTxOutputId } from "@/helpers/schema";
 import * as S from "@/schema";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { OpenTreasuryDatum } from "@/schema/teiki/treasury";
+import { MIN_UTXO_LOVELACE } from "@/transactions/constants";
 import {
   Params,
   withdrawAdaTx,
 } from "@/transactions/treasury/open-treasury/withdraw-ada";
+
 import {
   attachUtxos,
   generateAccount,
@@ -20,13 +22,8 @@ import {
   generateOutRef,
   generateScriptAddress,
   generateWalletAddress,
-  scriptHashToAddress,
-} from "tests/emulator";
-import {
-  MIN_UTXO_LOVELACE,
-  generateProtocolRegistry,
-  getRandomLovelaceAmount,
-} from "tests/utils";
+} from "../emulator";
+import { generateProtocolRegistry, getRandomLovelaceAmount } from "../utils";
 
 const GOVERNOR_ACCOUNT = await generateAccount();
 const ANYONE_ACCOUNT = await generateAccount();
@@ -48,7 +45,7 @@ const openTreasuryVScript = exportScript(
 const openTreasuryVScriptHash =
   lucid.utils.validatorToScriptHash(openTreasuryVScript);
 
-const openTreasuryVScriptAddress = scriptHashToAddress(
+const openTreasuryVScriptAddress = addressFromScriptHashes(
   lucid,
   openTreasuryVScriptHash
 );

@@ -1,3 +1,5 @@
+export const MIN_UTXO_LOVELACE = 2_000_000n;
+
 export const INACTIVE_PROJECT_UTXO_ADA = 2_000_000n;
 export const PROJECT_DETAIL_UTXO_ADA = 2_000_000n;
 export const PROJECT_SCRIPT_UTXO_ADA = 20_000_000n;

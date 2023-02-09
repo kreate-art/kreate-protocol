@@ -1,6 +1,7 @@
 import { Lucid, Script, UTxO } from "lucid-cardano";
 
 import { PROJECT_AT_TOKEN_NAMES } from "@/contracts/common/constants";
+import { addressFromScriptHashes } from "@/helpers/lucid";
 import * as S from "@/schema";
 import {
   ProjectDatum,
@@ -10,7 +11,6 @@ import {
 } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { assert } from "@/utils";
-import { scriptHashToAddress } from "tests/emulator";
 
 import { PROJECT_SCRIPT_UTXO_ADA } from "../constants";
 
@@ -85,7 +85,7 @@ export function allocateStakingTx(
     const newStakingValidatorHash = lucid.utils.validatorToScriptHash(
       projectInfo.newStakeValidator
     );
-    const projectScriptUtxoAddress = scriptHashToAddress(
+    const projectScriptUtxoAddress = addressFromScriptHashes(
       lucid,
       protocolParams.registry.projectScriptValidator.latest.script.hash,
       newStakingValidatorHash

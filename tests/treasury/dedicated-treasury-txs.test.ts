@@ -7,7 +7,7 @@ import {
   PROTOCOL_NFT_TOKEN_NAMES,
 } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
-import { signAndSubmit } from "@/helpers/lucid";
+import { addressFromScriptHashes, signAndSubmit } from "@/helpers/lucid";
 import {
   constructAddress,
   constructProjectIdUsingBlake2b,
@@ -17,7 +17,10 @@ import * as S from "@/schema";
 import { ProjectDatum } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
-import { TREASURY_MIN_WITHDRAWAL_ADA } from "@/transactions/constants";
+import {
+  MIN_UTXO_LOVELACE,
+  TREASURY_MIN_WITHDRAWAL_ADA,
+} from "@/transactions/constants";
 import {
   Params as RevokeParams,
   revokeTx,
@@ -26,6 +29,7 @@ import {
   Params as WithdrawAdaParams,
   withdrawAdaTx,
 } from "@/transactions/treasury/dedicated-treasury/withdraw-ada";
+
 import {
   attachUtxos,
   generateAccount,
@@ -33,13 +37,8 @@ import {
   generateOutRef,
   generateScriptAddress,
   generateWalletAddress,
-  scriptHashToAddress,
-} from "tests/emulator";
-import {
-  MIN_UTXO_LOVELACE,
-  generateProtocolRegistry,
-  getRandomLovelaceAmount,
-} from "tests/utils";
+} from "../emulator";
+import { generateProtocolRegistry, getRandomLovelaceAmount } from "../utils";
 
 const GOVERNOR_ACCOUNT = await generateAccount();
 const ANYONE_ACCOUNT = await generateAccount();
@@ -65,7 +64,7 @@ const dedicatedTreasuryVScriptHash = lucid.utils.validatorToScriptHash(
   dedicatedTreasuryVScript
 );
 
-const dedicatedTreasuryVScriptAddress = scriptHashToAddress(
+const dedicatedTreasuryVScriptAddress = addressFromScriptHashes(
   lucid,
   dedicatedTreasuryVScriptHash
 );

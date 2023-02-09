@@ -10,7 +10,11 @@ import {
 import { SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS } from "@/commands/generate-protocol-params";
 import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
-import { getPaymentKeyHash, signAndSubmit } from "@/helpers/lucid";
+import {
+  addressFromScriptHashes,
+  getPaymentKeyHash,
+  signAndSubmit,
+} from "@/helpers/lucid";
 import { constructAddress, constructTxOutputId } from "@/helpers/schema";
 import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
@@ -18,6 +22,7 @@ import {
   ProtocolParamsDatum,
   ProtocolProposalDatum,
 } from "@/schema/teiki/protocol";
+import { MIN_UTXO_LOVELACE } from "@/transactions/constants";
 import {
   applyProtocolProposalTx,
   ApplyProtocolTxParams,
@@ -47,13 +52,8 @@ import {
   generateOutRef,
   generateScriptAddress,
   generateWalletAddress,
-  scriptHashToAddress,
 } from "./emulator";
-import {
-  generateProtocolRegistry,
-  getRandomLovelaceAmount,
-  MIN_UTXO_LOVELACE,
-} from "./utils";
+import { generateProtocolRegistry, getRandomLovelaceAmount } from "./utils";
 
 const BOOTSTRAP_ACCOUNT = await generateAccount();
 const emulator = new Emulator([BOOTSTRAP_ACCOUNT]);
@@ -546,7 +546,7 @@ describe("protocol transactions", () => {
       protocolScriptVScript
     );
 
-    const protocolScriptVScriptAddress = scriptHashToAddress(
+    const protocolScriptVScriptAddress = addressFromScriptHashes(
       lucid,
       protocolScriptVScriptHash
     );

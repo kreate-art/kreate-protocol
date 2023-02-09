@@ -1,4 +1,6 @@
 import {
+  Lucid,
+  ScriptHash,
   Address,
   AddressDetails,
   getAddressDetails,
@@ -29,4 +31,19 @@ export function getAddressDetailsSafe(address: Address): AddressDetails | null {
       return null;
     throw e;
   }
+}
+
+export function addressFromScriptHashes(
+  lucid: Lucid,
+  paymentScriptHash: ScriptHash,
+  stakeScriptHash?: ScriptHash
+): Address {
+  return stakeScriptHash
+    ? lucid.utils.credentialToAddress(
+        lucid.utils.scriptHashToCredential(paymentScriptHash),
+        lucid.utils.scriptHashToCredential(stakeScriptHash)
+      )
+    : lucid.utils.credentialToAddress(
+        lucid.utils.scriptHashToCredential(paymentScriptHash)
+      );
 }

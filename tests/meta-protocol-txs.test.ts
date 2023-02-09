@@ -14,6 +14,7 @@ import { getPaymentKeyHash, signAndSubmit } from "@/helpers/lucid";
 import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import { RulesProposal, TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
+import { MIN_UTXO_LOVELACE } from "@/transactions/constants";
 import {
   applyMetaProtocolProposalTx,
   ApplyMetaProtocolTxParams,
@@ -46,7 +47,7 @@ import {
   generateOutRef,
   generateScriptAddress,
 } from "./emulator";
-import { getRandomLovelaceAmount, MIN_UTXO_LOVELACE } from "./utils";
+import { getRandomLovelaceAmount } from "./utils";
 
 const BOOTSTRAP_ACCOUNT = await generateAccount();
 const ANYONE_ACCOUNT = await generateAccount();

@@ -13,6 +13,7 @@ import {
   UTxO,
 } from "lucid-cardano";
 
+import { addressFromScriptHashes } from "@/helpers/lucid";
 import { Hex } from "@/types";
 import { assert } from "@/utils";
 
@@ -122,26 +123,11 @@ export function generateStakingSeed(): Hex {
 }
 
 export function generateScriptAddress(lucid: Lucid): Address {
-  return scriptHashToAddress(lucid, generateBlake2b224Hash());
+  return addressFromScriptHashes(lucid, generateBlake2b224Hash());
 }
 
 export function generateWalletAddress(lucid: Lucid): Address {
   return lucid.utils.credentialToAddress(
     lucid.utils.keyHashToCredential(generateBlake2b224Hash())
   );
-}
-
-export function scriptHashToAddress(
-  lucid: Lucid,
-  scriptHash: ScriptHash,
-  stakeValidatorHash?: ScriptHash
-): Address {
-  return stakeValidatorHash
-    ? lucid.utils.credentialToAddress(
-        lucid.utils.scriptHashToCredential(scriptHash),
-        lucid.utils.scriptHashToCredential(stakeValidatorHash)
-      )
-    : lucid.utils.credentialToAddress(
-        lucid.utils.scriptHashToCredential(scriptHash)
-      );
 }

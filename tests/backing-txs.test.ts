@@ -17,7 +17,7 @@ import {
   TEIKI_TOKEN_NAME,
 } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
-import { signAndSubmit } from "@/helpers/lucid";
+import { addressFromScriptHashes, signAndSubmit } from "@/helpers/lucid";
 import {
   constructAddress,
   constructProjectIdUsingBlake2b,
@@ -39,6 +39,7 @@ import { claimRewardsByFlowerTx } from "@/transactions/backing/claim-rewards-by-
 import { CleanUpParams, cleanUpTx } from "@/transactions/backing/clean-up";
 import { PlantParams, plantTx } from "@/transactions/backing/plant";
 import { sortPlantByBackingOutputId } from "@/transactions/backing/utils";
+import { MIN_UTXO_LOVELACE } from "@/transactions/constants";
 import { Hex } from "@/types";
 
 import {
@@ -48,13 +49,8 @@ import {
   generateBlake2b224Hash,
   generateOutRef,
   generateWalletAddress,
-  scriptHashToAddress,
 } from "./emulator";
-import {
-  MIN_UTXO_LOVELACE,
-  generateProtocolRegistry,
-  getRandomLovelaceAmount,
-} from "./utils";
+import { generateProtocolRegistry, getRandomLovelaceAmount } from "./utils";
 
 // NOTE: Becareful with global emulator, one test fails may lead to others fails
 const BACKER_ACCOUNT = await generateAccount();
@@ -109,7 +105,7 @@ const projectStakeValidator = exportScript(
   })
 );
 
-const backingScriptAddress = scriptHashToAddress(
+const backingScriptAddress = addressFromScriptHashes(
   lucid,
   backingVHash,
   lucid.utils.validatorToScriptHash(projectStakeValidator)
@@ -128,7 +124,10 @@ const sharedTreasuryVHash = lucid.utils.validatorToScriptHash(
   sharedTreasuryValidator
 );
 
-const sharedTreasuryAddress = scriptHashToAddress(lucid, sharedTreasuryVHash);
+const sharedTreasuryAddress = addressFromScriptHashes(
+  lucid,
+  sharedTreasuryVHash
+);
 
 const proofOfBackingMpRefUtxo: UTxO = {
   ...generateOutRef(),
