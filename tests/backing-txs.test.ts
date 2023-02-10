@@ -804,7 +804,7 @@ function generateBackingUtxo() {
   const backingDatum: BackingDatum = {
     projectId: { id: projectId },
     backerAddress: constructAddress(BACKER_ACCOUNT.address),
-    stakedAt: { timestamp: getRandomTime() },
+    backedAt: { timestamp: getRandomTime() },
     milestoneBacked: initialProjectMilestone,
   };
 
@@ -824,25 +824,25 @@ function generateBackingUtxoList(size: number): UTxO[] {
 }
 
 function generateFlower(): Plant {
-  const stakedAt = {
+  const backedAt = {
     timestamp: getRandomTime(),
   };
-  const stakedEpochs = Math.floor(Math.random() * 100);
-  const unstakedAt = {
+  const backedEpochs = Math.floor(Math.random() * 100);
+  const unbackedAt = {
     timestamp:
-      stakedAt.timestamp +
+      backedAt.timestamp +
       BigInt(
-        stakedEpochs * Number(protocolParamsDatum.epochLength.milliseconds)
+        backedEpochs * Number(protocolParamsDatum.epochLength.milliseconds)
       ),
   };
   return {
     isMatured: false,
     backingOutputId: constructTxOutputId(generateOutRef()),
     backingAmount: getRandomLovelaceAmount(),
-    unstakedAt,
+    unbackedAt,
     projectId: { id: projectId },
     backerAddress: constructAddress(BACKER_ACCOUNT.address),
-    stakedAt,
+    backedAt,
     milestoneBacked: initialProjectMilestone,
   };
 }

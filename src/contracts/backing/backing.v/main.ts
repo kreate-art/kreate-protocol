@@ -33,7 +33,7 @@ export default function main({ proofOfBackingMph, protocolNftMph }: Params) {
       tx: Tx = ctx.tx;
 
       redeemer.switch {
-        Unstake => {
+        Unback => {
           pob_script_purpose: ScriptPurpose =
             ScriptPurpose::new_minting(PROOF_OF_BACKING_MPH);
 

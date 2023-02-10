@@ -31,7 +31,7 @@ export type ProjectInfo = {
 };
 
 export type BackingInfo = {
-  // negative for unstaking
+  // negative for unbacking
   // positive for backing
   amount: bigint;
   backerAddress: Address;
@@ -97,7 +97,7 @@ export function plantTx(
 
   assert(
     remainBackingAmount >= 0n,
-    "Current backing amount does not cover the unstake amount"
+    "Current backing amount does not cover the unbacking amount"
   );
 
   let tx = lucid
@@ -134,7 +134,7 @@ export function plantTx(
     );
   }
 
-  // TODO: @sk-saru Check whether the backer unstake or not
+  // TODO: @sk-saru Check whether the backer unback or not
   if (backingInfo.amount <= 0n) {
     tx = addCollectBackingInstruction(tx, backingInfo);
 
@@ -158,7 +158,7 @@ export function plantTx(
     const backingDatum: BackingDatum = {
       projectId: { id: projectInfo.id },
       backerAddress: constructAddress(backingInfo.backerAddress),
-      stakedAt: { timestamp: BigInt(txTimeEnd) },
+      backedAt: { timestamp: BigInt(txTimeEnd) },
       milestoneBacked: projectInfo.currentMilestone,
     };
 
@@ -177,7 +177,7 @@ function addCollectBackingInstruction(tx: Tx, backingInfo: BackingInfo) {
     .readFrom([backingInfo.backingScriptRefUtxo])
     .collectFrom(
       backingInfo.backingUtxos,
-      S.toCbor(S.toData({ case: "Unstake" }, BackingRedeemer))
+      S.toCbor(S.toData({ case: "Unback" }, BackingRedeemer))
     );
 }
 
@@ -222,7 +222,7 @@ function addMintingInstruction(
 
   const projectDatum = S.fromData(S.fromCbor(projectUtxo.datum), ProjectDatum);
 
-  const unstakedAt = txTimeStart;
+  const unbackedAt = txTimeStart;
   let totalTeikiRewards = 0n;
   let wiltedFlowerMintAmount = 0n;
 
@@ -237,9 +237,9 @@ function addMintingInstruction(
       BackingDatum
     );
 
-    const timePassed = BigInt(unstakedAt) - backingDatum.stakedAt.timestamp;
+    const timePassed = BigInt(unbackedAt) - backingDatum.backedAt.timestamp;
 
-    if (timePassed < 0n) throw new Error("Invalid unstake time");
+    if (timePassed < 0n) throw new Error("Invalid unbacking time");
     if (timePassed >= protocolParams.epochLength.milliseconds) {
       const backingAmount = BigInt(backingUtxo.assets.lovelace);
 
@@ -251,7 +251,7 @@ function addMintingInstruction(
         isMatured,
         backingOutputId: constructTxOutputId(backingUtxo),
         backingAmount,
-        unstakedAt: { timestamp: BigInt(unstakedAt) },
+        unbackedAt: { timestamp: BigInt(unbackedAt) },
         ...backingDatum,
       };
 
@@ -273,7 +273,7 @@ function addMintingInstruction(
 
       const teikiRewards = isMatured
         ? (backingAmount *
-            BigInt(BigInt(unstakedAt) - backingDatum.stakedAt.timestamp)) /
+            BigInt(BigInt(unbackedAt) - backingDatum.backedAt.timestamp)) /
           BigInt(protocolParams.epochLength.milliseconds) /
           protocolParams.teikiCoefficient
         : 0n;

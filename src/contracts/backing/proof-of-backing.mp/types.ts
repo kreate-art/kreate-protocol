@@ -7,10 +7,10 @@ export default helios("mp__proof_of_backing__types")`
     is_matured: Bool
     backing_output_id: TxOutputId
     backing_amount: Int
-    unstaked_at: Time
+    unbacked_at: Time
     project_id: ByteArray
     backer_address: Address
-    staked_at: Time
+    backed_at: Time
     milestone_backed: Int
   }
 
@@ -25,10 +25,10 @@ export default helios("mp__proof_of_backing__types")`
       is_matured: true,
       backing_output_id: flower.backing_output_id,
       backing_amount: flower.backing_amount,
-      unstaked_at: flower.unstaked_at,
+      unbacked_at: flower.unbacked_at,
       project_id: flower.project_id,
       backer_address: flower.backer_address,
-      staked_at: flower.staked_at,
+      backed_at: flower.backed_at,
       milestone_backed: flower.milestone_backed
     }
   }

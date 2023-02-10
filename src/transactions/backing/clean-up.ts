@@ -104,7 +104,7 @@ export function cleanUpTx(
     ])
     .collectFrom(
       cleanUpInfo.backingUtxos,
-      S.toCbor(S.toData({ case: "Unstake" }, BackingRedeemer))
+      S.toCbor(S.toData({ case: "Unback" }, BackingRedeemer))
     )
     .mintAssets(
       { [seedUnit]: BigInt(-cleanUpInfo.backingUtxos.length) },
@@ -163,7 +163,7 @@ function addMintingInstruction(
 
   const projectDatum = S.fromData(S.fromCbor(projectUtxo.datum), ProjectDatum);
 
-  const unstakedAt = txTimeStart;
+  const unbackedAt = txTimeStart;
   let totalTeikiRewards = 0n;
   let wiltedFlowerMintAmount = 0n;
   const wiltedFlowerUnit: Unit =
@@ -194,9 +194,9 @@ function addMintingInstruction(
       backingDatum.backerAddress
     );
 
-    const timePassed = BigInt(unstakedAt) - backingDatum.stakedAt.timestamp;
+    const timePassed = BigInt(unbackedAt) - backingDatum.backedAt.timestamp;
 
-    if (timePassed < 0n) throw new Error("Invalid unstake time");
+    if (timePassed < 0n) throw new Error("Invalid unback time");
     if (timePassed >= protocolParams.epochLength.milliseconds) {
       const backingAmount = BigInt(backingUtxo.assets.lovelace);
 
@@ -208,14 +208,14 @@ function addMintingInstruction(
         isMatured,
         backingOutputId: constructTxOutputId(backingUtxo),
         backingAmount,
-        unstakedAt: { timestamp: BigInt(unstakedAt) },
+        unbackedAt: { timestamp: BigInt(unbackedAt) },
         ...backingDatum,
       };
 
       const plantHash = constructPlantHashUsingBlake2b(plant);
 
       const backingDuration = BigInt(
-        BigInt(unstakedAt) - backingDatum.stakedAt.timestamp
+        BigInt(unbackedAt) - backingDatum.backedAt.timestamp
       );
       const teikiRewards = isMatured
         ? (backingAmount * backingDuration) /
