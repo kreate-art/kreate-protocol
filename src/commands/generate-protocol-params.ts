@@ -201,7 +201,7 @@ export const SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS: ProtocolNonScriptParams = {
   // If the Project Owner paid the sponsorship fee, the project would be sponsored for this duration (in milliseconds).
   projectSponsorshipDuration: { milliseconds: 864_000_000n }, // 10 days
   projectInformationUpdateFee: 1_000_000n,
-  projectCommunityUpdateFee: 500_000n,
+  projectAnnouncementFee: 500_000n,
   //The minimum number of shared treasuries need to be created (to receive Teiki) per milestone-reached event.
   minTreasuryPerMilestoneEvent: 10n,
   // The amount of ADA (in Lovelace) of a stake registration deposit - Cardano Protocol Params.

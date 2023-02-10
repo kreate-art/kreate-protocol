@@ -206,7 +206,7 @@ const projectDetailDatum: ProjectDetailDatum = {
   withdrawnFunds: 0n,
   sponsoredUntil: null,
   informationCid: { cid: generateBlake2b224Hash() },
-  lastCommunityUpdateCid: null,
+  lastAnnouncementCid: null,
 };
 const projectScriptDatum: ProjectScriptDatum = {
   projectId: { id: projectId },
@@ -609,7 +609,7 @@ function generateUpdateProjectParams(): UpdateProjectParams {
     newInformationCid: {
       cid: "QmaMS3jikf86AC1aGpUVD2wn3jFv1SaeVBChhkNDit5XQy",
     },
-    newCommunityUpdateCid: {
+    newAnnouncementCid: {
       cid: "QmaMS3jikf86AN1aGpUVD2wn3jFv1SaeVBChhkNDit5XQy",
     },
     dedicatedTreasuryUtxo,

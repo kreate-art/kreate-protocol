@@ -162,7 +162,7 @@ export default function main({ protocolNftMph }: Params) {
               && project_detail_datum.project_id == project_id
               && project_detail_datum.withdrawn_funds == 0
               && project_detail_datum.information_cid != ""
-              && project_detail_datum.last_community_update_cid == Option[String]::None
+              && project_detail_datum.last_announcement_cid == Option[String]::None
               && project_detail_datum.sponsored_until.switch {
                 None => true,
                 s: Some => s.some == tx.time_range.start + pparams_datum.project_sponsorship_duration
