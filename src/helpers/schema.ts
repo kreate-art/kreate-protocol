@@ -12,6 +12,7 @@ import {
 
 import * as S from "@/schema";
 import { Plant } from "@/schema/teiki/backing";
+import { NextProjectDatum, ProjectDatum } from "@/schema/teiki/project";
 import {
   MigratableScript,
   ProtocolParamsDatum,
@@ -123,6 +124,10 @@ export function deconstructAddress(
   );
 }
 
+export function hashBlake2b256(cbor: Hex): Hex {
+  return toHex(C.hash_blake2b256(fromHex(cbor)));
+}
+
 export function parseProtocolParams(
   data: Data
 ):
@@ -145,6 +150,18 @@ export function parseProtocolParams(
   }
 }
 
-export function hashBlake2b256(cbor: Hex): Hex {
-  return toHex(C.hash_blake2b256(fromHex(cbor)));
+export function parseProjectDatum(
+  data: Data
+):
+  | { next: false; project: ProjectDatum }
+  | { next: true; project: NextProjectDatum } {
+  try {
+    return { next: true, project: S.fromData(data, NextProjectDatum) };
+  } catch (e) {
+    try {
+      return { next: false, project: S.fromData(data, ProjectDatum) };
+    } catch {
+      throw e;
+    }
+  }
 }

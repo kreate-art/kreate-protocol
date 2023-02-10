@@ -23,6 +23,25 @@ export const ProjectDatum = Struct({
 });
 export type ProjectDatum = Static<typeof ProjectDatum>;
 
+// TODO: These types are going to replace the current ones in the next update
+export const NextProjectStatus = Enum("type", {
+  Active: Void,
+  PreClosed: { pendingUntil: Time },
+  PreDelisted: { pendingUntil: Time },
+  Closed: { closedAt: Time },
+  Delisted: { delistedAt: Time },
+});
+export type NextProjectStatus = Static<typeof NextProjectStatus>;
+
+export const NextProjectDatum = Struct({
+  projectId: ProjectId,
+  ownerAddress: Address,
+  status: NextProjectStatus,
+  milestoneReached: Int,
+  isStakingDelegationManagedByProtocol: Bool,
+});
+export type NextProjectDatum = Static<typeof NextProjectDatum>;
+
 export const ProjectRedeemer = Enum("case", {
   RecordNewMilestone: { newMilestone: Int },
   AllocateStakingValidator: { newStakingValidator: StakingValidatorHash },
