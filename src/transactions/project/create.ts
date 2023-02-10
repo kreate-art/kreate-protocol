@@ -130,7 +130,7 @@ export function createProjectTx(
     withdrawnFunds: 0n,
     sponsoredUntil,
     informationCid: informationCid,
-    lastCommunityUpdateCid: null,
+    lastAnnouncementCid: null,
   };
 
   const projectDatum: ProjectDatum = {

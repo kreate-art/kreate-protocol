@@ -28,7 +28,7 @@ export type UpdateProjectParams = {
   dedicatedTreasuryVScriptUtxo: UTxO;
   shouldExtendSponsorship: boolean;
   newInformationCid?: IpfsCid;
-  newCommunityUpdateCid?: IpfsCid;
+  newAnnouncementCid?: IpfsCid;
   txTimePadding?: TimeDifference;
 };
 
@@ -44,7 +44,7 @@ export function updateProjectTx(
     dedicatedTreasuryVScriptUtxo,
     shouldExtendSponsorship,
     newInformationCid,
-    newCommunityUpdateCid,
+    newAnnouncementCid,
     txTimePadding = 20000,
   }: UpdateProjectParams
 ) {
@@ -105,10 +105,10 @@ export function updateProjectTx(
   }
 
   if (
-    newCommunityUpdateCid?.cid &&
-    newCommunityUpdateCid.cid !== projectDetail.lastCommunityUpdateCid?.cid
+    newAnnouncementCid?.cid &&
+    newAnnouncementCid.cid !== projectDetail.lastAnnouncementCid?.cid
   ) {
-    minTotalFees += protocolParams.projectCommunityUpdateFee;
+    minTotalFees += protocolParams.projectAnnouncementFee;
   }
 
   const txTime = getTime({ lucid }) - txTimePadding;
@@ -127,8 +127,8 @@ export function updateProjectTx(
         }
       : projectDetail.sponsoredUntil,
     informationCid: newInformationCid ?? projectDetail.informationCid,
-    lastCommunityUpdateCid:
-      newCommunityUpdateCid ?? projectDetail.lastCommunityUpdateCid,
+    lastAnnouncementCid:
+      newAnnouncementCid ?? projectDetail.lastAnnouncementCid,
   };
 
   const newDedicatedTreasury: DedicatedTreasuryDatum = {

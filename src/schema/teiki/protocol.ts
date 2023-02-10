@@ -46,7 +46,7 @@ export const ProtocolParamsDatum = Struct({
   projectSponsorshipFee: Int,
   projectSponsorshipDuration: Duration,
   projectInformationUpdateFee: Int,
-  projectCommunityUpdateFee: Int,
+  projectAnnouncementFee: Int,
   minTreasuryPerMilestoneEvent: Int,
   stakeKeyDeposit: Int,
   proposalWaitingPeriod: Duration,

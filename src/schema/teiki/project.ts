@@ -43,7 +43,7 @@ export const ProjectDetailDatum = Struct({
   withdrawnFunds: Int,
   sponsoredUntil: Option(Time),
   informationCid: IpfsCid,
-  lastCommunityUpdateCid: Option(IpfsCid),
+  lastAnnouncementCid: Option(IpfsCid),
 });
 export type ProjectDetailDatum = Static<typeof ProjectDetailDatum>;
 

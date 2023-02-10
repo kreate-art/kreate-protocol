@@ -16,6 +16,6 @@ export default helios("v__project_detail__types")`
     withdrawn_funds: Int
     sponsored_until: Option[Time]
     information_cid: String
-    last_community_update_cid: Option[String]
+    last_announcement_cid: Option[String]
   }
 `;

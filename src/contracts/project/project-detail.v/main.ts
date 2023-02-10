@@ -193,8 +193,8 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                         && output_datum.withdrawn_funds == new_withdrawn_funds
                         && datum.sponsored_until == output_datum.sponsored_until
                         && datum.information_cid == output_datum.information_cid
-                        && datum.last_community_update_cid
-                            == output_datum.last_community_update_cid
+                        && datum.last_announcement_cid
+                            == output_datum.last_announcement_cid
                     },
                     else => error("Invalid project detail UTxO: missing inline datum")
                   }
@@ -344,8 +344,8 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                         && (
                           datum.sponsored_until != output_datum.sponsored_until
                             || datum.information_cid != output_datum.information_cid
-                            || datum.last_community_update_cid
-                                != output_datum.last_community_update_cid
+                            || datum.last_announcement_cid
+                                != output_datum.last_announcement_cid
                         )
                     },
                     else => error("Invalid project detail UTxO: missing inline datum")
@@ -395,18 +395,18 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               0
             };
 
-          update_community_fee: Int =
-            if (datum.last_community_update_cid != own_output_datum.last_community_update_cid) {
-              if (own_output_datum.last_community_update_cid.unwrap().encode_utf8().length > 0){
-                pparams_datum.project_community_update_fee
+          update_announcement_fee: Int =
+            if (datum.last_announcement_cid != own_output_datum.last_announcement_cid) {
+              if (own_output_datum.last_announcement_cid.unwrap().encode_utf8().length > 0){
+                pparams_datum.project_announcement_fee
               } else {
-                error("Invalid community update cid")
+                error("Invalid announcement cid")
               }
             } else {
               0
             };
 
-          min_total_fees: Int = update_sponsor_fee + update_info_fee + update_community_fee;
+          min_total_fees: Int = update_sponsor_fee + update_info_fee + update_announcement_fee;
 
           dedicated_treasury_credential: Credential =
             Credential::new_validator(

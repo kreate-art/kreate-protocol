@@ -39,7 +39,7 @@ export default helios("v__protocol_params__types")`
     project_sponsorship_fee: Int
     project_sponsorship_duration: Duration
     project_information_update_fee: Int
-    project_community_update_fee: Int
+    project_announcement_fee: Int
     min_treasury_per_milestone_event: Int
     stake_key_deposit: Int
     proposal_waiting_period: Duration
