@@ -128,7 +128,7 @@ export function claimRewardsByFlowerTx(
     };
 
     const backingDuration = BigInt(
-      flower.unstakedAt.timestamp - flower.stakedAt.timestamp
+      flower.unbackedAt.timestamp - flower.backedAt.timestamp
     );
 
     const teikiRewards =

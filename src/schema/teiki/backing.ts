@@ -8,13 +8,13 @@ import { ProjectId } from "./common";
 export const BackingDatum = Struct({
   projectId: ProjectId,
   backerAddress: Address,
-  stakedAt: Time,
+  backedAt: Time,
   milestoneBacked: Int,
 });
 export type BackingDatum = Static<typeof BackingDatum>;
 
 export const BackingRedeemer = Enum("case", {
-  Unstake: Void,
+  Unback: Void,
   Migrate: Void,
 });
 export type BackingRedeemer = Static<typeof BackingRedeemer>;
@@ -25,10 +25,10 @@ export const Plant = Struct({
   isMatured: Bool,
   backingOutputId: TxOutputId,
   backingAmount: Int,
-  unstakedAt: Time,
+  unbackedAt: Time,
   projectId: ProjectId,
   backerAddress: Address,
-  stakedAt: Time,
+  backedAt: Time,
   milestoneBacked: Int,
 });
 export type Plant = Static<typeof Plant>;

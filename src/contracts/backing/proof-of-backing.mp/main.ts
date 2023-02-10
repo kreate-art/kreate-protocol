@@ -234,14 +234,14 @@ export default function main({
 
                       assert(is_backing_datum_valid, "Invalid backing datum");
 
-                      unstaked_at: Time = tx.time_range.start;
-                      time_passed: Duration = unstaked_at - backing_datum.staked_at;
+                      unbacked_at: Time = tx.time_range.start;
+                      time_passed: Duration = unbacked_at - backing_datum.backed_at;
 
-                      is_unstaked_valid: Bool =
-                        if (unstaked_at >= backing_datum.staked_at) { true }
-                        else { error("Invalid unstaked time") };
+                      is_unbacked_valid: Bool =
+                        if (unbacked_at >= backing_datum.backed_at) { true }
+                        else { error("Invalid unbacked time") };
 
-                      assert(is_unstaked_valid, "Invalid unstaked time");
+                      assert(is_unbacked_valid, "Invalid unbacked time");
 
                       if (time_passed > pparams_datum.epoch_length) {
                         backing_amount: Int = consumed_backing_txinput.output.value.get_safe(AssetClass::ADA);
@@ -258,10 +258,10 @@ export default function main({
                             is_matured: is_matured,
                             backing_output_id: consumed_backing_txinput.output_id,
                             backing_amount: backing_amount,
-                            unstaked_at: unstaked_at,
+                            unbacked_at: unbacked_at,
                             project_id: backing_datum.project_id,
                             backer_address: backing_datum.backer_address,
-                            staked_at: backing_datum.staked_at,
+                            backed_at: backing_datum.backed_at,
                             milestone_backed: backing_datum.milestone_backed
                           };
 
@@ -270,7 +270,7 @@ export default function main({
                         teiki_rewards: Int =
                           if(is_matured) {
                             backing_amount
-                              * (unstaked_at - backing_datum.staked_at) / pparams_datum.epoch_length
+                              * (unbacked_at - backing_datum.backed_at) / pparams_datum.epoch_length
                               / pparams_datum.teiki_coefficient
                           } else {
                             0
@@ -496,7 +496,7 @@ export default function main({
                   produced_backing_datums.all(
                     (produced_backing_datum: BackingDatum) -> Bool {
                       produced_backing_datum.backer_address == produced_backer_address
-                        && produced_backing_datum.staked_at == tx.time_range.end
+                        && produced_backing_datum.backed_at == tx.time_range.end
                         && produced_backing_datum.milestone_backed == project_datum.milestone_reached
                     }
                   );
@@ -607,7 +607,7 @@ export default function main({
               (acc: Int, flower: Plant) -> Int {
                 teiki_rewards: Int =
                   flower.backing_amount
-                    * (flower.unstaked_at - flower.staked_at) / pparams_datum.epoch_length
+                    * (flower.unbacked_at - flower.backed_at) / pparams_datum.epoch_length
                     / pparams_datum.teiki_coefficient;
 
                 acc + teiki_rewards
