@@ -159,7 +159,7 @@ export default function main({ protocolNftMph }: Params) {
                         && output_datum.sponsorship.switch {
                           None => true,
                           s: Some => {
-                            s.some.amount >= pparams_datum.project_sponsorship_fee
+                            s.some.amount >= pparams_datum.project_sponsorship_min_fee
                               && s.some.until == tx.time_range.start + pparams_datum.project_sponsorship_duration
                           }
                         }

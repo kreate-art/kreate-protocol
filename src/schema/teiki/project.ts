@@ -74,7 +74,7 @@ export type ProjectDetailDatum = Static<typeof ProjectDetailDatum>;
 export const LegacyProjectDetailDatum = Struct({
   projectId: ProjectId,
   withdrawnFunds: Int,
-  sponsorshipUntil: Option(Time),
+  sponsoredUntil: Option(Time),
   informationCid: IpfsCid,
   lastAnnouncementCid: Option(IpfsCid),
 });

@@ -197,7 +197,7 @@ export const SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS: ProtocolNonScriptParams = {
   projectPledge: 500_000_000n,
   projectCreationFee: 10_000_000n,
   // Minimum project sponsorship fee ADA (in Lovelace). Higher number, higher position.
-  projectSponsorshipFee: 3_000_000_000n,
+  projectSponsorshipMinFee: 3_000_000_000n,
   // If the Project Owner paid the sponsorship fee, the project would be sponsored for this duration (in milliseconds).
   projectSponsorshipDuration: { milliseconds: 864_000_000n }, // 10 days
   projectInformationUpdateFee: 1_000_000n,

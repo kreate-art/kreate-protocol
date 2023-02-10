@@ -299,7 +299,7 @@ describe("project transactions", () => {
 
     const createProjectParams = generateCreateProjectParams({
       sponsorshipAmount:
-        protocolParamsDatum.projectSponsorshipFee + getRandomLovelaceAmount(),
+        protocolParamsDatum.projectSponsorshipMinFee + getRandomLovelaceAmount(),
       seedUtxo,
       ownerAddress,
     });
@@ -397,7 +397,7 @@ describe("project transactions", () => {
 
     const updateProjectParams = generateUpdateProjectParams({
       sponsorshipAmount:
-        protocolParamsDatum.projectSponsorshipFee + getRandomLovelaceAmount(),
+        protocolParamsDatum.projectSponsorshipMinFee + getRandomLovelaceAmount(),
     });
 
     const tx = updateProjectTx(lucid, updateProjectParams);

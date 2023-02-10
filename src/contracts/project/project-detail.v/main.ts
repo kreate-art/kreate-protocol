@@ -378,7 +378,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   until: Time = s.some.until;
 
                   assert (
-                    amount >= pparams_datum.project_sponsorship_fee,
+                    amount >= pparams_datum.project_sponsorship_min_fee,
                     "Invalid sponsorship amount"
                   );
 
