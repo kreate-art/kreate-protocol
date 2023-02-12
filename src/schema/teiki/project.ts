@@ -106,6 +106,16 @@ export type ProjectScriptRedeemer = Static<typeof ProjectScriptRedeemer>;
 
 // ==================== AT | Project ====================
 
+export const LegacyProjectMintingRedeemer = Enum("case", {
+  NewProject: { projectSeed: TxOutputId },
+  AllocateStaking: Void,
+  DeallocateStaking: Void,
+  Migrate: Void,
+});
+export type LegacyProjectMintingRedeemer = Static<
+  typeof LegacyProjectMintingRedeemer
+>;
+
 export const ProjectMintingRedeemer = Enum("case", {
   NewProject: { projectSeed: TxOutputId },
   AllocateStaking: Void,

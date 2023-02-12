@@ -1,15 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Address, Lucid, Script } from "lucid-cardano";
+import { Lucid } from "lucid-cardano";
 
 import { compile, exportScript } from "@/contracts/compile";
-import { HeliosSource, helios } from "@/contracts/program";
 import { getPaymentKeyHash, signAndSubmit } from "@/helpers/lucid";
 import { TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
 import { Registry } from "@/schema/teiki/protocol";
-import {
-  DeployScriptParams,
-  deployScriptsTx,
-} from "@/transactions/deploy-scripts";
 import {
   BootstrapMetaProtocolTxParams,
   bootstrapMetaProtocolTx,
@@ -46,9 +41,16 @@ import {
 } from "../commands/generate-protocol-params";
 import { getLucid } from "../commands/utils";
 
+import {
+  sleep,
+  alwaysFalse,
+  deployReferencedScript,
+  printScriptHash,
+} from "./utils";
+
 // =======================BOOTSTRAP==========================
 // Protocol staking
-const POOL_ID = "pool1kgyazdg4n0vvdkznuud3ktm0wmwvd2gr932k6mt346d2u4l9tt2";
+const POOL_ID = "pool1z9nsz7wyyxc5r8zf8pf774p9gry09yxtrlqlg5tsnjndv5xupu3";
 
 // Staking manager address - only use payment credential
 const STAKING_MANAGER_ADDRESS =
@@ -351,53 +353,4 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
   };
 
   return scripts;
-}
-
-async function deployReferencedScript(
-  lucid: Lucid,
-  scripts: Script[],
-  referenceAddress: Address
-) {
-  console.log(`Deploying ${scripts.length} reference scripts ...`);
-
-  const params: DeployScriptParams = {
-    deployAddress: referenceAddress,
-    scriptReferences: scripts,
-    batchScriptSize: 15_000,
-  };
-
-  const txs = deployScriptsTx(lucid, params);
-
-  console.log("number of transactions :>> ", txs.length);
-
-  for (const tx of txs) {
-    await sleep(60_000);
-    const txComplete = await tx.complete();
-    const txHash = await signAndSubmit(txComplete);
-    const result = await lucid.awaitTx(txHash);
-    console.log(result, txHash);
-  }
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
-
-function alwaysFalse(): HeliosSource {
-  return helios("v__locking", [])`
-    spending v__locking
-
-    func main() -> Bool {
-      731211 == 731112
-    }
-  `;
-}
-
-function printScriptHash(lucid: Lucid, scripts: any) {
-  for (const key of Object.keys(scripts)) {
-    const script: any = scripts[key as keyof typeof scripts];
-    console.log(`${key}=${lucid.utils.validatorToScriptHash(script)}`);
-  }
 }

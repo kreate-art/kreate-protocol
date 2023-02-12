@@ -44,6 +44,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && tsc-alias && ts-add-js-extension add --dir dist",
     "deploy": "node --loader=./loader.js src/cli/bootstrap.ts",
+    "deploy:major-migration": "node --loader=./loader.js src/cli/deploy-scripts-for-major-migration.ts",
     "meta-protocol:propose": "node --loader=./loader.js src/cli/meta-protocol/propose",
     "meta-protocol:apply": "node --loader=./loader.js src/cli/meta-protocol/apply",
     "protocol:propose": "node --loader=./loader.js src/cli/protocol/propose",
@@ -56,10 +57,10 @@
     "typecheck:watch": "tsc --noEmit --strict --watch"
   },
   "dependencies": {
-    "@hyperionbt/helios": "^0.11.3",
+    "@hyperionbt/helios": "git@github.com:Hyperion-BT/helios#1240ed26d1d57d96c01e38a1efde2954f054e1cb",
     "@shinka-network/json-bigint": "^1.0.2",
     "@sinclair/typebox": "^0.25.21",
-    "lucid-cardano": "^0.9.1"
+    "lucid-cardano": "^0.9.2"
   },
   "devDependencies": {
     "@types/jest": "^29.4.0",

@@ -33,6 +33,15 @@ export const Plant = Struct({
 });
 export type Plant = Static<typeof Plant>;
 
+export const LegacyProofOfBackingMintingRedeemer = Enum("case", {
+  Plant: { cleanup: Bool },
+  ClaimRewards: { flowers: List(Plant) },
+  Migrate: Void,
+});
+export type LegacyProofOfBackingMintingRedeemer = Static<
+  typeof LegacyProofOfBackingMintingRedeemer
+>;
+
 export const ProofOfBackingMintingRedeemer = Enum("case", {
   Plant: { cleanup: Bool },
   ClaimRewards: { flowers: List(Plant) },
