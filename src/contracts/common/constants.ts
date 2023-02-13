@@ -26,28 +26,21 @@ import { helios } from "../program";
 
 // FIXME: Redo this module...
 
-export const PROTOCOL_NFT_TOKEN_NAMES: Record<string, Hex> = Object.fromEntries(
-  Object.entries({
-    PARAMS: "params",
-    PROPOSAL: "proposal",
-  }).map(([k, v]) => [k, fromText(v)])
-);
+export const PROTOCOL_NFT_TOKEN_NAMES = {
+  PARAMS: fromText("params"),
+  PROPOSAL: fromText("proposal"),
+};
 
-export const PROJECT_AT_TOKEN_NAMES: Record<string, Hex> = Object.fromEntries(
-  Object.entries({
-    PROJECT: "project",
-    PROJECT_DETAIL: "project-detail",
-    PROJECT_SCRIPT: "project-script",
-  }).map(([k, v]) => [k, fromText(v)])
-);
+export const PROJECT_AT_TOKEN_NAMES = {
+  PROJECT: fromText("project"),
+  PROJECT_DETAIL: fromText("project-detail"),
+  PROJECT_SCRIPT: fromText("project-script"),
+};
 
-export const PROOF_OF_BACKING_TOKEN_NAMES: Record<string, Hex> =
-  Object.fromEntries(
-    Object.entries({
-      SEED: "seed",
-      WILTED_FLOWER: "wilted-flower",
-    }).map(([k, v]) => [k, fromText(v)])
-  );
+export const PROOF_OF_BACKING_TOKEN_NAMES = {
+  SEED: fromText("seed"),
+  WILTED_FLOWER: fromText("wilted-flower"),
+};
 
 export const TEIKI_TOKEN_NAME: Hex = fromText("teiki");
 
