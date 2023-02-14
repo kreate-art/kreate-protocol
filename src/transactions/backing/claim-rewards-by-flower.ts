@@ -4,7 +4,7 @@ import {
   constructPlantHashUsingBlake2b,
   parseProtocolParams,
 } from "@/helpers/schema";
-import { TimeProvider, getTime } from "@/helpers/time";
+import { TimeProvider, getTxTimeRange } from "@/helpers/time";
 import * as S from "@/schema";
 import { Plant, ProofOfBackingMintingRedeemer } from "@/schema/teiki/backing";
 import { ProjectDatum } from "@/schema/teiki/project";
@@ -92,9 +92,12 @@ export function claimRewardsByFlowerTx(
   const projectId = projectDatum.projectId.id;
   const currentProjectMilestone = projectDatum.milestoneReached;
 
-  const now = getTime({ timeProvider, lucid });
-  const txTimeStart = now - txTimeStartPadding;
-  const txTimeEnd = now + txTimeEndPadding;
+  const [txTimeStart, txTimeEnd] = getTxTimeRange({
+    lucid,
+    timeProvider,
+    txTimeStartPadding,
+    txTimeEndPadding,
+  });
 
   let tx = lucid
     .newTx()

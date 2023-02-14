@@ -10,7 +10,7 @@ import {
   constructPlantHashUsingBlake2b,
   deconstructAddress,
 } from "@/helpers/schema";
-import { getTime, TimeProvider } from "@/helpers/time";
+import { getTxTimeRange, TimeProvider } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   BackingDatum,
@@ -69,7 +69,7 @@ export function cleanUpTx(
     projectInfo,
     cleanUpInfo,
     teikiMintingInfo,
-    txTimeStartPadding = 20_000,
+    txTimeStartPadding = 60_000,
     txTimeEndPadding = 60_000,
     timeProvider,
   }: CleanUpParams
@@ -86,9 +86,12 @@ export function cleanUpTx(
     S.toData({ case: "Plant", cleanup: true }, ProofOfBackingMintingRedeemer)
   );
 
-  const now = getTime({ timeProvider, lucid });
-  const txTimeStart = now - txTimeStartPadding;
-  const txTimeEnd = now + txTimeEndPadding;
+  const [txTimeStart, txTimeEnd] = getTxTimeRange({
+    lucid,
+    timeProvider,
+    txTimeStartPadding,
+    txTimeEndPadding,
+  });
 
   const seedUnit =
     cleanUpInfo.proofOfBackingMph + PROOF_OF_BACKING_TOKEN_NAMES.SEED;

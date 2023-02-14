@@ -3,7 +3,7 @@ import { Data, Lucid, PolicyId, Unit, UTxO } from "lucid-cardano";
 import { PROJECT_AT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { addressFromScriptHashes } from "@/helpers/lucid";
 import { deconstructAddress } from "@/helpers/schema";
-import { getTime } from "@/helpers/time";
+import { getTxTimeRange } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   ProjectDatum,
@@ -134,9 +134,11 @@ export function finalizeCloseTx(
   const projectAtUnit: Unit =
     projectAtPolicyId + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
 
-  const now = getTime({ lucid });
-  const txTimeStart = now - txTimeStartPadding;
-  const txTimeEnd = now + txTimeEndPadding;
+  const [txTimeStart, txTimeEnd] = getTxTimeRange({
+    lucid,
+    txTimeStartPadding,
+    txTimeEndPadding,
+  });
 
   let tx = lucid
     .newTx()

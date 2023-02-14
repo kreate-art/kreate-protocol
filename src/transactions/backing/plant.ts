@@ -7,7 +7,7 @@ import {
   constructTxOutputId,
   parseProtocolParams,
 } from "@/helpers/schema";
-import { getTime, TimeProvider } from "@/helpers/time";
+import { getTxTimeRange, TimeProvider } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   BackingDatum,
@@ -68,7 +68,7 @@ export function plantTx(
     projectInfo,
     backingInfo,
     teikiMintingInfo,
-    txTimeStartPadding = 20_000,
+    txTimeStartPadding = 60_000,
     txTimeEndPadding = 60_000,
     timeProvider,
   }: PlantParams
@@ -84,9 +84,12 @@ export function plantTx(
     S.toData({ case: "Plant", cleanup: false }, ProofOfBackingMintingRedeemer)
   );
 
-  const now = getTime({ timeProvider, lucid });
-  const txTimeStart = now - txTimeStartPadding;
-  const txTimeEnd = now + txTimeEndPadding;
+  const [txTimeStart, txTimeEnd] = getTxTimeRange({
+    lucid,
+    timeProvider,
+    txTimeStartPadding,
+    txTimeEndPadding,
+  });
 
   const totalBackingAmount = backingInfo.backingUtxos.reduce(
     (acc, backingUtxo) => acc + BigInt(backingUtxo.assets.lovelace),

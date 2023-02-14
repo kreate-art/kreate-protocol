@@ -1,6 +1,6 @@
 import { Emulator, Lucid } from "lucid-cardano";
 
-import { UnixTime } from "@/types";
+import { TimeDifference, UnixTime } from "@/types";
 
 // TODO: Make sure all transactions accept a TimeProvider
 export type TimeProvider = () => UnixTime;
@@ -19,4 +19,23 @@ export function getTime({
     const now = timeProvider ? timeProvider() : Date.now();
     return now - (now % 1000);
   }
+}
+
+export function getTxTimeRange({
+  now,
+  timeProvider,
+  lucid,
+  txTimeStartPadding,
+  txTimeEndPadding,
+}: {
+  now?: UnixTime;
+  timeProvider?: TimeProvider;
+  lucid?: Lucid;
+  txTimeStartPadding: TimeDifference;
+  txTimeEndPadding: TimeDifference;
+}) {
+  const time = now ?? getTime({ lucid, timeProvider });
+  const start = time - txTimeStartPadding;
+  const end = start + txTimeEndPadding;
+  return [start, end];
 }
