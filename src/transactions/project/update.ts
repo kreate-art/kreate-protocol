@@ -1,4 +1,4 @@
-import { Lucid, UTxO } from "lucid-cardano";
+import { Lucid, Tx, UTxO } from "lucid-cardano";
 
 import { constructTxOutputId, deconstructAddress } from "@/helpers/schema";
 import * as S from "@/schema";
@@ -17,7 +17,7 @@ import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
 import { getTime } from "../../helpers/time";
-import { RATIO_MULTIPLIER } from "../constants";
+import { PROJECT_SPONSORSHIP_RESOLUTION, RATIO_MULTIPLIER } from "../constants";
 
 export type UpdateProjectParams = {
   protocolParamsUtxo: UTxO;
@@ -26,11 +26,13 @@ export type UpdateProjectParams = {
   dedicatedTreasuryUtxo: UTxO;
   projectDetailVRefScriptUtxo: UTxO;
   dedicatedTreasuryVRefScriptUtxo: UTxO;
-  extendSponsorshipAmount: bigint;
+  newSponsorshipAmount?: bigint;
   newInformationCid?: IpfsCid;
   newAnnouncementCid?: IpfsCid;
   txTimePadding?: TimeDifference;
 };
+
+type Result = { tx: Tx; sponsorshipFee: bigint };
 
 // TODO: @sk-umiuma: Add the commented params
 export function updateProjectTx(
@@ -42,12 +44,12 @@ export function updateProjectTx(
     dedicatedTreasuryUtxo,
     projectDetailVRefScriptUtxo,
     dedicatedTreasuryVRefScriptUtxo,
-    extendSponsorshipAmount,
+    newSponsorshipAmount,
     newInformationCid,
     newAnnouncementCid,
     txTimePadding = 20000,
   }: UpdateProjectParams
-) {
+): Result {
   assert(
     projectDetailVRefScriptUtxo.scriptRef != null,
     "Invalid project detail script UTxO: Missing script reference"
@@ -91,8 +93,30 @@ export function updateProjectTx(
     DedicatedTreasuryDatum
   );
 
-  let totalFees = extendSponsorshipAmount;
+  const txTimeStart = getTime({ lucid }) - txTimePadding;
 
+  let sponsorshipFee = 0n;
+  if (newSponsorshipAmount != null) {
+    if (projectDetail.sponsorship == null) {
+      sponsorshipFee = newSponsorshipAmount;
+    } else {
+      const o_amount = projectDetail.sponsorship?.amount ?? 0n;
+      const o_until = projectDetail.sponsorship?.until.timestamp ?? 0n;
+      const now = BigInt(txTimeStart);
+      const duration = protocolParams.projectSponsorshipDuration.milliseconds;
+      const resolution = PROJECT_SPONSORSHIP_RESOLUTION;
+      let leftover = duration;
+      if (leftover > o_until - now) leftover = o_until - now;
+      if (leftover < 0n) leftover = 0n;
+      const discount =
+        (o_amount * (leftover / resolution)) / (duration / resolution);
+      let fee = newSponsorshipAmount - discount;
+      if (fee < 0n) fee = 0n;
+      sponsorshipFee = fee;
+    }
+  }
+
+  let totalFees = sponsorshipFee;
   if (
     newInformationCid?.cid &&
     newInformationCid.cid !== projectDetail.informationCid.cid
@@ -107,14 +131,12 @@ export function updateProjectTx(
     totalFees += protocolParams.projectAnnouncementFee;
   }
 
-  const txTimeStart = getTime({ lucid }) - txTimePadding;
-
   const newProjectDetail: ProjectDetailDatum = {
     ...projectDetail,
     sponsorship:
-      extendSponsorshipAmount > 0n
+      newSponsorshipAmount != null
         ? {
-            amount: extendSponsorshipAmount,
+            amount: newSponsorshipAmount,
             until: {
               timestamp:
                 BigInt(txTimeStart) +
@@ -138,7 +160,7 @@ export function updateProjectTx(
     },
   };
 
-  return lucid
+  const tx = lucid
     .newTx()
     .readFrom([
       protocolParamsUtxo,
@@ -175,4 +197,6 @@ export function updateProjectTx(
       { lovelace: BigInt(dedicatedTreasuryUtxo.assets.lovelace) + totalFees }
     )
     .validFrom(txTimeStart);
+
+  return { tx, sponsorshipFee };
 }
