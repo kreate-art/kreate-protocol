@@ -378,11 +378,9 @@ describe("project transactions", () => {
 
     lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
 
-    const updateProjectParams = generateUpdateProjectParams({
-      sponsorshipAmount: 0n,
-    });
+    const updateProjectParams = generateUpdateProjectParams({});
 
-    const tx = updateProjectTx(lucid, updateProjectParams);
+    const { tx } = updateProjectTx(lucid, updateProjectParams);
 
     const txComplete = await tx.complete();
 
@@ -402,7 +400,7 @@ describe("project transactions", () => {
         getRandomLovelaceAmount(),
     });
 
-    const tx = updateProjectTx(lucid, updateProjectParams);
+    const { tx } = updateProjectTx(lucid, updateProjectParams);
 
     const txComplete = await tx.complete();
 
@@ -626,9 +624,9 @@ function generateCreateProjectParams({
 }
 
 function generateUpdateProjectParams({
-  sponsorshipAmount = 0n,
+  sponsorshipAmount,
 }: {
-  sponsorshipAmount: bigint;
+  sponsorshipAmount?: bigint;
 }): UpdateProjectParams {
   const projectDatum: ProjectDatum = {
     projectId: { id: projectId },
@@ -664,7 +662,7 @@ function generateUpdateProjectParams({
     projectDetailUtxo,
     projectDetailVRefScriptUtxo,
     dedicatedTreasuryVRefScriptUtxo,
-    extendSponsorshipAmount: sponsorshipAmount,
+    newSponsorshipAmount: sponsorshipAmount,
     newInformationCid: {
       cid: "QmaMS3jikf86AC1aGpUVD2wn3jFv1SaeVBChhkNDit5XQy",
     },
