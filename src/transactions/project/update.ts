@@ -34,7 +34,6 @@ export type UpdateProjectParams = {
 
 type Result = { tx: Tx; sponsorshipFee: bigint };
 
-// TODO: @sk-umiuma: Add the commented params
 export function updateProjectTx(
   lucid: Lucid,
   {
@@ -149,18 +148,7 @@ export function updateProjectTx(
       newAnnouncementCid ?? projectDetail.lastAnnouncementCid,
   };
 
-  const newDedicatedTreasury: DedicatedTreasuryDatum = {
-    projectId: dedicatedTreasury.projectId,
-    governorAda:
-      dedicatedTreasury.governorAda +
-      (totalFees * protocolParams.governorShareRatio) / RATIO_MULTIPLIER,
-    tag: {
-      kind: "TagContinuation",
-      former: constructTxOutputId(dedicatedTreasuryUtxo),
-    },
-  };
-
-  const tx = lucid
+  let tx = lucid
     .newTx()
     .readFrom([
       protocolParamsUtxo,
@@ -173,30 +161,45 @@ export function updateProjectTx(
       [projectDetailUtxo],
       S.toCbor(S.toData({ case: "Update" }, ProjectDetailRedeemer))
     )
-    .collectFrom(
-      [dedicatedTreasuryUtxo],
-      S.toCbor(
-        S.toData(
-          { case: "CollectFees", fees: totalFees, split: false },
-          DedicatedTreasuryRedeemer
-        )
-      )
-    )
     .payToContract(
       projectDetailUtxo.address,
       { inline: S.toCbor(S.toData(newProjectDetail, ProjectDetailDatum)) },
       projectDetailUtxo.assets
     )
-    .payToContract(
-      dedicatedTreasuryUtxo.address,
-      {
-        inline: S.toCbor(
-          S.toData(newDedicatedTreasury, DedicatedTreasuryDatum)
-        ),
-      },
-      { lovelace: BigInt(dedicatedTreasuryUtxo.assets.lovelace) + totalFees }
-    )
     .validFrom(txTimeStart);
+
+  if (totalFees > 0) {
+    const newDedicatedTreasury: DedicatedTreasuryDatum = {
+      projectId: dedicatedTreasury.projectId,
+      governorAda:
+        dedicatedTreasury.governorAda +
+        (totalFees * protocolParams.governorShareRatio) / RATIO_MULTIPLIER,
+      tag: {
+        kind: "TagContinuation",
+        former: constructTxOutputId(dedicatedTreasuryUtxo),
+      },
+    };
+
+    tx = tx
+      .collectFrom(
+        [dedicatedTreasuryUtxo],
+        S.toCbor(
+          S.toData(
+            { case: "CollectFees", fees: totalFees, split: false },
+            DedicatedTreasuryRedeemer
+          )
+        )
+      )
+      .payToContract(
+        dedicatedTreasuryUtxo.address,
+        {
+          inline: S.toCbor(
+            S.toData(newDedicatedTreasury, DedicatedTreasuryDatum)
+          ),
+        },
+        { lovelace: BigInt(dedicatedTreasuryUtxo.assets.lovelace) + totalFees }
+      );
+  }
 
   return { tx, sponsorshipFee };
 }
