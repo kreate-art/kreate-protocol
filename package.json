@@ -56,9 +56,9 @@
     "typecheck:watch": "tsc --noEmit --strict --watch"
   },
   "dependencies": {
-    "@hyperionbt/helios": "^0.11.3",
+    "@hyperionbt/helios": "^0.12.0",
     "@shinka-network/json-bigint": "^1.0.2",
-    "@sinclair/typebox": "^0.25.21",
+    "@sinclair/typebox": "^0.25.22",
     "lucid-cardano": "^0.9.2"
   },
   "devDependencies": {
