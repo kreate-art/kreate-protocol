@@ -85,7 +85,6 @@ export function getProtocolRegistryScript(
           projectAtMph,
           protocolNftMph,
           teikiMph,
-          proofOfBackingMph,
         })
       )
     ),

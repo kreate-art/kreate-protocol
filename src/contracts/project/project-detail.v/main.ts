@@ -45,7 +45,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       PROJECT_AT_TOKEN_NAME,
       PROJECT_FUNDS_WITHDRAWAL_DISCOUNT_RATIO,
       PROJECT_NEW_MILESTONE_DISCOUNT_CENTS,
-      PROJECT_MIN_FUNDS_WITHDRAWAL_ADA,
       PROJECT_SCRIPT_AT_TOKEN_NAME,
       PROJECT_SPONSORSHIP_RESOLUTION
     } from constants
@@ -120,12 +119,56 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       )
     }
 
-    func is_project_script_valid(input: TxInput, project_id: ByteArray) -> Bool {
-      input.output.value.get_safe(PROJECT_SCRIPT_AT_ASSET_CLASS) == 1
-        && input.output.datum.switch {
-          i: Inline => ProjectScriptDatum::from_data(i.data).project_id == project_id,
-          else => false
-        }
+    func extract_project_id_from_project_script_datum(data: Data) -> Option[ByteArray] {
+      // TODO: Extremely error prone
+      data.switch {
+        l: []Data => {
+          if (l.is_empty()) {
+            Option[ByteArray]::None
+          } else {
+            l.head.switch {
+              b: ByteArray => {
+                Option[ByteArray]::Some { b }
+              },
+              else => Option[ByteArray]::None
+            }
+          }
+        },
+        else => Option[ByteArray]::None
+      }
+    }
+
+    func calculate_total_withdrawal(
+      withdrawals: Map[StakingCredential]Int,
+      inputs: []TxInput,
+      project_id: ByteArray
+    ) -> Int {
+      inputs.fold(
+        (acc: Int, input: TxInput) -> Int {
+          output: TxOutput = input.output;
+          output.ref_script_hash.switch {
+            sh: Some => {
+              output.datum.switch {
+                i: Inline => {
+                  extract_project_id_from_project_script_datum(i.data).switch {
+                    si: Some => {
+                      if (si.some == project_id) {
+                        acc + withdrawals.get(scriptHashToStakingCredential(sh.some))
+                      } else {
+                        acc
+                      }
+                    },
+                    else => acc
+                  }
+                },
+                else => acc
+              }
+            },
+            else => acc
+          }
+        },
+        0
+      )
     }
 
     func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
@@ -154,32 +197,9 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
           withdrawals: Map[StakingCredential]Int = tx.withdrawals;
 
-          project_script_input_withdrawals: Int =
-            tx.inputs
-              .fold(
-                (acc: Int, input: TxInput) -> Int {
-                  if (is_project_script_valid(input, datum.project_id)) {
-                    acc + withdrawals.get(input.output.address.staking_credential.unwrap())
-                  }
-                  else { acc }
-                },
-                0
-              );
-
-          project_script_ref_inputs: []TxInput =
-            tx.ref_inputs.filter((input: TxInput) -> Bool { is_project_script_valid(input, datum.project_id) });
-
-          project_script_ref_input_withdrawals: Int =
-            project_script_ref_inputs
-              .fold(
-                (acc: Int, input: TxInput) -> Int {
-                  acc + withdrawals.get(input.output.address.staking_credential.unwrap())
-                },
-                0
-              );
-
           total_withdrawal: Int =
-            project_script_input_withdrawals + project_script_ref_input_withdrawals;
+            calculate_total_withdrawal(withdrawals, tx.inputs, datum.project_id)
+              + calculate_total_withdrawal(withdrawals, tx.ref_inputs, datum.project_id);
 
           new_withdrawn_funds: Int = datum.withdrawn_funds + total_withdrawal;
 
@@ -283,11 +303,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 + if (is_new_milestone_reached) {
                   pparams_datum.discount_cent_price * PROJECT_NEW_MILESTONE_DISCOUNT_CENTS
                 } else {
-                  assert (
-                    total_withdrawal >= PROJECT_MIN_FUNDS_WITHDRAWAL_ADA
-                      || (total_withdrawal > 0 && project_script_ref_inputs.is_empty() ),
-                    "Total withdrawal must be larger than min funds or must consume all project script UTxO"
-                  );
                   0
                 };
 

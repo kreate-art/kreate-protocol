@@ -342,7 +342,9 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   }
                 );
 
-              is_tx_authorized_by(tx, pparams_datum.governor_address.credential)
+              (is_tx_authorized_by(tx, pparams_datum.staking_manager)
+                || is_tx_authorized_by(tx, pparams_datum.governor_address.credential)
+              )
                 && is_output_project_datum_valid
                 && is_treasury_txout_valid
             },

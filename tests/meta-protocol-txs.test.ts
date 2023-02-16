@@ -97,6 +97,8 @@ describe("meta-protocol transactions", () => {
       teikiPlantAddress,
     };
 
+    emulator.awaitBlock(100);
+
     const tx = bootstrapMetaProtocolTx(lucid, params);
 
     const txComplete = await tx.complete();

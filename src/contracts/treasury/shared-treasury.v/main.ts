@@ -6,14 +6,12 @@ export type Params = {
   projectAtMph: Hex;
   protocolNftMph: Hex;
   teikiMph: Hex;
-  proofOfBackingMph: Hex;
 };
 
 export default function main({
   projectAtMph,
   protocolNftMph,
   teikiMph,
-  proofOfBackingMph,
 }: Params) {
   return helios("v__shared_treasury", [
     "v__shared_treasury__types",
@@ -21,7 +19,6 @@ export default function main({
     "v__project__types",
     "mp__teiki__types",
     "v__open_treasury__types",
-    "mp__proof_of_backing__types",
     "fraction",
     "helpers",
     "constants",
@@ -38,7 +35,6 @@ export default function main({
     import { Datum as ProjectDatum } from v__project__types
     import { Redeemer as TeikiRedeemer } from mp__teiki__types
     import { Datum as OpenTreasuryDatum } from v__open_treasury__types
-    import { Redeemer as PoBRedeemer } from mp__proof_of_backing__types
 
     import { Fraction } from fraction
 
@@ -70,9 +66,6 @@ export default function main({
 
     const TEIKI_ASSET_CLASS: AssetClass =
       AssetClass::new(TEIKI_MPH, TEIKI_TOKEN_NAME)
-
-    const PROOF_OF_BACKING_MPH: MintingPolicyHash =
-      MintingPolicyHash::new(#${proofOfBackingMph})
 
     // Synchronize with the calculateTeikiRemaining in transactions
     func calculate_teiki_remaining(
@@ -121,20 +114,9 @@ export default function main({
 
           burn_amount_condition: Bool =
             if (update_teiki.burn_amount == 0){
-              pob_script_purpose: ScriptPurpose =
-                ScriptPurpose::new_minting(PROOF_OF_BACKING_MPH);
-
-              pob_redeemer_data: Data = tx.redeemers.get(pob_script_purpose);
-
-              is_pob_redeemer_valid: Bool =
-                PoBRedeemer::from_data(pob_redeemer_data).switch {
-                  Plant => true,
-                  ClaimRewards => true,
-                  else => false
-                };
 
               update_teiki.rewards > 0
-                && is_pob_redeemer_valid
+                && tx.minted.get_safe(TEIKI_ASSET_CLASS) > 0
             } else {
               update_teiki.rewards >= 0
             };
