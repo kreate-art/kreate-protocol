@@ -58,8 +58,6 @@ const lucid = await getLucid();
 
 const teikiPlantNftPolicy = await runBootstrapMetaProtocol(lucid);
 
-// wait for several minutes to ensure wallet UTxOs is updated
-// check why lucid.awaitTx() not working as expected
 await sleep(60_000);
 
 const teikiPlantNftMph = lucid.utils.validatorToScriptHash(teikiPlantNftPolicy);
@@ -261,7 +259,6 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
       projectAtMph,
       protocolNftMph,
       teikiMph,
-      proofOfBackingMph,
     })
   );
   const openTreasuryVScript = exportScript(

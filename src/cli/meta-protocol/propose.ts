@@ -10,7 +10,7 @@ import { assert } from "@/utils";
 
 const lucid = await getLucid();
 const teikiPlantNftMph = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-const teikiMph = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+const proofOfBackingMph = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
 const teikiPlantNftUnit: Unit = teikiPlantNftMph + TEIKI_PLANT_NFT_TOKEN_NAME;
 const teikiPlantAddress = "addr1xxxx";
 
@@ -37,7 +37,7 @@ const proposedRules: RulesProposal = {
     ...teikiPlantDatum.rules,
     teikiMintingRules: [
       {
-        mintingPolicyHash: { script: { hash: teikiMph } },
+        mintingPolicyHash: { script: { hash: proofOfBackingMph } },
         redeemer: { kind: "ConstrNotIn", constrs: [2n] },
       },
     ],

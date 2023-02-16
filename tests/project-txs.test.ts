@@ -104,7 +104,6 @@ const lucid = await Lucid.new(emulator);
 // Context
 const protocolNftMph = generateBlake2b224Hash();
 const teikiMph = generateBlake2b224Hash();
-const proofOfBackingMph = generateBlake2b224Hash();
 const protocolSvScriptHash = generateBlake2b224Hash();
 
 const projectAtMintingPolicy = exportScript(
@@ -140,7 +139,6 @@ const sharedTreasuryVScript = exportScript(
     projectAtMph: projectAtMph,
     protocolNftMph,
     teikiMph,
-    proofOfBackingMph,
   })
 );
 

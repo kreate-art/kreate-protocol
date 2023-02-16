@@ -116,7 +116,6 @@ const sharedTreasuryValidator = exportScript(
     projectAtMph,
     protocolNftMph,
     teikiMph,
-    proofOfBackingMph,
   })
 );
 

@@ -716,6 +716,11 @@ export default function main({
               tx.minted.contains_policy(s.some)
             }
           }
+        },
+        Burn => {
+          tx.minted.to_map().get(own_mph).all(
+            (_, amount: Int) -> Bool { amount <= 0 }
+          )
         }
       }
     }

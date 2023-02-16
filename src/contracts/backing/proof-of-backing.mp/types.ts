@@ -19,6 +19,7 @@ export default helios("mp__proof_of_backing__types")`
     ClaimRewards { flowers: []Plant}
     MigrateOut
     MigrateIn
+    Burn
   }
 
   func to_fruit(flower: Plant) -> Plant {

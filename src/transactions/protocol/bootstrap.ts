@@ -11,12 +11,14 @@ import {
 
 import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { getPaymentKeyHash } from "@/helpers/lucid";
+import { getTxTimeRange, TimeProvider } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   ProtocolNonScriptParams,
   ProtocolParamsDatum,
   Registry,
 } from "@/schema/teiki/protocol";
+import { TimeDifference } from "@/types";
 
 import { constructAddress } from "../../helpers/schema";
 
@@ -32,6 +34,9 @@ export type BootstrapProtocolParams = {
   protocolProposalAddress: Address;
   protocolStakeAddress: Address;
   protocolStakeValidator: Script;
+  txTimeStartPadding?: TimeDifference;
+  txTimeEndPadding?: TimeDifference;
+  timeProvider?: TimeProvider;
 };
 
 export function bootstrapProtocolTx(
@@ -48,8 +53,18 @@ export function bootstrapProtocolTx(
     protocolProposalAddress,
     protocolStakeValidator,
     protocolStakeAddress,
+    txTimeStartPadding = 60_000,
+    txTimeEndPadding = 60_000,
+    timeProvider,
   }: BootstrapProtocolParams
 ) {
+  const [txTimeStart, txTimeEnd] = getTxTimeRange({
+    lucid,
+    timeProvider,
+    txTimeStartPadding,
+    txTimeEndPadding,
+  });
+
   const protocolParamsDatum: ProtocolParamsDatum = {
     registry,
     governorAddress: constructAddress(governorAddress),
@@ -89,5 +104,7 @@ export function bootstrapProtocolTx(
     )
     .registerStake(protocolStakeAddress)
     .delegateTo(protocolStakeAddress, poolId, Data.void())
-    .attachCertificateValidator(protocolStakeValidator);
+    .attachCertificateValidator(protocolStakeValidator)
+    .validFrom(txTimeStart)
+    .validTo(txTimeEnd);
 }

@@ -121,6 +121,8 @@ describe("protocol transactions", () => {
       protocolStakeValidator,
     };
 
+    emulator.awaitBlock(100);
+
     const tx = bootstrapProtocolTx(lucid, params);
 
     const txComplete = await tx.complete();
