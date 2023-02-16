@@ -24,6 +24,7 @@ import {
   INACTIVE_PROJECT_UTXO_ADA,
   RATIO_MULTIPLIER,
   TREASURY_UTXO_MIN_ADA,
+  PROJECT_IMMEDIATE_CLOSURE_TX_TIME_SLIPPAGE,
 } from "../constants";
 
 export type ProjectScriptInfo = {
@@ -186,7 +187,12 @@ export function finalizeCloseTx(
     )
     .addSigner(deconstructAddress(lucid, project.ownerAddress))
     .validFrom(txTimeStart)
-    .validTo(txTimeEnd);
+    .validTo(
+      Math.min(
+        txTimeEnd,
+        txTimeStart + Number(PROJECT_IMMEDIATE_CLOSURE_TX_TIME_SLIPPAGE)
+      )
+    );
 
   const openTreasuryScriptAddress = addressFromScriptHashes(
     lucid,

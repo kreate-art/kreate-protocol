@@ -19,6 +19,7 @@ import { ProjectDatum } from "@/schema/teiki/project";
 import { Hex, TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
+import { PROOF_OF_BACKING_PLANT_TX_TIME_SLIPPAGE } from "../constants";
 import { attachTeikiNftMetadata, getPlantNftName } from "../meta-data";
 
 import { mintTeiki } from "./utils";
@@ -111,7 +112,12 @@ export function plantTx(
       protocolParamsUtxo,
     ])
     .validFrom(txTimeStart)
-    .validTo(txTimeEnd);
+    .validTo(
+      Math.min(
+        txTimeEnd,
+        txTimeStart + Number(PROOF_OF_BACKING_PLANT_TX_TIME_SLIPPAGE)
+      )
+    );
 
   // NOTE: We may only need to produce multiple backing UTxOs in case of cleanup
   const numProducedBackingUtxos = remainBackingAmount === 0n ? 0 : 1;

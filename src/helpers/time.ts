@@ -36,6 +36,6 @@ export function getTxTimeRange({
 }) {
   const time = now ?? getTime({ lucid, timeProvider });
   const start = time - txTimeStartPadding;
-  const end = start + txTimeEndPadding;
+  const end = time + txTimeEndPadding;
   return [start, end];
 }
