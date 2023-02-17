@@ -13,9 +13,6 @@ export default function main({ teikiPlantSeed }: Params): HeliosScript {
     import { TEIKI_PLANT_NFT_TOKEN_NAME }
       from ${module("constants")}
 
-    import { does_consume_input_with_output_id }
-      from ${module("helpers")}
-
     import { Redeemer }
       from ${module("nft__teiki_plant__types")}
 
@@ -32,7 +29,7 @@ export default function main({ teikiPlantSeed }: Params): HeliosScript {
       redeemer.switch {
 
         Bootstrap => {
-          does_consume_input_with_output_id(tx, SEED_OUTPUT_ID)
+          tx.inputs.any((input: TxInput) -> { input.output_id == SEED_OUTPUT_ID })
            && tx.minted.get_policy(own_mph) == Map[ByteArray]Int {TEIKI_PLANT_NFT_TOKEN_NAME: 1}
         }
 
