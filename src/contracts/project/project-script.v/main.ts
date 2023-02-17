@@ -135,8 +135,8 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           );
 
           assert(
-            tx.minted.to_map().get(PROJECTS_AT_MPH).all(
-              (_, amount: Int) -> Bool { amount <= 0 - 1 }
+            tx.minted.get_policy(PROJECTS_AT_MPH).all(
+              (_, amount: Int) -> Bool { amount < 0 }
             ),
             "Burn project auth token incorrect amount"
           );

@@ -425,17 +425,14 @@ export default function main({
 
                   does_update_teiki_reward_correctly && teiki_minted == teiki_to_mint
                 } else {
-                  tx.minted.to_map().get_safe(TEIKI_MPH).switch {
-                      None => true,
-                      else => false
-                    }
+                  !tx.minted.contains_policy(TEIKI_MPH)
                 };
 
               seed_mint_amount: Int =
                 produced_backing_txouts.length - consumed_backing_txinputs.length;
 
               does_mint_correctly: Bool =
-                tx.minted.to_map().get(own_mph).all(
+                tx.minted.get_policy(own_mph).all(
                   (token_name: ByteArray, amount: Int) -> Bool {
                     if (token_name == SEED_TOKEN_NAME) { amount == seed_mint_amount }
                     else if (token_name == WILTED_FLOWER_TOKEN_NAME) { amount == plant_accumulator.wilted_amount }
@@ -687,7 +684,7 @@ export default function main({
 
           assert(teiki_minted == teiki_to_mint, "Mint incorrect Teiki amount");
 
-          tx.minted.to_map().get(own_mph).all(
+          tx.minted.get_policy(own_mph).all(
             (token_name: ByteArray, amount: Int) -> Bool {
               plant_minting_map.get_safe(token_name).switch {
                 None => error("Mint incorrect plant token"),
@@ -714,7 +711,7 @@ export default function main({
           }
         },
         Burn => {
-          tx.minted.to_map().get(own_mph).all(
+          tx.minted.get_policy(own_mph).all(
             (_, amount: Int) -> Bool { amount <= 0 }
           )
         }
