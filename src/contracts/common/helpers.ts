@@ -17,18 +17,6 @@ export default helios`
     MintingRedeemer
   } from ${module("v__teiki_plant__types")}
 
-  func extract_constr_index(data: Data) -> Int {
-    data.switch {
-      (index: Int, dats: []Data) => {
-        // Helios currently does not allow unused variables here,
-        // hence we need to do this redundant check.
-        if (dats.length >= 0) { index }
-        else { error("Invalid Constr") }
-      },
-      else => error("Must be a Constr value")
-    }
-  }
-
   func is_tx_authorized_by(tx: Tx, credential: Credential) -> Bool{
     credential.switch {
       pubKey: PubKey => {
@@ -77,17 +65,15 @@ export default helios`
     predicate.redeemer.switch {
       Any => true,
       constr_in: ConstrIn => {
-        minting_constr: Int = extract_constr_index(minting_redeemer_data);
-
+        minting_constr_tag: Int = minting_redeemer_data.tag;
         constr_in.constrs.any(
-          (constr: Int) -> { constr == minting_constr }
+          (constr: Int) -> { constr == minting_constr_tag }
         )
       },
       constr_not_in: ConstrNotIn => {
-        minting_constr: Int = extract_constr_index(minting_redeemer_data);
-
+        minting_constr_tag: Int = minting_redeemer_data.tag;
         constr_not_in.constrs.all(
-          (constr: Int) -> { constr != minting_constr }
+          (constr: Int) -> { constr != minting_constr_tag }
         )
       }
     }
