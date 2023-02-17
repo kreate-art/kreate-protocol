@@ -98,7 +98,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
     func get_own_output_datum (output: TxOutput) -> Datum {
       output.datum.switch {
-        i:Inline => Datum::from_data(i.data),
+        i: Inline => Datum::from_data(i.data),
         else => error("Invalid project detail UTxO: missing inline datum")
       }
     }
@@ -204,7 +204,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 output.address == own_input_txout.address
                   && output.value == own_input_txout.value
                   && output.datum.switch {
-                    i:Inline => {
+                    i: Inline => {
                       output_datum: Datum = Datum::from_data(i.data);
 
                       datum.project_id == output_datum.project_id
@@ -307,7 +307,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     && output.value.get(AssetClass::ADA)
                         >= (total_withdrawal - fees - discount)
                     && output.datum.switch {
-                      i:Inline =>
+                      i: Inline =>
                         UserTag::from_data(i.data).switch {
                           tag: TagProjectFundsWithdrawal =>
                             tag.project_id == datum.project_id,
@@ -349,7 +349,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 own_input_txout.address == output.address
                   && own_input_txout.value == output.value
                   && output.datum.switch {
-                    i:Inline => {
+                    i: Inline => {
                       output_datum: Datum = Datum::from_data(i.data);
 
                       datum.project_id == output_datum.project_id
@@ -515,7 +515,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 )
                 && output.value == own_input_txout.value
                 && output.datum.switch {
-                  i:Inline => Datum::from_data(i.data) == datum,
+                  i: Inline => Datum::from_data(i.data) == datum,
                   else => error("Invalid project detail UTxO: missing inline datum")
                 }
               }
@@ -556,7 +556,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 )
                 && output.value == own_input_txout.value
                 && output.datum.switch {
-                  i:Inline => Datum::from_data(i.data) == datum,
+                  i: Inline => Datum::from_data(i.data) == datum,
                   else => error("Invalid project detail UTxO: missing inline datum")
                 }
               }
