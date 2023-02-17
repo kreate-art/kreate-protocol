@@ -90,7 +90,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             tx.outputs.find(
               (output: TxOutput) -> Bool {
                 output.address == own_input_txinput.output.address
-                  && output.datum.switch{
+                  && output.datum.switch {
                     i: Inline => {
                       output_datum: Datum = Datum::from_data(i.data);
 
@@ -106,7 +106,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               }
             );
 
-          own_output_datum: Datum = own_output_txout.datum.switch{
+          own_output_datum: Datum = own_output_txout.datum.switch {
             i: Inline => Datum::from_data(i.data),
             else => error("Invalid dedicated treasury UTxO: Missing inline datum")
           };
@@ -224,7 +224,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 output.address == own_input_txinput.output.address
                   && output.value.get_safe(AssetClass::ADA)
                       == own_input_txinput.output.value.get_safe(AssetClass::ADA) - withdrawn_ada
-                  && output.datum.switch{
+                  && output.datum.switch {
                     i: Inline => {
                       output_datum: Datum = Datum::from_data(i.data);
 

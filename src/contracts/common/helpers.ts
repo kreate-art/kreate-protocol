@@ -150,8 +150,8 @@ export default helios`
   }
 
   func stakingCredentialToSVH(staking_credential: StakingCredential) -> StakingValidatorHash {
-    staking_credential.switch{
-      h: Hash => h.hash.switch{
+    staking_credential.switch {
+      h: Hash => h.hash.switch {
         v: Validator => v.hash,
         else => error("not StakingValidatorHash")},
       else => error("not StakingHash")

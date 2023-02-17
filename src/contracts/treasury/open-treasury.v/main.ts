@@ -58,7 +58,7 @@ export default function main({ protocolNftMph }: Params) {
           own_output_txout: TxOutput = own_output_txouts.head;
 
           own_output_datum: Datum =
-            own_output_txout.datum.switch{
+            own_output_txout.datum.switch {
               i: Inline => Datum::from_data(i.data),
               else => error("Invalid open treasury UTxO: Missing inline datum")
             };
@@ -136,7 +136,7 @@ export default function main({ protocolNftMph }: Params) {
                 .head;
 
             own_output_datum: Datum =
-              own_output_txout.datum.switch{
+              own_output_txout.datum.switch {
                 i: Inline => Datum::from_data(i.data),
                 else => error("Invalid open treasury UTxO: Missing inline datum")
               };
