@@ -84,7 +84,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           tx.minted.get_safe(migration_asset_class) != 0
         },
         else => {
-          assert (
+          assert(
             own_validator_hash
               == pparams_datum.registry.project_validator.latest,
             "Wrong script version"
@@ -110,12 +110,12 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               project_detail_redeemer_data: Data =
                 tx.redeemers.get(project_detail_script_purpose);
 
-              assert (
+              assert(
                   record.new_milestone > datum.milestone_reached,
                   "Invalid new milestone"
               );
 
-              assert (
+              assert(
                 ProjectDetailRedeemer::from_data(project_detail_redeemer_data).switch {
                   WithdrawFunds => true,
                   else => false
@@ -147,14 +147,14 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               new_staking_credential: StakingCredential =
                 StakingCredential::new_hash(StakingHash::new_validator(allocate.new_staking_validator));
 
-              assert (
+              assert(
                 is_tx_authorized_by(tx, datum.owner_address.credential)
                   || is_tx_authorized_by(tx, pparams_datum.staking_manager)
                   || is_tx_authorized_by(tx, pparams_datum.governor_address.credential),
                 "Transaction is not authorized"
               );
 
-              assert (
+              assert(
                 datum.status.switch {
                   Active => true,
                   else => false
@@ -185,7 +185,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   }
                 );
 
-              assert (
+              assert(
                 is_own_output_valid,
                 "Invalid own output"
               );
@@ -210,7 +210,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   s: Some => s.some
                 };
 
-              assert (
+              assert(
                 output_project_script.address == Address::new(
                   Credential::new_validator(
                     pparams_datum.registry
@@ -222,7 +222,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Invalid output project script address"
               );
 
-              assert (
+              assert(
                 output_project_script.datum.switch {
                   i: Inline => {
                     project_script_datum: ProjectScriptDatum = ProjectScriptDatum::from_data(i.data);
@@ -235,7 +235,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Invalid output project script datum"
               );
 
-              assert (
+              assert(
                 StakingValidatorHash::from_script_hash(output_project_script.ref_script_hash.unwrap())
                   == allocate.new_staking_validator,
                 "Invalid output project script ref script hash"
@@ -255,7 +255,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
             },
             UpdateStakingDelegationManagement => {
-              assert (
+              assert(
                 datum.status.switch {
                   Active => true,
                   else => false
@@ -263,14 +263,14 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Wrong project status"
               );
 
-              assert (
+              assert(
                 datum.is_staking_delegation_managed_by_protocol,
                 "Staking delegation is not managed by protocol"
               );
 
 
 
-              assert (
+              assert(
                 tx.outputs.any(
                   (output: TxOutput) -> Bool {
                     output.address == own_input_txout.address
@@ -296,7 +296,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
             },
             InitiateClose => {
-              assert (
+              assert(
                 datum.status.switch {
                   Active => true,
                   else => false
@@ -304,7 +304,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Wrong project status"
               );
 
-              assert (
+              assert(
                 tx.outputs.any(
                   (output: TxOutput) -> Bool {
                     output.address == own_input_txout.address
@@ -334,7 +334,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
             },
             InitiateDelist => {
-              assert (
+              assert(
                 datum.status.switch {
                   Active => true,
                   PreClosed => true,
@@ -344,7 +344,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Invalid project status"
               );
 
-              assert (
+              assert(
                 tx.outputs.any(
                   (output: TxOutput) -> Bool {
                     output.address == own_input_txout.address
@@ -377,7 +377,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
             },
             CancelDelist => {
-              assert (
+              assert(
                 datum.status.switch {
                   PreDelisted => true,
                   else => false
@@ -385,7 +385,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Invalid project status"
               );
 
-              assert (
+              assert(
                 tx.outputs.any(
                   (output: TxOutput) -> Bool {
                     output.address == own_input_txout.address
@@ -433,7 +433,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               project_detail_redeemer_data: Data =
                 tx.redeemers.get(project_detail_script_purpose);
 
-              assert (
+              assert(
                 ProjectDetailRedeemer::from_data(project_detail_redeemer_data).switch {
                   Close => true,
                   else => false
@@ -441,7 +441,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Missing input Project detail UTxO"
               );
 
-              assert (
+              assert(
                 tx.outputs.any(
                   (output: TxOutput) -> Bool {
                     output.address == Address::new(
@@ -548,7 +548,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   - INACTIVE_PROJECT_UTXO_ADA
                   - (pparams_datum.discount_cent_price * PROJECT_DELIST_DISCOUNT_CENTS);
 
-              assert (
+              assert(
                 datum.status.switch {
                   pre_delisted: PreDelisted => pre_delisted.pending_until < tx.time_range.start,
                   else => false
@@ -556,7 +556,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Invalid project status"
               );
 
-              assert (
+              assert(
                 ProjectDetailRedeemer::from_data(project_detail_redeemer_data).switch {
                   Delist => true,
                   else => false

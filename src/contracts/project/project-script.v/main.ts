@@ -85,7 +85,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           tx.minted.get_safe(migration_asset_class) != 0
         },
         else => {
-          assert (
+          assert(
             own_validator_hash
               == pparams_datum.registry.project_script_validator.latest,
             "Wrong script version"
@@ -113,7 +113,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               else => error("Invalid Project utxo: missing inline datum")
             };
 
-          assert (
+          assert(
             project_datum.project_id == datum.project_id,
             "Incorrect project UTxO"
           );
@@ -129,7 +129,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               else => false
             };
 
-          assert (
+          assert(
             does_burn_project_at_with_correct_redeemer,
             "Burn project auth token with incorrect redeemer"
           );
@@ -151,7 +151,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               }
             );
 
-          assert (
+          assert(
             does_deregister_correctly,
             "Deregister incorrect staking credential"
           );
@@ -253,7 +253,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   else => error("Wrong project status")
                 };
 
-              assert (
+              assert(
                 true || does_pass_project_datum_check,
                 "Incorrect project status"
               );
