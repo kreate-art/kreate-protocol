@@ -39,12 +39,12 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
               }
             );
 
-          proposal_script_purpose: ScriptPurpose =
+          proposal_purpose: ScriptPurpose =
             ScriptPurpose::new_spending(proposal_txinput.output_id);
 
-          proposal_redeemer_data: Data = tx.redeemers.get(proposal_script_purpose);
+          proposal_redeemer: Data = tx.redeemers.get(proposal_purpose);
 
-          ProposalRedeemer::from_data(proposal_redeemer_data).switch {
+          ProposalRedeemer::from_data(proposal_redeemer).switch {
             Apply => true,
             else => false
           }

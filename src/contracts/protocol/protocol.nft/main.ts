@@ -32,7 +32,7 @@ export default function main({ protocolSeed }: Params): HeliosScript {
 
         Bootstrap => {
           assert(
-            tx.minted.to_map().get(own_mph).all(
+            tx.minted.get_policy(own_mph).all(
               (token_name: ByteArray, amount: Int) -> {
                 if (token_name == PROTOCOL_PARAMS_NFT_TOKEN_NAME) { amount == 1 }
                 else if (token_name == PROTOCOL_PROPOSAL_NFT_TOKEN_NAME) { amount == 1 }
