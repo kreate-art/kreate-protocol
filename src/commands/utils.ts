@@ -16,7 +16,7 @@ export async function getLucid(): Promise<Lucid> {
   return lucid;
 }
 
-function requiredEnv(key: string): string {
+export function requiredEnv(key: string): string {
   const value = process.env[key];
   if (value) return value;
   else throw new Error(`${key} must be set`);
