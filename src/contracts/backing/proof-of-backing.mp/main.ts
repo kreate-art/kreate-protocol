@@ -18,34 +18,8 @@ export default function main({
     ${header("minting", "mp__proof_of_backing")}
 
     import {
-      Redeemer,
-      Plant,
-      PlantAccumulator,
-      to_fruit
-    } from ${module("mp__proof_of_backing__types")}
-    import { Datum as BackingDatum }
-      from ${module("v__backing__types")}
-    import { Datum as ProjectDatum }
-      from ${module("v__project__types")}
-    import { Datum as ProjectScriptDatum }
-      from ${module("v__project_script__types")}
-    import { Datum as PParamsDatum }
-      from ${module("v__protocol_params__types")}
-    import {
-      Datum as SharedTreasuryDatum,
-      Redeemer as SharedTreasuryRedeemer
-    } from ${module("v__shared_treasury__types")}
-    import { UserTag }
-      from ${module("common__types")}
-
-    import {
-      find_pparams_datum_from_inputs,
-      is_tx_authorized_by,
-      script_hash_to_staking_credential
-    } from ${module("helpers")}
-
-    import {
       ADA_MINTING_POLICY_HASH,
+      ADA_TOKEN_NAME,
       INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS,
       PROJECT_AT_TOKEN_NAME,
       PROJECT_SCRIPT_AT_TOKEN_NAME,
@@ -54,17 +28,46 @@ export default function main({
       TEIKI_TOKEN_NAME
     } from ${module("constants")}
 
+    import {
+      find_pparams_datum_from_inputs,
+      is_tx_authorized_by,
+      script_hash_to_staking_credential
+    } from ${module("helpers")}
+
+    import { UserTag }
+      from ${module("common__types")}
+
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
+
+    import { Datum as ProjectDatum, ProjectStatus }
+      from ${module("v__project__types")}
+
+    import { Datum as ProjectScriptDatum }
+      from ${module("v__project_script__types")}
+
+    import {
+      Datum as SharedTreasuryDatum,
+      Redeemer as SharedTreasuryRedeemer
+    } from ${module("v__shared_treasury__types")}
+
+    import { Datum as BackingDatum }
+      from ${module("v__backing__types")}
+
+    import { Redeemer, Plant }
+      from ${module("mp__proof_of_backing__types")}
+
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
 
-    const PROJECTS_AT_MPH: MintingPolicyHash =
+    const PROJECT_AT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${projectAtMph})
 
     const PROJECT_AT_ASSET_CLASS: AssetClass =
-      AssetClass::new(PROJECTS_AT_MPH, PROJECT_AT_TOKEN_NAME)
+      AssetClass::new(PROJECT_AT_MPH, PROJECT_AT_TOKEN_NAME)
 
     const PROJECT_SCRIPT_AT_ASSET_CLASS: AssetClass =
-      AssetClass::new(PROJECTS_AT_MPH, PROJECT_SCRIPT_AT_TOKEN_NAME)
+      AssetClass::new(PROJECT_AT_MPH, PROJECT_SCRIPT_AT_TOKEN_NAME)
 
     const TEIKI_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${teikiMph})
@@ -76,14 +79,36 @@ export default function main({
     const WILTED_FLOWER_TOKEN_NAME: ByteArray =
       #${PROOF_OF_BACKING_TOKEN_NAMES.WILTED_FLOWER}
 
+    struct PlantAccumulator {
+      plant_map: Map[ByteArray]Int
+      total_teiki_rewards: Int
+      wilted_amount: Int
+    }
+
+    func to_fruit(flower: Plant) -> Plant {
+      Plant {
+        is_matured: true,
+        backing_output_id: flower.backing_output_id,
+        backing_amount: flower.backing_amount,
+        unbacked_at: flower.unbacked_at,
+        project_id: flower.project_id,
+        backer_address: flower.backer_address,
+        backed_at: flower.backed_at,
+        milestone_backed: flower.milestone_backed
+      }
+    }
+
     func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
       own_mph: MintingPolicyHash = ctx.get_current_minting_policy_hash();
 
       redeemer.switch {
+
         plant: Plant => {
+          tx_time_start: Time = tx.time_range.start;
+
           assert(
-            tx.time_range.start >= tx.time_range.end - PROOF_OF_BACKING_PLANT_TX_TIME_SLIPPAGE,
+            tx_time_start >= tx.time_range.end - PROOF_OF_BACKING_PLANT_TX_TIME_SLIPPAGE,
             "Invalid time range"
           );
 
@@ -94,466 +119,465 @@ export default function main({
           pparams_datum: PParamsDatum =
             find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
 
-          consumed_backing_txinputs: []TxInput =
-            tx.inputs
-              .filter(
-                (input: TxInput) -> Bool {
-                  amount: Int = input.output.value.get_safe(seed_asset_class);
-
-                  if (amount <= 0) { false }
-                  else if (amount == 1) { true }
-                  else {
-                    error("Backing UTxO contains more than one seed token")
-                  }
+          consumed_backing_inputs: []TxInput =
+            tx.inputs.filter(
+              (input: TxInput) -> {
+                amount: Int = input.output.value.get_safe(seed_asset_class);
+                if (amount == 0) { false }
+                else if (amount == 1) { true }
+                else {
+                  error("Backing UTxO contains more than one seed token")
                 }
-              );
+              }
+            );
 
-          is_consumed_backing_empty: Bool = consumed_backing_txinputs.length == 0;
+          is_consumed_backing_empty: Bool = consumed_backing_inputs.is_empty();
 
-          produced_backing_txouts: []TxOutput =
+          produced_backing_outputs: []TxOutput =
             tx.outputs.filter(
-              (output: TxOutput) -> Bool {
+              (output: TxOutput) -> {
                 output.value.get_safe(seed_asset_class) >= 1
               }
             );
 
-          produced_backing_datums: []BackingDatum =
-            produced_backing_txouts
-            .map(
-              (txout: TxOutput) -> BackingDatum {
-                txout.datum.switch {
-                  i: Inline => BackingDatum::from_data(i.data),
-                  else => error("Invalid backing UTxO: missing inline datum")
-                }
-              }
+          is_produced_backing_empty: Bool = produced_backing_outputs.is_empty();
+
+          if (cleanup) {
+            assert(!is_consumed_backing_empty, "Must consume backing in cleaning up");
+            assert(is_produced_backing_empty, "Must not produce backing in cleaning up")
+          };
+
+          backing_credential: Credential =
+            Credential::new_validator(
+              pparams_datum.registry.backing_validator.latest
             );
 
-          is_produced_backing_empty: Bool = produced_backing_txouts.length == 0;
-
-          assert(
-            !(is_consumed_backing_empty && is_produced_backing_empty),
-            "Must consume or produce backing UTxO"
-          );
-
-          assert(
-            !(is_consumed_backing_empty && cleanup),
-            "Must consume backing in cleaning up"
-          );
-
-          assert(
-            !(!is_produced_backing_empty && cleanup),
-            "Must not produce backing in cleaning up"
-          );
-
-          are_backing_credentials_valid: Bool =
-            if(!is_consumed_backing_empty && !is_produced_backing_empty) {
-              consumed_backing_txinputs.head.output.address.credential
-                == produced_backing_txouts.head.address.credential
-            } else {
-              true
-            };
-
-          assert(
-            are_backing_credentials_valid,
-            "Must consume and produce the same credential backings"
-          );
-
-          case_consumed_backing_not_empty: Bool =
-            if (is_consumed_backing_empty) { true }
+          consumed_backer_credential: Option[Credential] =
+            if (is_consumed_backing_empty) { Option[Credential]::None }
             else {
-              fisrt_consumed_backing_datum: BackingDatum =
-                consumed_backing_txinputs.head.output.datum.switch {
+              first_backing_datum: BackingDatum =
+                consumed_backing_inputs.head.output.datum.switch {
                   i: Inline => BackingDatum::from_data(i.data),
                   else => error("Invalid backing UTxO: missing inline datum")
                 };
 
-              project_id: ByteArray = fisrt_consumed_backing_datum.project_id;
-              consumed_backer_address: Address = fisrt_consumed_backing_datum.backer_address;
+              project_id: ByteArray = first_backing_datum.project_id;
+              first_backer_address: Address = first_backing_datum.backer_address;
 
-              project_txout: TxOutput =
+              project_output: TxOutput =
                 tx.ref_inputs.find(
-                  (input: TxInput) -> Bool {
+                  (input: TxInput) -> {
                     input.output.value.get_safe(PROJECT_AT_ASSET_CLASS) == 1
                   }
                 )
                 .output;
 
               project_datum: ProjectDatum =
-                project_txout.datum.switch {
+                project_output.datum.switch {
                   i: Inline => ProjectDatum::from_data(i.data),
-                  else => error("Invalid Project utxo: missing inline datum")
+                  else => error("Invalid project UTxO: missing inline datum")
                 };
 
-              is_project_datum_valid: Bool =
-                project_datum.project_id == project_id
-                  && if (cleanup) {
-                    project_datum.status.switch {
-                      Closed => true,
-                      Delisted => true,
-                      else => error("Invalid project datum: wrong project status")
-                    }
-                  } else {
-                    true
-                  };
+              assert(project_datum.project_id == project_id, "Invalid project datum");
 
-              assert(is_project_datum_valid, "Invalid project datum");
+              project_status: ProjectStatus = project_datum.status;
 
               discount: Int =
-                if(cleanup) {
+                if (cleanup) {
+                  assert(
+                    project_status.switch {
+                      Closed => true,
+                      Delisted => true,
+                      else => false
+                    },
+                    "Invalid project datum: wrong project status"
+                  );
                   pparams_datum.discount_cent_price * INACTIVE_BACKING_CLEANUP_DISCOUNT_CENTS
                 } else {
                   0
                 };
 
               unbacked_at: Time =
-                project_datum.status.switch {
+                project_status.switch {
                   closed: Closed =>
-                    if (closed.closed_at < tx.time_range.start) { closed.closed_at }
-                    else { tx.time_range.start },
+                    if (closed.closed_at < tx_time_start) { closed.closed_at }
+                    else { tx_time_start },
                   delisted: Delisted =>
-                    if (delisted.delisted_at < tx.time_range.start) { delisted.delisted_at }
-                    else { tx.time_range.start },
-                  else => tx.time_range.start
+                    if (delisted.delisted_at < tx_time_start) { delisted.delisted_at }
+                    else { tx_time_start },
+                  else => tx_time_start
                 };
+
+              epoch_length: Duration = pparams_datum.epoch_length;
+              teiki_coefficient: Int = pparams_datum.teiki_coefficient;
 
               init_plant_accumulator: PlantAccumulator =
                 PlantAccumulator {
-                  plant_map: Map[ByteArray]Int{},
+                  plant_map: Map[ByteArray]Int {},
                   total_teiki_rewards: 0,
                   wilted_amount: 0
                 };
 
               plant_accumulator: PlantAccumulator =
-                consumed_backing_txinputs
-                  .fold (
-                    (acc: PlantAccumulator, consumed_backing_txinput: TxInput) -> PlantAccumulator{
-                      backing_datum: BackingDatum =
-                        consumed_backing_txinput.output.datum.switch {
-                          i: Inline => BackingDatum::from_data(i.data),
-                          else => error("Invalid backing UTxO: missing inline datum")
-                        };
+                consumed_backing_inputs.fold(
+                  (acc: PlantAccumulator, backing_input: TxInput) -> PlantAccumulator {
+                    backing_output: TxOutput = backing_input.output;
 
-                      is_consumed_backer_address_valid: Bool =
-                        if (consumed_backing_txinput.output.address.credential
-                              == Credential::new_validator(pparams_datum.registry.backing_validator.latest)
-                        ) { true }
-                        else { error("Invalid consumed backing address") };
+                    backing_datum: BackingDatum =
+                      backing_output.datum.switch {
+                        i: Inline => BackingDatum::from_data(i.data),
+                        else => error("Invalid backing UTxO: missing inline datum")
+                      };
 
-                      assert(is_consumed_backer_address_valid, "Invalid consumed backing address");
-
-                      is_backing_datum_valid: Bool =
-                        if (backing_datum.project_id == project_id) {
-                          if(cleanup) { true }
-                          else {
-                            if (backing_datum.backer_address == consumed_backer_address) { true }
-                            else { error("Invalid backing datum: wrong backer address") }
-                          }
-                        } else {
-                          error("Invalid consumed backing datum: wrong project id")
-                        };
-
-                      assert(is_backing_datum_valid, "Invalid backing datum");
-
-                      time_passed: Duration = unbacked_at - backing_datum.backed_at;
-
-                      is_unbacked_valid: Bool =
-                        if (unbacked_at >= backing_datum.backed_at) { true }
-                        else { error("Invalid unbacked time") };
-
-                      assert(is_unbacked_valid, "Invalid unbacked time");
-
-                      if (time_passed > pparams_datum.epoch_length) {
-                        backing_amount: Int = consumed_backing_txinput.output.value.get_safe(AssetClass::ADA);
-
-                        is_matured: Bool =
-                          backing_datum.milestone_backed < project_datum.milestone_reached
-                            && project_datum.status.switch {
-                              PreDelisted => false,
-                              else => true
-                            };
-
-                        new_plant: Plant =
-                          Plant {
-                            is_matured: is_matured,
-                            backing_output_id: consumed_backing_txinput.output_id,
-                            backing_amount: backing_amount,
-                            unbacked_at: unbacked_at,
-                            project_id: backing_datum.project_id,
-                            backer_address: backing_datum.backer_address,
-                            backed_at: backing_datum.backed_at,
-                            milestone_backed: backing_datum.milestone_backed
-                          };
-
-                        plant_hash: ByteArray = new_plant.serialize().blake2b();
-
-                        teiki_rewards: Int =
-                          if(is_matured) {
-                            backing_amount
-                              * (unbacked_at - backing_datum.backed_at) / pparams_datum.epoch_length
-                              / pparams_datum.teiki_coefficient
-                          } else {
-                            0
-                          };
-
-                        are_outputs_valid: Bool =
-                          if (cleanup) {
-                            tx.outputs.any(
-                              (output: TxOutput) -> Bool {
-                                output.address == backing_datum.backer_address
-                                  && output.value.get_safe(AssetClass::ADA)
-                                      == consumed_backing_txinput.output.value.get_safe(AssetClass::ADA) - discount
-                                  && output.value.get_safe(TEIKI_ASSET_CLASS) == teiki_rewards
-                                  && output.value.get_safe(AssetClass::new(own_mph, plant_hash)) == 1
-                                  && output.datum.switch {
-                                    i: Inline =>
-                                      UserTag::from_data(i.data).switch {
-                                        tag: TagInactiveBacking =>
-                                          tag.backing_output_id == consumed_backing_txinput.output_id,
-                                          else => false
-                                      },
-                                    else => error("Invalid output UTxO, missing inline datum")
-                                  }
-                              }
-                            )
-                          } else {
-                            true
-                          };
-
-                        assert(are_outputs_valid, "Invalid outputs: missing backer outputs");
-
-                        PlantAccumulator {
-                          plant_map: acc.plant_map + Map[ByteArray]Int{plant_hash: 1},
-                          total_teiki_rewards: acc.total_teiki_rewards + teiki_rewards,
-                          wilted_amount: acc.wilted_amount
-                        }
-
-                      } else {
-                        are_outputs_valid: Bool =
-                          if (cleanup) {
-                            tx.outputs.any(
-                              (output: TxOutput) -> Bool {
-                                output.address == backing_datum.backer_address
-                                  && output.value.get_safe(AssetClass::ADA)
-                                      == consumed_backing_txinput.output.value.get_safe(AssetClass::ADA) - discount
-                                  && output.value.get_safe(AssetClass::new(own_mph, WILTED_FLOWER_TOKEN_NAME)) == 1
-                                  && output.datum.switch {
-                                    i: Inline =>
-                                      UserTag::from_data(i.data).switch {
-                                        tag: TagInactiveBacking =>
-                                          tag.backing_output_id == consumed_backing_txinput.output_id,
-                                          else => false
-                                      },
-                                    else => error("Invalid output UTxO, missing inline datum")
-                                  }
-                              }
-                            )
-                          } else {
-                            true
-                          };
-
-                        assert(are_outputs_valid, "Invalid outputs: missing backer outputs");
-
-                        PlantAccumulator {
-                          plant_map: acc.plant_map,
-                          total_teiki_rewards: acc.total_teiki_rewards,
-                          wilted_amount: acc.wilted_amount + 1
-                        }
-                      }
-                    },
-                    init_plant_accumulator
-                  );
-
-              does_consume_treasury_correctly: Bool =
-                if (plant_accumulator.total_teiki_rewards > 0) {
-                  total_teiki_rewards: Int = plant_accumulator.total_teiki_rewards;
-
-                  shared_treasury_credential: Credential =
-                    Credential::new_validator(
-                      pparams_datum.registry
-                        .shared_treasury_validator
-                        .latest
+                    assert(
+                      backing_output.address.credential == backing_credential,
+                      "Invalid consumed backing address"
                     );
 
-                  shared_treasury_txinput: TxInput =
-                    tx.inputs.find(
-                      (input: TxInput) -> Bool {
-                        input_credential: Credential = input.output.address.credential;
+                    backer_address: Address = backing_datum.backer_address;
 
-                        if (input_credential == shared_treasury_credential) {
-                            input.output.datum.switch {
-                              i: Inline =>
-                                SharedTreasuryDatum::from_data(i.data).project_id
-                                  == project_id,
-                              else => false
+                    assert(
+                      backing_datum.project_id == project_id
+                        && (cleanup || backer_address == first_backer_address),
+                      "Invalid backing datum"
+                    );
+
+                    backed_at: Time = backing_datum.backed_at;
+                    time_passed: Duration = unbacked_at - backing_datum.backed_at;
+
+                    if (time_passed < Duration::new(0)) {
+                      error("Invalid unback time")
+                    } else if (time_passed < epoch_length) {
+                      if (cleanup) {
+                        assert(
+                          tx.outputs.any(
+                            (output: TxOutput) -> {
+                              ada_to_backer: Int = backing_output.value.get(AssetClass::ADA) - discount;
+                              output.address == backer_address
+                                && output.value.to_map().all(
+                                    (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> {
+                                      if (mph == own_mph) {
+                                        tokens == Map[ByteArray]Int {WILTED_FLOWER_TOKEN_NAME: 1}
+                                      } else if (mph == ADA_MINTING_POLICY_HASH) {
+                                        tokens.get(ADA_TOKEN_NAME) >= ada_to_backer
+                                      } else {
+                                        false
+                                      }
+                                    }
+                                  )
+                                && output.datum.switch {
+                                  i: Inline =>
+                                    UserTag::from_data(i.data).switch {
+                                      tag: TagInactiveBacking =>
+                                        tag.backing_output_id == backing_input.output_id,
+                                        else => false
+                                    },
+                                  else => error("Invalid output UTxO, missing inline datum")
+                                }
                             }
+                          ),
+                          "Haven't paid to backer"
+                        )
+                      };
+
+                      PlantAccumulator {
+                        plant_map: acc.plant_map,
+                        total_teiki_rewards: acc.total_teiki_rewards,
+                        wilted_amount: acc.wilted_amount + 1
+                      }
+                    } else {
+                      backing_amount: Int = backing_output.value.get(AssetClass::ADA);
+
+                      milestone_backed: Int = backing_datum.milestone_backed;
+
+                      is_matured: Bool =
+                        milestone_backed < project_datum.milestone_reached
+                          && project_datum.status.switch {
+                            PreDelisted => false,
+                            else => true
+                          };
+
+                      new_plant: Plant =
+                        Plant {
+                          is_matured: is_matured,
+                          backing_output_id: backing_input.output_id,
+                          backing_amount: backing_amount,
+                          unbacked_at: unbacked_at,
+                          project_id: project_id,
+                          backer_address: backer_address,
+                          backed_at: backed_at,
+                          milestone_backed: milestone_backed
+                        };
+
+                      plant_hash: ByteArray = new_plant.serialize().blake2b();
+
+                      teiki_rewards: Int =
+                        if (is_matured) {
+                          backing_amount
+                            * ((unbacked_at - backed_at) / epoch_length)
+                            / teiki_coefficient
                         } else {
-                          false
-                        }
+                          0
+                        };
+
+                      if (cleanup) {
+                        assert(
+                          tx.outputs.any(
+                            (output: TxOutput) -> Bool {
+                              ada_to_backer: Int = backing_output.value.get(AssetClass::ADA) - discount;
+                              output.address == backer_address
+                                && output.value.to_map().all(
+                                    (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> {
+                                      if (mph == TEIKI_MPH) {
+                                        tokens == Map[ByteArray]Int {TEIKI_TOKEN_NAME: teiki_rewards}
+                                      } else if (mph == own_mph) {
+                                        tokens == Map[ByteArray]Int {plant_hash: 1}
+                                      } else if (mph == ADA_MINTING_POLICY_HASH) {
+                                        tokens.get(ADA_TOKEN_NAME) >= ada_to_backer
+                                      } else {
+                                        false
+                                      }
+                                    }
+                                  )
+                                && output.datum.switch {
+                                  i: Inline =>
+                                    UserTag::from_data(i.data).switch {
+                                      tag: TagInactiveBacking =>
+                                        tag.backing_output_id == backing_input.output_id,
+                                        else => false
+                                    },
+                                  else => error("Invalid output UTxO, missing inline datum")
+                                }
+                            }
+                          ),
+                          "Haven't paid to backer"
+                        )
+                      };
+
+                      PlantAccumulator {
+                        plant_map: acc.plant_map.prepend(plant_hash, 1),
+                        total_teiki_rewards: acc.total_teiki_rewards + teiki_rewards,
+                        wilted_amount: acc.wilted_amount
                       }
-                    );
 
-                  treasury_purpose: ScriptPurpose =
-                    ScriptPurpose::new_spending(shared_treasury_txinput.output_id);
-
-                  share_treasury_redeemer: Data =
-                    tx.redeemers.get(treasury_purpose);
-
-                  share_treasury_update_teiki_redeemer: SharedTreasuryRedeemer::UpdateTeiki =
-                    SharedTreasuryRedeemer::from_data(share_treasury_redeemer).switch {
-                      update_teiki: UpdateTeiki => update_teiki,
-                      else => error("Invalid share treasury redeemer")
-                    };
-
-                  does_update_teiki_reward_correctly: Bool =
-                    share_treasury_update_teiki_redeemer.rewards == total_teiki_rewards;
-
-                  teiki_to_mint: Int =
-                    project_datum.status.switch {
-                      Delisted => share_treasury_update_teiki_redeemer.burn_action.switch {
-                        BurnEntirely => 2 * total_teiki_rewards - share_treasury_update_teiki_redeemer.burn_amount,
-                        else => error("Invalid burn action")
-                      },
-                      else => {
-                        share_treasury_update_teiki_redeemer.burn_action.switch {
-                          BurnPeriodically => 3 * total_teiki_rewards - share_treasury_update_teiki_redeemer.burn_amount,
-                          else => error("Invalid burn action")
-                        }
-                      }
-                    };
-
-                  teiki_minted: Int = tx.minted.get_safe(TEIKI_ASSET_CLASS);
-
-                  does_update_teiki_reward_correctly && teiki_minted == teiki_to_mint
-                } else {
-                  !tx.minted.contains_policy(TEIKI_MPH)
-                };
-
-              seed_mint_amount: Int =
-                produced_backing_txouts.length - consumed_backing_txinputs.length;
-
-              does_mint_correctly: Bool =
-                tx.minted.get_policy(own_mph).all(
-                  (token_name: ByteArray, amount: Int) -> Bool {
-                    if (token_name == SEED_TOKEN_NAME) { amount == seed_mint_amount }
-                    else if (token_name == WILTED_FLOWER_TOKEN_NAME) { amount == plant_accumulator.wilted_amount }
-                    else {
-                      plant_accumulator.plant_map.get_safe(token_name).switch {
-                        None => error("Mint incorrect plant token"),
-                        s: Some => amount == s.some
-                      }
                     }
-                  }
+                  },
+                  init_plant_accumulator
                 );
 
-              assert(does_mint_correctly, "Proof of backing: Mint incorrectly value");
+              total_teiki_rewards: Int = plant_accumulator.total_teiki_rewards;
 
-              if (!cleanup) {
-                assert(
-                  is_tx_authorized_by(tx, consumed_backer_address.credential),
-                  "Transaction must be authorized by the backer"
-                )
+              if (total_teiki_rewards > 0) {
+                shared_treasury_credential: Credential =
+                  Credential::new_validator(
+                    pparams_datum.registry.shared_treasury_validator.latest
+                  );
+
+                shared_treasury_input: TxInput =
+                  tx.inputs.find(
+                    (input: TxInput) -> {
+                      output: TxOutput = input.output;
+                      if (output.address.credential == shared_treasury_credential) {
+                        output.datum.switch {
+                          i: Inline => SharedTreasuryDatum::from_data(i.data).project_id == project_id,
+                          else => false
+                        }
+                      } else {
+                        false
+                      }
+                    }
+                  );
+
+                shared_treasury_purpose: ScriptPurpose =
+                  ScriptPurpose::new_spending(shared_treasury_input.output_id);
+
+                share_treasury_redeemer: Data =
+                  tx.redeemers.get(shared_treasury_purpose);
+
+                shared_treasury_update_teiki: SharedTreasuryRedeemer::UpdateTeiki =
+                  SharedTreasuryRedeemer::from_data(share_treasury_redeemer).switch {
+                    update_teiki: UpdateTeiki => {
+                      assert(
+                        update_teiki.rewards == total_teiki_rewards,
+                        "Teiki rewards must match"
+                      );
+                      update_teiki
+                    },
+                    else => error("Invalid share treasury redeemer")
+                  };
+
+                teiki_to_mint: Int =
+                  project_datum.status.switch {
+                    Delisted => shared_treasury_update_teiki.burn_action.switch {
+                      BurnEntirely => 2 * total_teiki_rewards - shared_treasury_update_teiki.burn_amount,
+                      else => error("Invalid burn action")
+                    },
+                    else => {
+                      shared_treasury_update_teiki.burn_action.switch {
+                        BurnPeriodically => 3 * total_teiki_rewards - shared_treasury_update_teiki.burn_amount,
+                        else => error("Invalid burn action")
+                      }
+                    }
+                  };
+
+                teiki_minted: Int = tx.minted.get_safe(TEIKI_ASSET_CLASS);
+
+                assert(teiki_minted == teiki_to_mint, "Mint incorrect Teiki amount")
+              } else {
+                assert(!tx.minted.contains_policy(TEIKI_MPH), "Must not mint any Teiki")
               };
 
-              does_consume_treasury_correctly
+              seed_amount: Int =
+                produced_backing_outputs.length - consumed_backing_inputs.length;
+
+              assert(
+                tx.minted.get_policy(own_mph)
+                  == plant_accumulator.plant_map
+                    .prepend(SEED_TOKEN_NAME, seed_amount)
+                    .prepend(WILTED_FLOWER_TOKEN_NAME, plant_accumulator.wilted_amount)
+                    .sort((t1: ByteArray, _, t2: ByteArray, _) -> { t1 < t2 }),
+                "Incorrect Proof of Backing mint"
+              );
+
+              Option[Credential]::Some { first_backer_address.credential }
             };
 
-          case_produced_backing_not_empty: Bool =
-            if(is_produced_backing_empty) { true }
+          produced_backer_credential: Option[Credential] =
+            if (is_produced_backing_empty) { Option[Credential]::None }
             else {
-              if (cleanup) { error("Invalid case")}
-              else {
-                project_txout: TxOutput =
-                  tx.ref_inputs.find(
-                    (input: TxInput) -> Bool {
-                      input.output.value.get_safe(PROJECT_AT_ASSET_CLASS) == 1
-                    }
-                  )
-                  .output;
+              backer_address: Address =
+                produced_backing_outputs.head.datum.switch {
+                  i: Inline => BackingDatum::from_data(i.data).backer_address,
+                  else => error("Invalid backing UTxO: missing inline datum")
+                };
 
-                project_datum: ProjectDatum =
-                  project_txout.datum.switch {
-                    i: Inline => ProjectDatum::from_data(i.data),
-                    else => error("Invalid Project utxo: missing inline datum")
-                  };
-
-                is_project_datum_status_valid: Bool =
-                  project_datum.status.switch {
-                    Active => true,
-                    else => false
-                  };
-
-                assert(is_project_datum_status_valid, "Invalid project status");
-
-                project_id: ByteArray = produced_backing_datums.head.project_id;
-                produced_backer_address: Address = produced_backing_datums.head.backer_address;
-
-                project_script_txout: TxOutput =
-                  tx.ref_inputs.find(
-                    (input: TxInput) -> Bool {
-                      input.output.value.get_safe(PROJECT_SCRIPT_AT_ASSET_CLASS) == 1
-                    }
-                  )
-                  .output;
-
-                project_script_datum: ProjectScriptDatum =
-                  project_script_txout.datum.switch {
-                    i: Inline => ProjectScriptDatum::from_data(i.data),
-                    else => error("Invalid Project script utxo: missing inline datum")
-                  };
-
-                ref_option_staking_credential: Option[StakingCredential] =
-                  Option[StakingCredential]::Some{
-                    script_hash_to_staking_credential(
-                      project_script_txout.ref_script_hash.unwrap()
-                    )
-                  };
-
-                are_produced_backing_datums_valid: Bool =
-                  produced_backing_datums.all(
-                    (produced_backing_datum: BackingDatum) -> Bool {
-                      produced_backing_datum.backer_address == produced_backer_address
-                        && produced_backing_datum.backed_at == tx.time_range.start
-                        && produced_backing_datum.milestone_backed == project_datum.milestone_reached
-                    }
+              produced_backing_outputs.for_each(
+                (output: TxOutput) -> {
+                  assert(
+                    output.value.to_map().all(
+                      (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> {
+                        if (mph == own_mph) {
+                          tokens == Map[ByteArray]Int {SEED_TOKEN_NAME: 1}
+                        } else {
+                          mph == ADA_MINTING_POLICY_HASH
+                        }
+                      }
+                    ),
+                    "Incorrect backing value"
                   );
 
-                assert(are_produced_backing_datums_valid, "Invalid produced backing datums");
+                  backing_datum: BackingDatum = output.datum.switch {
+                    i: Inline => BackingDatum::from_data(i.data),
+                    else => error("Invalid backing UTxO: missing inline datum")
+                  };
 
-                assert(
-                  is_tx_authorized_by(tx, produced_backer_address.credential)
-                    || is_tx_authorized_by(tx, pparams_datum.governor_address.credential),
-                  "Transaction is not authorized by produced backer address"
-                );
+                  project_id: ByteArray = backing_datum.project_id;
 
-                assert(
-                  project_datum.project_id == project_id,
-                  "Reference incorrect project UTxO (incorrect project id)"
-                );
-
-                assert(
-                  project_script_datum.project_id == project_id,
-                  "Reference incorrect project script UTxO (incorrect project id)"
-                );
-
-                produced_backing_txouts.all(
-                  (output: TxOutput) -> Bool {
-                    output.address == Address::new (
-                      Credential::new_validator(
-                        pparams_datum.registry
-                          .backing_validator
-                          .latest
-                      ),
-                      ref_option_staking_credential
+                  project_output: TxOutput =
+                    tx.ref_inputs.find(
+                      (input: TxInput) -> {
+                        input.output.value.get_safe(PROJECT_AT_ASSET_CLASS) == 1
+                      }
                     )
-                  }
-                )
-              }
+                    .output;
+
+                  project_datum: ProjectDatum =
+                    project_output.datum.switch {
+                      i: Inline => ProjectDatum::from_data(i.data),
+                      else => error("Invalid project UTxO: missing inline datum")
+                    };
+
+                  is_project_active: Bool =
+                    project_datum.status.switch {
+                      Active => true,
+                      else => false
+                    };
+                  assert(is_project_active, "Project must be active");
+
+                  project_script_output: TxOutput =
+                    tx.ref_inputs.find(
+                      (input: TxInput) -> {
+                        input.output.value.get_safe(PROJECT_SCRIPT_AT_ASSET_CLASS) == 1
+                      }
+                    )
+                    .output;
+
+                  project_script_datum: ProjectScriptDatum =
+                    project_script_output.datum.switch {
+                      i: Inline => ProjectScriptDatum::from_data(i.data),
+                      else => error("Invalid project script UTxO: missing inline datum")
+                    };
+
+                  assert(
+                    project_datum.project_id == project_id,
+                    "Reference incorrect project UTxO (incorrect project id)"
+                  );
+
+                  assert(
+                    project_script_datum.project_id == project_id,
+                    "Reference incorrect project script UTxO (incorrect project id)"
+                  );
+
+                  assert(
+                    backing_datum.backer_address == backer_address
+                      && backing_datum.backed_at == tx_time_start
+                      && backing_datum.milestone_backed == project_datum.milestone_reached,
+                    "Incorrect backing datum"
+                  );
+
+                  assert(
+                    output.address == Address::new(
+                      backing_credential,
+                      Option[StakingCredential]::Some {
+                        script_hash_to_staking_credential(
+                          project_script_output.ref_script_hash.unwrap()
+                        )
+                      }
+                    ),
+                    "Incorrect backing address"
+                  )
+                }
+              );
+
+              Option[Credential]::Some { backer_address.credential }
             };
 
-          case_consumed_backing_not_empty
-            && case_produced_backing_not_empty
+          consumed_backer_credential.switch {
+            None => produced_backer_credential.switch {
+              None => {
+                error("Must consume or produce backing UTxO")
+              },
+              sp: Some => {
+                assert(
+                  is_tx_authorized_by(tx, sp.some)
+                    || is_tx_authorized_by(tx, pparams_datum.governor_address.credential),
+                  "Transaction must be authorized by the (produced) backer or governor"
+                )
+              }
+            },
+            sc: Some => produced_backer_credential.switch {
+              None => {
+                assert(
+                  cleanup || is_tx_authorized_by(tx, sc.some),
+                  "Transaction must be cleaning up or authorized by the (consumed) backer"
+                )
+              },
+              sp: Some => {
+                assert(
+                  sc.some == sp.some,
+                  "Must consume and produce the same credential backings"
+                );
+                assert(
+                  is_tx_authorized_by(tx, sc.some),
+                  "Transaction must be authorized by the (same) backer"
+                )
+              }
+            }
+          };
 
+          true
         },
+
         claim_rewards: ClaimRewards => {
           flowers: []Plant = claim_rewards.flowers;
 
@@ -562,7 +586,7 @@ export default function main({
 
           project_id: ByteArray = flowers.head.project_id;
 
-          project_txout: TxOutput =
+          project_output: TxOutput =
             tx.ref_inputs
               .find(
                 (input: TxInput) -> Bool {
@@ -572,45 +596,41 @@ export default function main({
               .output;
 
           project_datum: ProjectDatum =
-            project_txout.datum.switch {
+            project_output.datum.switch {
               i: Inline => ProjectDatum::from_data(i.data),
               else => error("Invalid Project utxo: missing inline datum")
             };
+          project_status: ProjectStatus = project_datum.status;
+          project_milestone: Int = project_datum.milestone_reached;
 
           is_project_datum_valid: Bool =
             project_datum.project_id == project_id
-              && project_datum.status.switch {
+              && project_status.switch {
                 PreDelisted => false,
                 else => true
               };
-
           assert(is_project_datum_valid, "Invalid project datum");
 
-          are_flowers_valid: Bool =
-            flowers.all(
-              (flower: Plant) -> Bool {
-                flower.project_id == project_id
-                  && flower.milestone_backed < project_datum.milestone_reached
-              }
-            );
-
-          assert(are_flowers_valid, "Invalid flowers");
-
-          _end_output_id: TxOutputId =
+          _ignored: TxOutputId =
             flowers.fold(
-              (last_id: TxOutputId, flower: Plant) -> TxOutputId {
+              (last_id: TxOutputId, flower: Plant) ->  {
                 current_id: TxOutputId = flower.backing_output_id;
                 assert(current_id > last_id, "Flowers are not sorted");
+                assert(
+                  !flower.is_matured
+                    && flower.project_id == project_id
+                    && flower.milestone_backed < project_milestone,
+                  "Invalid flower"
+                );
                 current_id
               },
               TxOutputId::new(TxId::new(#), 0)
             );
-
-          assert(_end_output_id.index >= 0, "dummy");
+          assert(_ignored.index >= 0, "invalid flowers");
 
           plant_minting_map: Map[ByteArray]Int =
             flowers.fold(
-              (acc: Map[ByteArray]Int, flower: Plant) -> Map[ByteArray]Int {
+              (acc: Map[ByteArray]Int, flower: Plant) -> {
                 acc
                   .prepend(flower.serialize().blake2b(), -1)
                   .prepend(to_fruit(flower).serialize().blake2b(), 1)
@@ -618,33 +638,35 @@ export default function main({
               Map[ByteArray]Int {}
             );
 
+          epoch_length: Duration = pparams_datum.epoch_length;
+          teiki_coefficient: Int = pparams_datum.teiki_coefficient;
           total_teiki_rewards: Int =
             flowers.fold(
-              (acc: Int, flower: Plant) -> Int {
+              (acc: Int, flower: Plant) -> {
                 teiki_rewards: Int =
                   flower.backing_amount
-                    * (flower.unbacked_at - flower.backed_at) / pparams_datum.epoch_length
-                    / pparams_datum.teiki_coefficient;
-
+                    * ((flower.unbacked_at - flower.backed_at) / epoch_length)
+                    / teiki_coefficient;
+                assert(teiki_rewards > 0, "flower is not ready yet");
                 acc + teiki_rewards
               },
               0
             );
 
-          shared_treasury_txinput: TxInput =
+          shared_treasury_credential: Credential =
+            Credential::new_validator(
+              pparams_datum.registry.shared_treasury_validator.latest
+            );
+
+          shared_treasury_input: TxInput =
             tx.inputs.find(
-              (input: TxInput) -> Bool {
-                input.output.address.credential
-                  == Credential::new_validator(
-                      pparams_datum.registry
-                        .shared_treasury_validator
-                        .latest
-                    )
+              (input: TxInput) -> {
+                input.output.address.credential == shared_treasury_credential
               }
             );
 
           shared_treasury_datum: SharedTreasuryDatum =
-            shared_treasury_txinput.output.datum.switch {
+            shared_treasury_input.output.datum.switch {
               i: Inline => SharedTreasuryDatum::from_data(i.data),
               else => error("Invalid shared treasury UTxO: missing inline datum")
             };
@@ -655,28 +677,32 @@ export default function main({
           );
 
           shared_treasury_purpose: ScriptPurpose =
-            ScriptPurpose::new_spending(shared_treasury_txinput.output_id);
+            ScriptPurpose::new_spending(shared_treasury_input.output_id);
 
           shared_treasury_redeemer: Data =
             tx.redeemers.get(shared_treasury_purpose);
 
-          share_treasury_update_teiki_redeemer: SharedTreasuryRedeemer::UpdateTeiki =
+          shared_treasury_update_teiki: SharedTreasuryRedeemer::UpdateTeiki =
             SharedTreasuryRedeemer::from_data(shared_treasury_redeemer).switch {
-              update_teiki: UpdateTeiki => update_teiki,
+              update_teiki: UpdateTeiki => {
+                assert(
+                  update_teiki.rewards == total_teiki_rewards,
+                  "Teiki rewards must match"
+                );
+                update_teiki
+              },
               else => error("Invalid share treasury redeemer")
             };
 
           teiki_to_mint: Int =
             project_datum.status.switch {
-              Delisted => share_treasury_update_teiki_redeemer.burn_action.switch {
-                BurnEntirely => 2 * total_teiki_rewards - share_treasury_update_teiki_redeemer.burn_amount,
+              Delisted => shared_treasury_update_teiki.burn_action.switch {
+                BurnEntirely => 2 * total_teiki_rewards - shared_treasury_update_teiki.burn_amount,
                 else => error("Invalid burn action")
               },
-              else => {
-                share_treasury_update_teiki_redeemer.burn_action.switch {
-                  BurnPeriodically => 3 * total_teiki_rewards - share_treasury_update_teiki_redeemer.burn_amount,
-                  else => error("Invalid burn action")
-                }
+              else => shared_treasury_update_teiki.burn_action.switch {
+                BurnPeriodically => 3 * total_teiki_rewards - shared_treasury_update_teiki.burn_amount,
+                else => error("Invalid burn action")
               }
             };
 
@@ -684,37 +710,32 @@ export default function main({
 
           assert(teiki_minted == teiki_to_mint, "Mint incorrect Teiki amount");
 
-          tx.minted.get_policy(own_mph).all(
-            (token_name: ByteArray, amount: Int) -> Bool {
-              plant_minting_map.get_safe(token_name).switch {
-                None => error("Mint incorrect plant token"),
-                s: Some => amount == s.some
-              }
-            }
-          )
-
+          tx.minted.get_policy(own_mph)
+            == plant_minting_map.sort((t1: ByteArray, _, t2: ByteArray, _) -> { t1 < t2 })
         },
+
         MigrateOut => {
           tx.minted.get_safe(TEIKI_ASSET_CLASS) <= 0
-          && tx.outputs.all(
-              (output: TxOutput) -> Bool {
-                !output.value.contains_policy(own_mph)
-              }
-            )
+            && !tx.outputs.any(
+                (output: TxOutput) -> Bool {
+                  output.value.contains_policy(own_mph)
+                }
+              )
         },
+
         MigrateIn => {
           PROOF_OF_BACKING_MIGRATE_IN.switch {
-            None => error("Unable to migrate in!"),
-            s: Some => {
-              tx.minted.contains_policy(s.some)
-            }
+            None => error("No PROOF_OF_BACKING_MIGRATE_IN"),
+            s: Some => tx.minted.contains_policy(s.some)
           }
         },
+
         Burn => {
           tx.minted.get_policy(own_mph).all(
-            (_, amount: Int) -> Bool { amount <= 0 }
+            (_, amount: Int) -> Bool { amount < 0 }
           )
         }
+
       }
     }
   `;

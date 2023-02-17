@@ -45,17 +45,17 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       PROJECT_SCRIPT_CLOSE_DISCOUNT_CENTS
     } from ${module("constants")}
 
-    const PROJECTS_AT_MPH: MintingPolicyHash =
+    const PROJECT_AT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${projectAtMph})
 
     const PROJECT_AT_ASSET_CLASS: AssetClass =
-      AssetClass::new(PROJECTS_AT_MPH, PROJECT_AT_TOKEN_NAME)
+      AssetClass::new(PROJECT_AT_MPH, PROJECT_AT_TOKEN_NAME)
 
     const PROJECT_DETAIL_AT_ASSET_CLASS: AssetClass =
-      AssetClass::new(PROJECTS_AT_MPH, PROJECT_DETAIL_AT_TOKEN_NAME)
+      AssetClass::new(PROJECT_AT_MPH, PROJECT_DETAIL_AT_TOKEN_NAME)
 
     const PROJECT_SCRIPT_AT_ASSET_CLASS: AssetClass =
-      AssetClass::new(PROJECTS_AT_MPH, PROJECT_SCRIPT_AT_TOKEN_NAME)
+      AssetClass::new(PROJECT_AT_MPH, PROJECT_SCRIPT_AT_TOKEN_NAME)
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
@@ -119,7 +119,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           );
 
           project_at_purpose: ScriptPurpose =
-            ScriptPurpose::new_minting(PROJECTS_AT_MPH);
+            ScriptPurpose::new_minting(PROJECT_AT_MPH);
 
           project_at_redeemer: Data = tx.redeemers.get(project_at_purpose);
 
@@ -135,7 +135,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           );
 
           assert(
-            tx.minted.get_policy(PROJECTS_AT_MPH).all(
+            tx.minted.get_policy(PROJECT_AT_MPH).all(
               (_, amount: Int) -> Bool { amount < 0 }
             ),
             "Burn project auth token incorrect amount"

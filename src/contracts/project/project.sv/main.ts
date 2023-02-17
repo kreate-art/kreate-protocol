@@ -127,7 +127,6 @@ export default function main({
 
               staking_manager_credential: Credential =
                 pparams_datum.staking_manager;
-
               governor_credential: Credential =
                 pparams_datum.governor_address.credential;
 

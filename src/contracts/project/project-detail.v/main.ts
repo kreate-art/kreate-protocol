@@ -44,14 +44,14 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       PROJECT_SPONSORSHIP_RESOLUTION
     } from ${module("constants")}
 
-    const PROJECTS_AT_MPH: MintingPolicyHash =
+    const PROJECT_AT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${projectAtMph})
 
     const PROJECT_AT_ASSET_CLASS: AssetClass =
-      AssetClass::new(PROJECTS_AT_MPH, PROJECT_AT_TOKEN_NAME)
+      AssetClass::new(PROJECT_AT_MPH, PROJECT_AT_TOKEN_NAME)
 
     const PROJECT_SCRIPT_AT_ASSET_CLASS: AssetClass =
-      AssetClass::new(PROJECTS_AT_MPH, PROJECT_SCRIPT_AT_TOKEN_NAME)
+      AssetClass::new(PROJECT_AT_MPH, PROJECT_SCRIPT_AT_TOKEN_NAME)
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
