@@ -32,6 +32,7 @@ import {
   constructProjectIdUsingBlake2b,
   constructTxOutputId,
 } from "@/helpers/schema";
+import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   ProjectDatum,
@@ -58,6 +59,10 @@ import {
   Params as FinalizeCloseParams,
   finalizeCloseTx,
 } from "@/transactions/project/finalize-close";
+import {
+  Params as InitiateCloseParams,
+  initiateCloseTx,
+} from "@/transactions/project/initiate-close";
 import {
   UpdateProjectParams,
   updateProjectTx,
@@ -416,6 +421,11 @@ describe("project transactions", () => {
     );
   });
 
+  it("initiate close project tx", async () => {
+    expect.assertions(1);
+    await testInitiateCloseProjectTx();
+  });
+
   it("finalize close project tx - close immediately - not consume open treasury", async () => {
     expect.assertions(2);
 
@@ -453,6 +463,52 @@ describe("project transactions", () => {
     await testUpdateStakingDelegationManagementTx();
   });
 });
+
+async function testInitiateCloseProjectTx() {
+  lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
+
+  const projectDatum: ProjectDatum = {
+    projectId: { id: projectId },
+    ownerAddress: constructAddress(projectOwnerAddress),
+    status: { type: "Active" },
+    milestoneReached: 0n,
+    isStakingDelegationManagedByProtocol: true,
+  };
+
+  const projectUtxo: UTxO = {
+    ...generateOutRef(),
+    address: projectAddress,
+    assets: {
+      lovelace:
+        SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS.projectPledge +
+        getRandomLovelaceAmount(),
+      [projectAtUnit]: 1n,
+    },
+    datum: S.toCbor(S.toData(projectDatum, ProjectDatum)),
+  };
+
+  attachUtxos(emulator, [
+    protocolParamsUtxo,
+    projectUtxo,
+    projectVRefScriptUtxo,
+  ]);
+
+  emulator.awaitBlock(10);
+
+  const time = getTime({ lucid });
+
+  const params: InitiateCloseParams = {
+    protocolParamsUtxo,
+    projectUtxo,
+    projectVRefScriptUtxo,
+    scheduledClosingTime: time + 8_640_000,
+  };
+
+  const tx = initiateCloseTx(lucid, params).addSigner(projectOwnerAddress);
+  const txComplete = await tx.complete();
+  const txHash = await signAndSubmit(txComplete);
+  await expect(lucid.awaitTx(txHash)).resolves.toBe(true);
+}
 
 async function testUpdateStakingDelegationManagementTx() {
   lucid.selectWalletFromSeed(PROJECT_OWNER_ACCOUNT.seedPhrase);
