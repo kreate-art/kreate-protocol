@@ -90,7 +90,7 @@ export default function main({
             );
 
           case_active: Bool =
-            project_detail_option_input.switch{
+            project_detail_option_input.switch {
               None => false,
               else => {
                 project_detail_input: TxInput = project_detail_option_input.unwrap();
