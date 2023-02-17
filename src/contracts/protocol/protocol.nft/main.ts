@@ -10,9 +10,6 @@ export default function main({ protocolSeed }: Params): HeliosScript {
   return helios`
     ${header("minting", "nft__protocol")}
 
-    import { does_consume_input_with_output_id }
-      from ${module("helpers")}
-
     import {
       PROTOCOL_PARAMS_NFT_TOKEN_NAME,
       PROTOCOL_PROPOSAL_NFT_TOKEN_NAME
@@ -45,7 +42,7 @@ export default function main({ protocolSeed }: Params): HeliosScript {
             "Transaction must mint only two protocol params nft and protocol proposal nft"
           );
 
-          does_consume_input_with_output_id(tx, SEED_OUTPUT_ID)
+          tx.inputs.any((input: TxInput) -> { input.output_id == SEED_OUTPUT_ID })
         }
 
       }

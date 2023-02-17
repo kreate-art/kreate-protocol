@@ -24,9 +24,7 @@ export default function main({ protocolNftMph }: Params) {
       from ${module("v__protocol_params__types")}
 
     import {
-      does_consume_input_with_output_id,
       find_pparams_datum_from_inputs,
-      find_tx_input_with_value,
       is_tx_authorized_by,
       scriptHashToStakingCredential
     } from ${module("helpers")}
@@ -277,7 +275,7 @@ export default function main({ protocolNftMph }: Params) {
                 }
               );
 
-          does_consume_input_with_output_id(tx, project_seed)
+          tx.inputs.any((input: TxInput) -> { input.output_id == project_seed })
             && does_mint_at_correctly
             && does_produce_exactly_one_project
             && does_produce_exactly_one_treasury

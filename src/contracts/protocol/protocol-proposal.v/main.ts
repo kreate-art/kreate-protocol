@@ -10,37 +10,47 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
   return helios`
     ${header("spending", "v__protocol_proposal")}
 
-    import { Datum as PParamsDatum }
-      from ${module("v__protocol_params__types")}
-    import { Datum, Redeemer, Proposal }
-      from ${module("v__protocol_proposal__types")}
+    import {
+      ADA_MINTING_POLICY_HASH,
+      PROTOCOL_PARAMS_NFT_TOKEN_NAME,
+      PROTOCOL_PROPOSAL_NFT_TOKEN_NAME
+    } from ${module("constants")}
 
     import {
-      find_tx_input_with_value,
-      get_pparams_datum,
+      parse_pparams_datum,
       is_tx_authorized_by
     } from ${module("helpers")}
 
-    import { PROTOCOL_PARAMS_NFT_TOKEN_NAME }
-      from ${module("constants")}
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
+
+    import { Datum, Redeemer, Proposal }
+      from ${module("v__protocol_proposal__types")}
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
 
-    const PROTOCOL_PARAMS_NFT_ASSET_CLASS: AssetClass =
+    const PROTOCOL_PARAMS_NFT: AssetClass =
       AssetClass::new(PROTOCOL_NFT_MPH, PROTOCOL_PARAMS_NFT_TOKEN_NAME)
 
-    const PROTOCOL_PARAMS_NFT: Value =
-      Value::new(PROTOCOL_PARAMS_NFT_ASSET_CLASS, 1)
-
-
-    func are_proposal_output_value_and_address_valid(input_txout: TxOutput, output_txout: TxOutput) -> Bool {
-      output_txout.address == input_txout.address
-        && output_txout.value >= input_txout.value
-        && output_txout.value.to_map().length == 2 // ADA and the NFT
+    func are_output_value_and_address_valid(
+      output: TxOutput,
+      address: Address,
+      token_name: ByteArray
+    ) -> Bool {
+      output.value.to_map().all(
+        (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> {
+          if (mph == PROTOCOL_NFT_MPH) {
+            tokens == Map[ByteArray]Int {token_name: 1}
+          } else {
+            mph == ADA_MINTING_POLICY_HASH
+          }
+        }
+      )
+        && output.address == address
     }
 
-    func is_datum_none(datum: Datum) -> Bool {
+    func is_proposal_empty(datum: Datum) -> Bool {
       datum.proposal.switch {
         None => true,
         else => false
@@ -59,51 +69,64 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
       own_output_datum: Datum =
         own_output_txout.datum
           .switch {
-            i:Inline => Datum::from_data(i.data),
+            i: Inline => Datum::from_data(i.data),
             else => error("Invalid proposal UTxO: missing inline datum")
           };
 
-      pparams_txinput: TxInput =
-        find_tx_input_with_value(
-          tx.inputs + tx.ref_inputs,
-          PROTOCOL_PARAMS_NFT
-        );
+      pparams_input: TxInput =
+        (tx.inputs + tx.ref_inputs)
+          .find((input: TxInput) -> { input.output.value.get_safe(PROTOCOL_PARAMS_NFT) == 1 });
 
-      pparams_datum: PParamsDatum = get_pparams_datum(pparams_txinput.output);
+      pparams_datum: PParamsDatum = parse_pparams_datum(pparams_input.output);
 
-      is_tx_authorized_by(tx, pparams_datum.governor_address.credential)
-        && are_proposal_output_value_and_address_valid(own_input_txout, own_output_txout)
-        && redeemer.switch {
-            Propose => {
-              output_proposal: Proposal = own_output_datum.proposal.unwrap();
+      assert(
+        is_tx_authorized_by(tx, pparams_datum.governor_address.credential),
+        "The proposal must be authorized"
+      );
 
-              output_proposal.in_effect_at > tx.time_range.end + pparams_datum.proposal_waiting_period
-                && output_proposal.base == pparams_txinput.output_id
+      assert(
+        are_output_value_and_address_valid(
+          own_output_txout,
+          own_input_txout.address,
+          PROTOCOL_PROPOSAL_NFT_TOKEN_NAME
+        ),
+        "Invalid proposal output value and address"
+      );
 
-            },
-            Apply => {
-              proposal: Proposal = datum.proposal.unwrap();
+      redeemer.switch {
 
-              output_pparams_txout: TxOutput =
-                tx.outputs.find(
-                  (output: TxOutput) -> Bool { output.value.contains(PROTOCOL_PARAMS_NFT) }
-                );
+        Propose => {
+          new_proposal: Proposal = own_output_datum.proposal.unwrap();
 
-              output_pparams_datum: PParamsDatum =
-                get_pparams_datum(output_pparams_txout);
+          new_proposal.in_effect_at >= tx.time_range.end + pparams_datum.proposal_waiting_period
+            && new_proposal.base == pparams_input.output_id
+        },
 
-              tx.time_range.start > proposal.in_effect_at
-                && proposal.base == pparams_txinput.output_id
-                && are_proposal_output_value_and_address_valid(pparams_txinput.output, output_pparams_txout)
-                && proposal.params == output_pparams_datum
-                && is_datum_none(own_output_datum)
-            },
-            Cancel => {
-              (!is_datum_none(datum))
-                && is_datum_none(own_output_datum)
-            },
-            else => false
-          }
+        Apply => {
+          proposal: Proposal = datum.proposal.unwrap();
+
+          new_pparams: TxOutput =
+            tx.outputs
+              .find((output: TxOutput) -> { output.value.get_safe(PROTOCOL_PARAMS_NFT) == 1 });
+
+          new_pparams_datum: PParamsDatum = parse_pparams_datum(new_pparams);
+
+          are_output_value_and_address_valid(
+            new_pparams,
+            pparams_input.output.address,
+            PROTOCOL_PARAMS_NFT_TOKEN_NAME
+          )
+            && tx.time_range.start >= proposal.in_effect_at
+            && proposal.base == pparams_input.output_id
+            && proposal.params == new_pparams_datum
+            && is_proposal_empty(own_output_datum)
+        },
+
+        Cancel => {
+          is_proposal_empty(own_output_datum) && !is_proposal_empty(datum)
+        }
+
+      }
     }
   `;
 }
