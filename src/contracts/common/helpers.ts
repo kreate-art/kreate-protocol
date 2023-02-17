@@ -16,46 +16,6 @@ export default helios`
     PROTOCOL_PARAMS_NFT_TOKEN_NAME
   } from ${module("constants")}
 
-  func is_tx_authorized_by(tx: Tx, credential: Credential) -> Bool{
-    credential.switch {
-      pubkey:PubKey => {
-        tx.is_signed_by(pubkey.hash)
-      },
-      else => {
-        tx.inputs.any(
-          (input: TxInput) -> Bool {
-            input.output.address.credential == credential
-          }
-        )
-      }
-    }
-  }
-
-  func does_tx_pass_token_preciate_check(tx: Tx, predicate: TokenPredicate) -> Bool {
-    mph: MintingPolicyHash = predicate.minting_policy_hash;
-
-    predicate.token_names.switch {
-      None => tx.inputs.any(
-        (input: TxInput) -> Bool {
-          input.output.value.contains_policy(mph)
-        }
-      ),
-      else => {
-        token_names: []ByteArray = predicate.token_names.unwrap();
-
-        token_names.all(
-          (token_name: ByteArray) -> Bool {
-            tx.inputs.any(
-              (input: TxInput) -> Bool {
-                input.output.value.get_safe(AssetClass::new(mph, token_name)) > 0
-              }
-            )
-          }
-        )
-      }
-    }
-  }
-
   func extract_constr_index(data: Data) -> Int {
     data.switch {
       (index: Int, dats: []Data) => {
@@ -68,6 +28,45 @@ export default helios`
     }
   }
 
+  func is_tx_authorized_by(tx: Tx, credential: Credential) -> Bool{
+    credential.switch {
+      pubKey: PubKey => {
+        tx.is_signed_by(pubKey.hash)
+      },
+      else => {
+        tx.inputs.any(
+          (input: TxInput) -> {
+            input.output.address.credential == credential
+          }
+        )
+      }
+    }
+  }
+
+  func does_tx_pass_token_preciate_check(tx: Tx, predicate: TokenPredicate) -> Bool {
+    mph: MintingPolicyHash = predicate.minting_policy_hash;
+
+    predicate.token_names.switch {
+      None => tx.inputs.any(
+        (input: TxInput) -> {
+          input.output.value.contains_policy(mph)
+        }
+      ),
+      else => {
+        token_names: []ByteArray = predicate.token_names.unwrap();
+
+        token_names.all(
+          (token_name: ByteArray) -> {
+            tx.inputs.any(
+              (input: TxInput) -> {
+                input.output.value.get_safe(AssetClass::new(mph, token_name)) > 0
+              }
+            )
+          }
+        )
+      }
+    }
+  }
 
   func does_tx_pass_minting_preciate_check(tx: Tx, predicate: MintingPredicate) -> Bool {
     mph: MintingPolicyHash = predicate.minting_policy_hash;
