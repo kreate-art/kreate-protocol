@@ -118,13 +118,13 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             "Incorrect project UTxO"
           );
 
-          project_at_script_purpose: ScriptPurpose =
+          project_at_purpose: ScriptPurpose =
             ScriptPurpose::new_minting(PROJECTS_AT_MPH);
 
-          project_at_redeemer_data: Data = tx.redeemers.get(project_at_script_purpose);
+          project_at_redeemer: Data = tx.redeemers.get(project_at_purpose);
 
           does_burn_project_at_with_correct_redeemer: Bool =
-            ProjectAtRedeemer::from_data(project_at_redeemer_data).switch {
+            ProjectAtRedeemer::from_data(project_at_redeemer).switch {
               DeallocateStaking => true,
               else => false
             };
@@ -169,12 +169,12 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                           }
                         );
 
-                    project_detail_script_purpose: ScriptPurpose =
+                    project_detail_purpose: ScriptPurpose =
                       ScriptPurpose::new_spending(project_detail_txinput.output_id);
 
-                    project_detail_redeemer_data: Data = tx.redeemers.get(project_detail_script_purpose);
+                    project_detail_redeemer: Data = tx.redeemers.get(project_detail_purpose);
 
-                    ProjectDetailRedeemer::from_data(project_detail_redeemer_data).switch {
+                    ProjectDetailRedeemer::from_data(project_detail_redeemer).switch {
                       WithdrawFunds => true,
                       else => error("Incorrect project detail redeemer")
                     }
@@ -201,13 +201,13 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                           }
                         );
 
-                      open_treasury_script_purpose: ScriptPurpose =
+                      open_treasury_purpose: ScriptPurpose =
                         ScriptPurpose::new_spending(open_treasury_input.output_id);
 
-                      open_treasury_redeemer_data: Data =
-                        tx.redeemers.get(open_treasury_script_purpose);
+                      open_treasury_redeemer: Data =
+                        tx.redeemers.get(open_treasury_purpose);
 
-                      OpenTreasuryRedeemer::from_data(open_treasury_redeemer_data).switch {
+                      OpenTreasuryRedeemer::from_data(open_treasury_redeemer).switch {
                         collect: CollectDelayedStakingRewards => {
                           collect.staking_withdrawals.get(staking_validator_hash)
                             == withdrawn_rewards

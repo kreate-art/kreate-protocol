@@ -258,17 +258,17 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               }
             );
 
-          dedicated_treasury_script_purpose: ScriptPurpose =
+          dedicated_treasury_purpose: ScriptPurpose =
             ScriptPurpose::new_spending(dedicated_treasury_input.output_id);
 
-          dedicated_treasury_redeemer_data: Data =
-            tx.redeemers.get(dedicated_treasury_script_purpose);
+          dedicated_treasury_redeemer: Data =
+            tx.redeemers.get(dedicated_treasury_purpose);
 
           fees: Int =
             total_withdrawal * pparams_datum.protocol_funds_share_ratio / RATIO_MULTIPLIER;
 
           does_consume_treasury_correctly: Bool =
-            DedicatedTreasuryRedeemer::from_data(dedicated_treasury_redeemer_data).switch {
+            DedicatedTreasuryRedeemer::from_data(dedicated_treasury_redeemer).switch {
               collect_fees: CollectFees => {
                 collect_fees.split == is_new_milestone_reached
                   && collect_fees.fees == fees
@@ -278,12 +278,12 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
           does_consume_project_utxo: Bool =
             if (is_new_milestone_reached) {
-              project_script_purpose: ScriptPurpose =
+              project_purpose: ScriptPurpose =
                 ScriptPurpose::new_spending(project_txinput.output_id);
 
-              project_redeemer_data: Data = tx.redeemers.get(project_script_purpose);
+              project_redeemer: Data = tx.redeemers.get(project_purpose);
 
-              ProjectRedeemer::from_data(project_redeemer_data).switch {
+              ProjectRedeemer::from_data(project_redeemer).switch {
                 record: RecordNewMilestone => record.new_milestone == milestone,
                 else => false
               }
@@ -476,14 +476,14 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   }
                 );
 
-              dedicated_treasury_script_purpose: ScriptPurpose =
+              dedicated_treasury_purpose: ScriptPurpose =
                 ScriptPurpose::new_spending(dedicated_treasury_input.output_id);
 
-              dedicated_treasury_redeemer_data: Data =
-                tx.redeemers.get(dedicated_treasury_script_purpose);
+              dedicated_treasury_redeemer: Data =
+                tx.redeemers.get(dedicated_treasury_purpose);
 
 
-              DedicatedTreasuryRedeemer::from_data(dedicated_treasury_redeemer_data).switch {
+              DedicatedTreasuryRedeemer::from_data(dedicated_treasury_redeemer).switch {
                 collect_fees: CollectFees => {
                   collect_fees.split == false
                     && collect_fees.fees == total_fees
@@ -521,13 +521,13 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               }
             );
 
-          project_script_purpose: ScriptPurpose =
+          project_purpose: ScriptPurpose =
             ScriptPurpose::new_spending(project_txinput.output_id);
 
-          project_redeemer_data: Data = tx.redeemers.get(project_script_purpose);
+          project_redeemer: Data = tx.redeemers.get(project_purpose);
 
           does_consume_project_correctly: Bool =
-            ProjectRedeemer::from_data(project_redeemer_data).switch {
+            ProjectRedeemer::from_data(project_redeemer).switch {
               FinalizeClose => true,
               else => false
             };
@@ -562,13 +562,13 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               }
             );
 
-          project_script_purpose: ScriptPurpose =
+          project_purpose: ScriptPurpose =
             ScriptPurpose::new_spending(project_txinput.output_id);
 
-          project_redeemer_data: Data = tx.redeemers.get(project_script_purpose);
+          project_redeemer: Data = tx.redeemers.get(project_purpose);
 
           does_consume_project_correctly: Bool =
-            ProjectRedeemer::from_data(project_redeemer_data).switch {
+            ProjectRedeemer::from_data(project_redeemer).switch {
               FinalizeDelist => true,
               else => false
             };

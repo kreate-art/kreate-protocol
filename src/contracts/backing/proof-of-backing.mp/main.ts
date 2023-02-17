@@ -392,14 +392,14 @@ export default function main({
                       }
                     );
 
-                  treasury_script_purpose: ScriptPurpose =
+                  treasury_purpose: ScriptPurpose =
                     ScriptPurpose::new_spending(shared_treasury_txinput.output_id);
 
-                  share_treasury_redeemer_data: Data =
-                    tx.redeemers.get(treasury_script_purpose);
+                  share_treasury_redeemer: Data =
+                    tx.redeemers.get(treasury_purpose);
 
                   share_treasury_update_teiki_redeemer: SharedTreasuryRedeemer::UpdateTeiki =
-                    SharedTreasuryRedeemer::from_data(share_treasury_redeemer_data).switch {
+                    SharedTreasuryRedeemer::from_data(share_treasury_redeemer).switch {
                       update_teiki: UpdateTeiki => update_teiki,
                       else => error("Invalid share treasury redeemer")
                     };
@@ -654,14 +654,14 @@ export default function main({
             "Incorrect project id shared treasury input"
           );
 
-          shared_treasury_script_purpose: ScriptPurpose =
+          shared_treasury_purpose: ScriptPurpose =
             ScriptPurpose::new_spending(shared_treasury_txinput.output_id);
 
-          shared_treasury_redeemer_data: Data =
-            tx.redeemers.get(shared_treasury_script_purpose);
+          shared_treasury_redeemer: Data =
+            tx.redeemers.get(shared_treasury_purpose);
 
           share_treasury_update_teiki_redeemer: SharedTreasuryRedeemer::UpdateTeiki =
-            SharedTreasuryRedeemer::from_data(shared_treasury_redeemer_data).switch {
+            SharedTreasuryRedeemer::from_data(shared_treasury_redeemer).switch {
               update_teiki: UpdateTeiki => update_teiki,
               else => error("Invalid share treasury redeemer")
             };

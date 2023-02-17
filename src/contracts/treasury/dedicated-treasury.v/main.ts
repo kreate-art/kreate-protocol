@@ -83,7 +83,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
           script_purpose: ScriptPurpose = ScriptPurpose::new_spending(project_detail_txinput.output_id);
 
-          project_detail_redeemer_data: Data = tx.redeemers.get(script_purpose);
+          project_detail_redeemer: Data = tx.redeemers.get(script_purpose);
 
           // This check is performed for batch processing purposes.
           own_output_txout: TxOutput =
@@ -173,7 +173,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           own_validator_hash
             == pparams_datum.registry.dedicated_treasury_validator.latest
             && (collect_fees.fees > 0 || collect_fees.split)
-            && ProjectDetailRedeemer::from_data(project_detail_redeemer_data).switch {
+            && ProjectDetailRedeemer::from_data(project_detail_redeemer).switch {
               WithdrawFunds => true,
               Update => true,
               else => false

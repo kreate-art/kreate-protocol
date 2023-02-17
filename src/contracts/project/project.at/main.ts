@@ -272,11 +272,11 @@ export default function main({ protocolNftMph }: Params) {
               .fold(
                 (acc: Int, input: TxInput) -> {
                   if (input.output.value.get_safe(project_at_asset_class) == 1) {
-                    project_script_purpose: ScriptPurpose =
+                    project_purpose: ScriptPurpose =
                       ScriptPurpose::new_spending(input.output_id);
-                    project_redeemer_data: Data =
-                      redeemers.get(project_script_purpose);
-                    ProjectRedeemer::from_data(project_redeemer_data).switch {
+                    project_redeemer: Data =
+                      redeemers.get(project_purpose);
+                    ProjectRedeemer::from_data(project_redeemer).switch {
                       AllocateStakingValidator => acc + 1,
                       else => acc
                     }
