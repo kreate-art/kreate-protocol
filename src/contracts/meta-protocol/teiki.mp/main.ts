@@ -40,9 +40,7 @@ export default function main({ teikiPlantNftMph }: Params): HeliosScript {
       redeemer.switch {
 
         Mint => {
-          own_minted: Map[ByteArray]Int = tx.minted.get_policy(own_mph);
-
-          teiki_plant_txout: TxOutput =
+          teiki_plant_output: TxOutput =
             tx.ref_inputs
               .find(
                 (input: TxInput) -> {
@@ -52,7 +50,7 @@ export default function main({ teikiPlantNftMph }: Params): HeliosScript {
               .output;
 
           teiki_plant_datum: TeikiPlantDatum =
-            teiki_plant_txout.datum.switch {
+            teiki_plant_output.datum.switch {
               i: Inline => TeikiPlantDatum::from_data(i.data),
               else => error("Invalid teiki-plant UTxO: missing inline datum")
             };
@@ -63,7 +61,7 @@ export default function main({ teikiPlantNftMph }: Params): HeliosScript {
             }
           );
 
-          is_only_teiki_minted: Bool = own_minted.all(
+          is_only_teiki_minted: Bool = tx.minted.get_policy(own_mph).all(
             (token_name: ByteArray, _) -> {
               token_name == TEIKI_TOKEN_NAME
             }
@@ -73,9 +71,7 @@ export default function main({ teikiPlantNftMph }: Params): HeliosScript {
         },
 
         Burn => {
-          own_minted: Map[ByteArray]Int = tx.minted.get_policy(own_mph);
-
-          own_minted.all(
+          tx.minted.get_policy(own_mph).all(
             (token_name: ByteArray, amount: Int) -> {
               if (token_name == TEIKI_TOKEN_NAME) { amount < 0 }
               else { false }

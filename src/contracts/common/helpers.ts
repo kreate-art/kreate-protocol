@@ -79,8 +79,8 @@ export default helios`
     }
   }
 
-  func parse_pparams_datum(txout: TxOutput) -> PParamsDatum {
-    txout.datum.switch {
+  func parse_pparams_datum(output: TxOutput) -> PParamsDatum {
+    output.datum.switch {
       i: Inline => PParamsDatum::from_data(i.data),
       else => error("Invalid protocol params UTxO: missing inline datum")
     }
@@ -105,8 +105,8 @@ export default helios`
     protocol_nft_mph: MintingPolicyHash
   ) -> PParamsDatum {
     protocol_params_nft: AssetClass = get_protocol_params_nft(protocol_nft_mph);
-    pparams_txinput: TxInput = find_tx_input_with_auth_token(inputs, protocol_params_nft);
-    parse_pparams_datum(pparams_txinput.output)
+    pparams_input: TxInput = find_tx_input_with_auth_token(inputs, protocol_params_nft);
+    parse_pparams_datum(pparams_input.output)
   }
 
   // TODO: PROTOCOL_NFT_MPH should be a global param
@@ -115,8 +115,8 @@ export default helios`
     protocol_nft_mph: MintingPolicyHash
   ) -> PParamsDatum {
     protocol_params_nft: AssetClass = get_protocol_params_nft(protocol_nft_mph);
-    pparams_txout: TxOutput = find_tx_output_with_auth_token(outputs, protocol_params_nft);
-    parse_pparams_datum(pparams_txout)
+    pparams_output: TxOutput = find_tx_output_with_auth_token(outputs, protocol_params_nft);
+    parse_pparams_datum(pparams_output)
   }
 
   func staking_credential_to_validator_hash(staking_credential: StakingCredential) -> StakingValidatorHash {
