@@ -79,6 +79,11 @@ export default function main({ protocolNftMph }: Params) {
                 own_mph: Map[ByteArray]Int { PROJECT_SCRIPT_AT_TOKEN_NAME: 1 }
               }
             );
+          project_script_credential: Credential =
+            Credential::new_validator(
+              pparams_datum.registry.project_script_validator.latest
+            );
+          stake_key_deposit: Int = pparams_datum.stake_key_deposit;
           project_script_output: TxOutput =
             tx.outputs.find(
               (output: TxOutput) -> {
@@ -88,9 +93,7 @@ export default function main({ protocolNftMph }: Params) {
                       script_hash_to_staking_credential(s.some);
                     project_script_address: Address =
                       Address::new(
-                        Credential::new_validator(
-                          pparams_datum.registry.project_script_validator.latest
-                        ),
+                        project_script_credential,
                         Option[StakingCredential]::Some { staking_validator }
                       );
                     output.value == project_script_value
@@ -100,7 +103,7 @@ export default function main({ protocolNftMph }: Params) {
                           project_script_datum: ProjectScriptDatum =
                             ProjectScriptDatum::from_data(i.data);
                           project_script_datum.project_id == project_id
-                            && project_script_datum.stake_key_deposit == pparams_datum.stake_key_deposit
+                            && project_script_datum.stake_key_deposit == stake_key_deposit
                         },
                         else => false
                       }
@@ -127,6 +130,10 @@ export default function main({ protocolNftMph }: Params) {
               ),
               Option[StakingCredential]::Some { staking_validator }
             );
+          project_sponsorship_min_fee: Int =
+            pparams_datum.project_sponsorship_min_fee;
+          project_sponsorship_duration: Duration =
+            pparams_datum.project_sponsorship_duration;
           project_detail_output: TxOutput =
             tx.outputs.find(
               (output: TxOutput) -> {
@@ -144,8 +151,8 @@ export default function main({ protocolNftMph }: Params) {
                           None => true,
                           s: Some => {
                             sp: Sponsorship = s.some;
-                            sp.amount >= pparams_datum.project_sponsorship_min_fee
-                              && sp.until == tx.time_range.start + pparams_datum.project_sponsorship_duration
+                            sp.amount >= project_sponsorship_min_fee
+                              && sp.until == tx.time_range.start + project_sponsorship_duration
                           }
                         }
                     },
@@ -175,6 +182,8 @@ export default function main({ protocolNftMph }: Params) {
               ),
               Option[StakingCredential]::Some { staking_validator }
             );
+          governor_address_credential: Credential =
+            pparams_datum.governor_address.credential;
           does_produce_project_correctly: Bool =
             tx.outputs.any(
               (output: TxOutput) -> {
@@ -188,7 +197,7 @@ export default function main({ protocolNftMph }: Params) {
                         && project_datum.is_staking_delegation_managed_by_protocol
                         && (
                           is_tx_authorized_by(tx, project_datum.owner_address.credential)
-                            || is_tx_authorized_by(tx, pparams_datum.governor_address.credential)
+                            || is_tx_authorized_by(tx, governor_address_credential)
                           )
                     },
                     else => false

@@ -16,28 +16,9 @@ export default helios`
 
   enum Redeemer {
     Plant { cleanup: Bool }
-    ClaimRewards { flowers: []Plant}
+    ClaimRewards { flowers: []Plant }
     MigrateOut
     MigrateIn
     Burn
-  }
-
-  func to_fruit(flower: Plant) -> Plant {
-    Plant {
-      is_matured: true,
-      backing_output_id: flower.backing_output_id,
-      backing_amount: flower.backing_amount,
-      unbacked_at: flower.unbacked_at,
-      project_id: flower.project_id,
-      backer_address: flower.backer_address,
-      backed_at: flower.backed_at,
-      milestone_backed: flower.milestone_backed
-    }
-  }
-
-  struct PlantAccumulator {
-    plant_map: Map[ByteArray]Int
-    total_teiki_rewards: Int
-    wilted_amount: Int
   }
 `;

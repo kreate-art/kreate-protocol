@@ -48,11 +48,11 @@ export default function main({
       TEIKI_TOKEN_NAME
     } from ${module("constants")}
 
-    const PROJECTS_AT_MPH: MintingPolicyHash =
+    const PROJECT_AT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${projectAtMph})
 
     const PROJECT_AT_ASSET_CLASS: AssetClass =
-      AssetClass::new(PROJECTS_AT_MPH, PROJECT_AT_TOKEN_NAME)
+      AssetClass::new(PROJECT_AT_MPH, PROJECT_AT_TOKEN_NAME)
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})

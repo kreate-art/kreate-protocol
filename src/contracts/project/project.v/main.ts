@@ -48,17 +48,17 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       RATIO_MULTIPLIER
     } from ${module("constants")}
 
-    const PROJECTS_AT_MPH: MintingPolicyHash =
+    const PROJECT_AT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${projectAtMph})
 
     const PROJECT_AT_ASSET_CLASS: AssetClass =
-      AssetClass::new(PROJECTS_AT_MPH, PROJECT_AT_TOKEN_NAME)
+      AssetClass::new(PROJECT_AT_MPH, PROJECT_AT_TOKEN_NAME)
 
     const PROJECT_DETAIL_AT_ASSET_CLASS: AssetClass =
-      AssetClass::new(PROJECTS_AT_MPH, PROJECT_DETAIL_AT_TOKEN_NAME)
+      AssetClass::new(PROJECT_AT_MPH, PROJECT_DETAIL_AT_TOKEN_NAME)
 
     const PROJECT_SCRIPT_AT_ASSET_CLASS: AssetClass =
-      AssetClass::new(PROJECTS_AT_MPH, PROJECT_SCRIPT_AT_TOKEN_NAME)
+      AssetClass::new(PROJECT_AT_MPH, PROJECT_SCRIPT_AT_TOKEN_NAME)
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
@@ -178,7 +178,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                                   - pparams_datum.stake_key_deposit
                                   - PROJECT_SCRIPT_UTXO_ADA
                           }
-                          else if (mph == PROJECTS_AT_MPH) { tokens == Map[ByteArray]Int {PROJECT_AT_TOKEN_NAME: 1} }
+                          else if (mph == PROJECT_AT_MPH) { tokens == Map[ByteArray]Int {PROJECT_AT_TOKEN_NAME: 1} }
                           else { false }
                         }
                       )
@@ -198,7 +198,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                         if (mph == ADA_MINTING_POLICY_HASH) {
                           output.value.get_safe(AssetClass::ADA)
                             == PROJECT_SCRIPT_UTXO_ADA
-                        } else if (mph == PROJECTS_AT_MPH) {
+                        } else if (mph == PROJECT_AT_MPH) {
                           tokens == Map[ByteArray]Int {PROJECT_SCRIPT_AT_TOKEN_NAME: 1}
                         } else { false }
                       }
