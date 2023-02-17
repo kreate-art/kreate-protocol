@@ -22,14 +22,28 @@ npm i
 export BLOCKFROST_URL=https://cardano-[preview/preprod/mainnet].blockfrost.io/api/v0
 export BLOCKFROST_PROJECT_ID=preview***********************
 export NETWORK=Preview
-export export TEST_SEED_PHRASE_URL=xxxxx%20xxxxxxx%20xxxxxxxx%20xxxxxxx
+export TEST_SEED_PHRASE_URL=xxxxx%20xxxxxxx%20xxxxxxxx%20xxxxxxx
+export STAKING_MANAGER_ADDRESS=addr_xxxxxxxxxxxxxxx
+export POOL_ID=poolxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 ```
 npm run deploy
 ```
 
-#### Test
+#### Propose Teiki minting rules
+
+Update information in `src/cli/meta-protocol/propose.ts` and `src/cli/meta-protocol/apply.ts`. Need to wait for the proposal duration before applying.
+
+```
+npm run meta-protocol:propose
+```
+
+```
+npm run meta-protocol:apply
+```
+
+#### Emulator Test
 
 ```
 npm test
