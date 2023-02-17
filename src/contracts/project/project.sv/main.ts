@@ -1,6 +1,6 @@
 import { Hex } from "@/types";
 
-import { helios } from "../../program";
+import { header, helios, module } from "../../program";
 
 export type Params = {
   projectId: Hex;
@@ -16,37 +16,33 @@ export default function main({
   projectAtMph,
   protocolNftMph,
 }: Params) {
-  return helios("sv__project", [
-    "v__project_detail__types",
-    "v__project__types",
-    "v__protocol_params__types",
-    "v__project_detail__types",
-    "v__project_script__types",
-    "helpers",
-    "constants",
-  ])`
-    staking sv__project
+  return helios`
+    ${header("staking", "sv__project")}
 
-    import { Datum as ProjectDetailDatum } from v__project_detail__types
+    import { Datum as ProjectDetailDatum }
+      from ${module("v__project_detail__types")}
     import {
       Datum as ProjectDatum,
       Redeemer as ProjectRedeemer
-    } from v__project__types
-    import { Datum as PParamsDatum } from v__protocol_params__types
-    import { Redeemer as ProjectDetailRedeemer } from v__project_detail__types
-    import { Redeemer as ProjectScriptRedeemer } from v__project_script__types
+    } from ${module("v__project__types")}
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
+    import { Redeemer as ProjectDetailRedeemer }
+      from ${module("v__project_detail__types")}
+    import { Redeemer as ProjectScriptRedeemer }
+      from ${module("v__project_script__types")}
 
     import {
       scriptHashToStakingCredential,
       is_tx_authorized_by,
       find_pparams_datum_from_inputs
-    } from helpers
+    } from ${module("helpers")}
 
     import {
       PROJECT_AT_TOKEN_NAME,
       PROJECT_DETAIL_AT_TOKEN_NAME,
       PROJECT_SCRIPT_AT_TOKEN_NAME
-    } from constants
+    } from ${module("constants")}
 
     const project_id: ByteArray = #${projectId}
     const staking_seed: ByteArray = #${stakingSeed}

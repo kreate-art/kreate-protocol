@@ -1,29 +1,25 @@
 import { Hex } from "@/types";
 
-import { HeliosSource, helios } from "../../program";
+import { HeliosScript, helios, header, module } from "../../program";
 
 export type Params = {
   teikiPlantNftMph: Hex;
 };
 
-export default function main({ teikiPlantNftMph }: Params): HeliosSource {
-  return helios("v__teiki_plant", [
-    "constants",
-    "helpers",
-    "v__teiki_plant__types",
-  ])`
-    spending v__teiki_plant
+export default function main({ teikiPlantNftMph }: Params): HeliosScript {
+  return helios`
+    ${header("spending", "v__teiki_plant")}
 
     import {
       ADA_MINTING_POLICY_HASH,
       TEIKI_PLANT_NFT_TOKEN_NAME
-    } from constants
+    } from ${module("constants")}
 
     import {
       is_tx_authorized_by,
       does_tx_pass_token_preciate_check,
       does_tx_pass_minting_preciate_check
-    } from helpers
+    } from ${module("helpers")}
 
     import {
       Datum,
@@ -33,7 +29,7 @@ export default function main({ teikiPlantNftMph }: Params): HeliosSource {
       MintingPredicate,
       MintingRedeemer,
       RulesProposal
-    } from v__teiki_plant__types
+    } from ${module("v__teiki_plant__types")}
 
     const TEIKI_PLANT_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${teikiPlantNftMph})

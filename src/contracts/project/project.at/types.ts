@@ -1,10 +1,10 @@
-import { helios } from "../../program";
+import { header, helios } from "../../program";
 
-export default helios("at__project__types")`
-  module at__project__types
+export default helios`
+  ${header("module", "at__project__types")}
 
   enum Redeemer {
-    NewProject{ project_seed: TxOutputId}
+    NewProject { project_seed: TxOutputId }
     AllocateStaking
     DeallocateStaking
     MigrateOut

@@ -1,9 +1,10 @@
-import { helios } from "../../program";
+import { header, helios, module } from "../../program";
 
-export default helios("v__dedicated_treasury__types", ["common__types"])`
-  module v__dedicated_treasury__types
+export default helios`
+  ${header("module", "v__dedicated_treasury__types")}
 
-  import { TreasuryTag } from common__types
+  import { TreasuryTag }
+    from ${module("common__types")}
 
   struct Datum {
     project_id: ByteArray

@@ -1,7 +1,7 @@
-import { helios } from "../../program";
+import { header, helios } from "../../program";
 
-export default helios("v__protocol_params__types")`
-  module v__protocol_params__types
+export default helios`
+  ${header("module", "v__protocol_params__types")}
 
   enum Redeemer {
     ApplyProposal

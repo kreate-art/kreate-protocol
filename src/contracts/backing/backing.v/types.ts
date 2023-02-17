@@ -1,7 +1,7 @@
-import { helios } from "../../program";
+import { header, helios } from "../../program";
 
-export default helios("v__backing__types")`
-  module v__backing__types
+export default helios`
+  ${header("module", "v__backing__types")}
 
   struct Datum {
     project_id: ByteArray

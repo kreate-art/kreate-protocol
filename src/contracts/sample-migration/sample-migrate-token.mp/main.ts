@@ -1,16 +1,17 @@
 import { Hex } from "@/types";
 
-import { HeliosSource, helios } from "../../program";
+import { HeliosScript, helios, header, module } from "../../program";
 
 export type Params = {
   governorPkh: Hex;
 };
 
-export default function main({ governorPkh }: Params): HeliosSource {
-  return helios("mp__sample_migrate_token_policy", ["helpers"])`
-    minting mp__sample_migrate_token_policy
+export default function main({ governorPkh }: Params): HeliosScript {
+  return helios`
+    ${header("minting", "mp__sample_migrate_token_policy")}
 
-    import { is_tx_authorized_by } from helpers
+    import { is_tx_authorized_by }
+      from ${module("helpers")}
 
     const SAMPLE_GOVERNOR_CREDENTIAL: Credential =
       Credential::new_pubkey(

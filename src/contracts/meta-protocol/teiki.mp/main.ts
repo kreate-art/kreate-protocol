@@ -1,35 +1,31 @@
 import { Hex } from "@/types";
 
-import { HeliosSource, helios } from "../../program";
+import { HeliosScript, helios, header, module } from "../../program";
 
 export type Params = {
   teikiPlantNftMph: Hex;
 };
 
-export default function main({ teikiPlantNftMph }: Params): HeliosSource {
-  return helios("mp__teiki", [
-    "constants",
-    "helpers",
-    "v__teiki_plant__types",
-    "mp__teiki__types",
-  ])`
-    minting mp__teiki
+export default function main({ teikiPlantNftMph }: Params): HeliosScript {
+  return helios`
+    ${header("minting", "mp__teiki")}
 
     import {
       TEIKI_TOKEN_NAME,
       TEIKI_PLANT_NFT_TOKEN_NAME
-    } from constants
+    } from ${module("constants")}
 
     import {
       does_tx_pass_minting_preciate_check
-    } from helpers
+    } from ${module("helpers")}
 
     import {
       Datum as TeikiPlantDatum,
       MintingPredicate
-    } from v__teiki_plant__types
+    } from ${module("v__teiki_plant__types")}
 
-    import { Redeemer } from mp__teiki__types
+    import { Redeemer }
+      from ${module("mp__teiki__types")}
 
     const TEIKI_PLANT_NFT_ASSET_CLASS: AssetClass =
       AssetClass::new(

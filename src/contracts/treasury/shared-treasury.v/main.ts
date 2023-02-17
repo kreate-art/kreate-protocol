@@ -1,6 +1,6 @@
 import { Hex } from "@/types";
 
-import { helios } from "../../program";
+import { header, helios, module } from "../../program";
 
 export type Params = {
   projectAtMph: Hex;
@@ -13,44 +13,40 @@ export default function main({
   protocolNftMph,
   teikiMph,
 }: Params) {
-  return helios("v__shared_treasury", [
-    "v__shared_treasury__types",
-    "v__protocol_params__types",
-    "v__project__types",
-    "mp__teiki__types",
-    "v__open_treasury__types",
-    "fraction",
-    "helpers",
-    "constants",
-  ])`
-    spending v__shared_treasury
+  return helios`
+    ${header("spending", "v__shared_treasury")}
 
     import {
       Datum,
       Redeemer,
       BurnActionResult,
       ProjectTeiki
-    } from v__shared_treasury__types
-    import { Datum as PParamsDatum } from v__protocol_params__types
-    import { Datum as ProjectDatum } from v__project__types
-    import { Redeemer as TeikiRedeemer } from mp__teiki__types
-    import { Datum as OpenTreasuryDatum } from v__open_treasury__types
+    } from ${module("v__shared_treasury__types")}
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
+    import { Datum as ProjectDatum }
+      from ${module("v__project__types")}
+    import { Redeemer as TeikiRedeemer }
+      from ${module("mp__teiki__types")}
+    import { Datum as OpenTreasuryDatum }
+      from ${module("v__open_treasury__types")}
 
-    import { Fraction } from fraction
+    import { Fraction }
+      from ${module("fraction")}
 
     import {
       find_pparams_datum_from_inputs,
       max,
       is_tx_authorized_by,
       scriptHashToStakingCredential
-    } from helpers
+    } from ${module("helpers")}
 
     import {
       ADA_MINTING_POLICY_HASH,
       RATIO_MULTIPLIER,
       PROJECT_AT_TOKEN_NAME,
       TEIKI_TOKEN_NAME
-    } from constants
+    } from ${module("constants")}
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${projectAtMph})

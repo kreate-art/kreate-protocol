@@ -1,23 +1,20 @@
-import { helios } from "../program";
+import { header, helios, module } from "../program";
 
-export default helios("helpers", [
-  "v__protocol_params__types",
-  "v__teiki_plant__types",
-  "constants",
-])`
-  module helpers
+export default helios`
+  ${header("module", "helpers")}
 
-  import { Datum as PParamsDatum } from v__protocol_params__types
+  import { Datum as PParamsDatum }
+    from ${module("v__protocol_params__types")}
   import {
     TokenPredicate,
     MintingPredicate,
     MintingRedeemer
-  } from v__teiki_plant__types
+  } from ${module("v__teiki_plant__types")}
 
   import {
     RATIO_MULTIPLIER,
     PROTOCOL_PARAMS_NFT_TOKEN_NAME
-  } from constants
+  } from ${module("constants")}
 
   func is_tx_authorized_by(tx: Tx, credential: Credential) -> Bool{
     credential.switch {

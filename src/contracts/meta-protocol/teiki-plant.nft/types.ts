@@ -1,7 +1,7 @@
-import { helios } from "../../program";
+import { header, helios } from "../../program";
 
-export default helios("nft__teiki_plant__types")`
-  module nft__teiki_plant__types
+export default helios`
+  ${header("module", "nft__teiki_plant__types")}
 
   enum Redeemer {
     Bootstrap

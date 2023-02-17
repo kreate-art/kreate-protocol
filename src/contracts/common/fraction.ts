@@ -1,12 +1,12 @@
 // Synchronize with the fraction in transactions
 import { FRACTION_LIMIT } from "@/transactions/constants";
 
-import { helios } from "../program";
+import { header, helios } from "../program";
 
-export default helios("fraction")`
-  module fraction
+export default helios`
+  ${header("module", "fraction")}
 
-  const FRACTION_LIMIT: Int = ${FRACTION_LIMIT.toString()}
+  const FRACTION_LIMIT: Int = ${FRACTION_LIMIT}
 
   struct Fraction {
     numerator: Int

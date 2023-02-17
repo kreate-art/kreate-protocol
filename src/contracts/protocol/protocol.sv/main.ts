@@ -1,30 +1,28 @@
 import { Hex } from "@/types";
 
-import { helios, HeliosSource } from "../../program";
+import { header, helios, HeliosScript, module } from "../../program";
 
 export type Params = {
   protocolNftMph: Hex;
 };
 
-export default function main({ protocolNftMph }: Params): HeliosSource {
-  return helios("sv_protocol", [
-    "constants",
-    "helpers",
-    "v__open_treasury__types",
-    "v__protocol_params__types",
-  ])`
-    staking sv__protocol
+export default function main({ protocolNftMph }: Params): HeliosScript {
+  return helios`
+    ${header("staking", "sv__protocol")}
 
-    import { RATIO_MULTIPLIER } from constants
-    import { Datum as OpenTreasuryDatum } from v__open_treasury__types
-    import { Datum as PParamsDatum } from v__protocol_params__types
+    import { RATIO_MULTIPLIER }
+      from ${module("constants")}
+    import { Datum as OpenTreasuryDatum }
+      from ${module("v__open_treasury__types")}
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
 
     import {
       find_pparams_datum_from_inputs,
       find_pparams_datum_from_outputs,
       stakingCredentialToSVH,
       is_tx_authorized_by
-    } from helpers
+    } from ${module("helpers")}
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})

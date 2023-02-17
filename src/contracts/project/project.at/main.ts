@@ -1,31 +1,27 @@
 import { Hex } from "@/types";
 
-import { helios } from "../../program";
+import { header, helios, module } from "../../program";
 
 export type Params = {
   protocolNftMph: Hex;
 };
 
 export default function main({ protocolNftMph }: Params) {
-  return helios("at__project", [
-    "at__project__types",
-    "v__project__types",
-    "v__project_detail__types",
-    "v__project_script__types",
-    "v__project__types",
-    "v__protocol_params__types",
-    "v__dedicated_treasury__types",
-    "helpers",
-    "constants",
-  ])`
-    minting at__project
+  return helios`
+    ${header("minting", "at__project")}
 
-    import { Redeemer } from at__project__types
-    import { Datum as DedicatedTreasuryDatum } from v__dedicated_treasury__types
-    import { Datum as ProjectDetailDatum } from v__project_detail__types
-    import { Datum as ProjectScriptDatum } from v__project_script__types
-    import { Datum as ProjectDatum, Redeemer as ProjectRedeemer } from v__project__types
-    import { Datum as PParamsDatum } from v__protocol_params__types
+    import { Redeemer }
+      from ${module("at__project__types")}
+    import { Datum as DedicatedTreasuryDatum }
+      from ${module("v__dedicated_treasury__types")}
+    import { Datum as ProjectDetailDatum }
+      from ${module("v__project_detail__types")}
+    import { Datum as ProjectScriptDatum }
+      from ${module("v__project_script__types")}
+    import { Datum as ProjectDatum, Redeemer as ProjectRedeemer }
+      from ${module("v__project__types")}
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
 
     import {
       does_consume_input_with_output_id,
@@ -33,7 +29,7 @@ export default function main({ protocolNftMph }: Params) {
       find_tx_input_with_value,
       is_tx_authorized_by,
       scriptHashToStakingCredential
-    } from helpers
+    } from ${module("helpers")}
 
     import {
       ADA_MINTING_POLICY_HASH,
@@ -45,7 +41,7 @@ export default function main({ protocolNftMph }: Params) {
       PROJECT_SCRIPT_AT_TOKEN_NAME,
       PROJECT_SCRIPT_UTXO_ADA,
       RATIO_MULTIPLIER
-    } from constants
+    } from ${module("constants")}
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})

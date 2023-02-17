@@ -1,29 +1,28 @@
 import { OutRef } from "@/types";
 
-import { HeliosSource, helios } from "../../program";
+import { HeliosScript, helios, module, header } from "../../program";
 
 export type Params = {
   teikiPlantSeed: OutRef;
 };
 
-export default function main({ teikiPlantSeed }: Params): HeliosSource {
-  return helios("nft__teiki_plant", [
-    "constants",
-    "helpers",
-    "nft__teiki_plant__types",
-  ])`
-    minting nft__teiki_plant
+export default function main({ teikiPlantSeed }: Params): HeliosScript {
+  return helios`
+    ${header("minting", "nft__teiki_plant")}
 
-    import { TEIKI_PLANT_NFT_TOKEN_NAME } from constants
+    import { TEIKI_PLANT_NFT_TOKEN_NAME }
+      from ${module("constants")}
 
-    import { does_consume_input_with_output_id } from helpers
+    import { does_consume_input_with_output_id }
+      from ${module("helpers")}
 
-    import { Redeemer } from nft__teiki_plant__types
+    import { Redeemer }
+      from ${module("nft__teiki_plant__types")}
 
     const seed_output_id: TxOutputId =
       TxOutputId::new(
         TxId::new(#${teikiPlantSeed.txHash}),
-        ${teikiPlantSeed.outputIndex.toString()}
+        ${teikiPlantSeed.outputIndex}
       )
 
     func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool {

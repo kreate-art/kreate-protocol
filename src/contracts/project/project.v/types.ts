@@ -1,7 +1,7 @@
-import { helios } from "../../program";
+import { header, helios } from "../../program";
 
-export default helios("v__project__types")`
-  module v__project__types
+export default helios`
+  ${header("module", "v__project__types")}
 
   enum ProjectStatus {
     Active

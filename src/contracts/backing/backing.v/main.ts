@@ -1,6 +1,6 @@
 import { Hex } from "@/types";
 
-import { helios } from "../../program";
+import { header, helios, module } from "../../program";
 
 export type Params = {
   proofOfBackingMph: Hex;
@@ -8,20 +8,19 @@ export type Params = {
 };
 
 export default function main({ proofOfBackingMph, protocolNftMph }: Params) {
-  return helios("v__backing", [
-    "helpers",
-    "v__backing__types",
-    "v__protocol_params__types",
-    "mp__proof_of_backing__types",
-  ])`
-    spending v__backing
+  return helios`
+    ${header("spending", "v__backing")}
 
-    import { find_pparams_datum_from_inputs } from helpers
+    import { find_pparams_datum_from_inputs }
+      from ${module("helpers")}
 
-    import { Redeemer } from v__backing__types
-    import { Datum as PParamsDatum } from v__protocol_params__types
+    import { Redeemer }
+      from ${module("v__backing__types")}
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
 
-    import { Redeemer as PoBRedeemer } from mp__proof_of_backing__types
+    import { Redeemer as PoBRedeemer }
+      from ${module("mp__proof_of_backing__types")}
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})

@@ -1,11 +1,10 @@
-import { helios } from "../../program";
+import { header, helios, module } from "../../program";
 
-export default helios("v__protocol_proposal__types", [
-  "v__protocol_params__types",
-])`
-  module v__protocol_proposal__types
+export default helios`
+  ${header("module", "v__protocol_proposal__types")}
 
-  import { Datum as PParamsDatum } from v__protocol_params__types
+  import { Datum as PParamsDatum }
+    from ${module("v__protocol_params__types")}
 
   struct Proposal {
     in_effect_at: Time

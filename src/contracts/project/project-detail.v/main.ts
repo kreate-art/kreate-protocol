@@ -1,6 +1,6 @@
 import { Hex } from "@/types";
 
-import { helios } from "../../program";
+import { header, helios, module } from "../../program";
 
 export type Params = {
   projectAtMph: Hex;
@@ -8,37 +8,32 @@ export type Params = {
 };
 
 export default function main({ projectAtMph, protocolNftMph }: Params) {
-  return helios("v__project_detail", [
-    "v__project_detail__types",
-    "common__types",
-    "v__project__types",
-    "v__project_script__types",
-    "v__protocol_params__types",
-    "v__dedicated_treasury__types",
-    "helpers",
-    "constants",
-  ])`
-    spending v__project_detail
+  return helios`
+    ${header("spending", "v__project_detail")}
 
-    import { Datum, Redeemer } from v__project_detail__types
-    import { UserTag } from common__types
+    import { Datum, Redeemer }
+      from ${module("v__project_detail__types")}
+    import { UserTag }
+      from ${module("common__types")}
     import {
       ProjectStatus,
       Redeemer as ProjectRedeemer,
       Datum as ProjectDatum
-    } from v__project__types
-    import { Datum as ProjectScriptDatum } from v__project_script__types
-    import { Datum as PParamsDatum } from v__protocol_params__types
+    } from ${module("v__project__types")}
+    import { Datum as ProjectScriptDatum }
+      from ${module("v__project_script__types")}
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
     import {
       Datum as DedicatedTreasuryDatum,
       Redeemer as DedicatedTreasuryRedeemer
-    } from v__dedicated_treasury__types
+    } from ${module("v__dedicated_treasury__types")}
 
     import {
       find_pparams_datum_from_inputs,
       is_tx_authorized_by,
       scriptHashToStakingCredential
-    } from helpers
+    } from ${module("helpers")}
 
     import {
       RATIO_MULTIPLIER,
@@ -47,7 +42,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       PROJECT_NEW_MILESTONE_DISCOUNT_CENTS,
       PROJECT_SCRIPT_AT_TOKEN_NAME,
       PROJECT_SPONSORSHIP_RESOLUTION
-    } from constants
+    } from ${module("constants")}
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${projectAtMph})
