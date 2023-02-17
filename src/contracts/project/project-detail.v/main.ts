@@ -90,7 +90,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
     ) -> () {
       project_datum: ProjectDatum = get_project_datum(output);
 
-      assert (
+      assert(
         project_datum.project_id == project_id,
         "Wrong project_id"
       )
@@ -107,7 +107,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       own_validator_hash: ValidatorHash,
       pparams_datum: PParamsDatum
     ) -> () {
-      assert (
+      assert(
         own_validator_hash ==
           pparams_datum.registry.project_detail_validator.latest,
         "Wrong script version"
@@ -373,7 +373,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             else {
               own_output_datum.sponsorship.switch {
                 None => {
-                  assert (
+                  assert(
                     datum.sponsorship.switch {
                       None => error("Unreachable"),
                       o: Some => o.some.until <= tx.time_range.start
@@ -387,12 +387,12 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   amount: Int = s.some.amount;
                   until: Time = s.some.until;
 
-                  assert (
+                  assert(
                     amount >= pparams_datum.project_sponsorship_min_fee,
                     "Invalid sponsorship amount"
                   );
 
-                  assert (
+                  assert(
                     until == tx.time_range.start + pparams_datum.project_sponsorship_duration,
                     "Invalid sponsorship until"
                   );

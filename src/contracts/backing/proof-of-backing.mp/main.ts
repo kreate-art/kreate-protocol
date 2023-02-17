@@ -82,7 +82,7 @@ export default function main({
 
       redeemer.switch {
         plant: Plant => {
-          assert (
+          assert(
             tx.time_range.start >= tx.time_range.end - PROOF_OF_BACKING_PLANT_TX_TIME_SLIPPAGE,
             "Invalid time range"
           );
@@ -130,17 +130,17 @@ export default function main({
 
           is_produced_backing_empty: Bool = produced_backing_txouts.length == 0;
 
-          assert (
+          assert(
             !(is_consumed_backing_empty && is_produced_backing_empty),
             "Must consume or produce backing UTxO"
           );
 
-          assert (
+          assert(
             !(is_consumed_backing_empty && cleanup),
             "Must consume backing in cleaning up"
           );
 
-          assert (
+          assert(
             !(!is_produced_backing_empty && cleanup),
             "Must not produce backing in cleaning up"
           );
@@ -153,7 +153,7 @@ export default function main({
               true
             };
 
-          assert (
+          assert(
             are_backing_credentials_valid,
             "Must consume and produce the same credential backings"
           );
@@ -652,7 +652,7 @@ export default function main({
               else => error("Invalid shared treasury UTxO: missing inline datum")
             };
 
-          assert (
+          assert(
             shared_treasury_datum.project_id == project_id,
             "Incorrect project id shared treasury input"
           );
