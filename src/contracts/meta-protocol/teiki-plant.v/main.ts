@@ -34,15 +34,6 @@ export default function main({ teikiPlantNftMph }: Params): HeliosScript {
     const TEIKI_PLANT_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${teikiPlantNftMph})
 
-    const TEIKI_PLANT_NFT: Value =
-      Value::new(
-        AssetClass::new(
-          TEIKI_PLANT_NFT_MPH,
-          TEIKI_PLANT_NFT_TOKEN_NAME
-        ),
-        1
-      )
-
     func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
       own_input: TxInput = ctx.get_current_input();

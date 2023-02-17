@@ -19,7 +19,7 @@ export default function main({ teikiPlantSeed }: Params): HeliosScript {
     import { Redeemer }
       from ${module("nft__teiki_plant__types")}
 
-    const seed_output_id: TxOutputId =
+    const SEED_OUTPUT_ID: TxOutputId =
       TxOutputId::new(
         TxId::new(#${teikiPlantSeed.txHash}),
         ${teikiPlantSeed.outputIndex}
@@ -30,10 +30,12 @@ export default function main({ teikiPlantSeed }: Params): HeliosScript {
       own_mph: MintingPolicyHash = ctx.get_current_minting_policy_hash();
 
       redeemer.switch {
+
         Bootstrap => {
-          does_consume_input_with_output_id(tx, seed_output_id)
+          does_consume_input_with_output_id(tx, SEED_OUTPUT_ID)
            && tx.minted.get_policy(own_mph) == Map[ByteArray]Int {TEIKI_PLANT_NFT_TOKEN_NAME: 1}
         }
+
       }
     }
   `;
