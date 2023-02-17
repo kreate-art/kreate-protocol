@@ -56,6 +56,19 @@ export default helios`
     }
   }
 
+  func extract_constr_index(data: Data) -> Int {
+    data.switch {
+      (index: Int, dats: []Data) => {
+        // Helios currently does not allow unused variables here,
+        // hence we need to do this redundant check.
+        if (dats.length >= 0) { index }
+        else { error("Invalid Constr") }
+      },
+      else => error("Must be a Constr value")
+    }
+  }
+
+
   func does_tx_pass_minting_preciate_check(tx: Tx, predicate: MintingPredicate) -> Bool {
     mph: MintingPolicyHash = predicate.minting_policy_hash;
     minting_redeemer_data: Data =
@@ -64,31 +77,17 @@ export default helios`
     predicate.redeemer.switch {
       Any => true,
       constr_in: ConstrIn => {
-        minting_constr: Int = minting_redeemer_data.switch {
-          (idx: Int, dl: []Data) => {
-            // Helios currently does not allow unused variables here,
-            // hence we need to do this redundant check.
-            if (dl.length >= 0 ) { idx }
-            else { error("Invalid minting Constr") }
-          },
-          else => error("Minting redeemer must be a Constr value")
-        };
+        minting_constr: Int = extract_constr_index(minting_redeemer_data);
 
-        constr_in.constrs.any (
-          (constr: Int) -> Bool { constr == minting_constr}
+        constr_in.constrs.any(
+          (constr: Int) -> { constr == minting_constr }
         )
       },
       constr_not_in: ConstrNotIn => {
-        minting_constr: Int = minting_redeemer_data.switch {
-          (idx: Int, dl: []Data) => {
-            if (dl.length >= 0 ) { idx }
-            else { error("Invalid minting Constr") }
-          },
-          else => error("Minting redeemer must be a Constr value")
-        };
+        minting_constr: Int = extract_constr_index(minting_redeemer_data);
 
-        constr_not_in.constrs.all (
-          (constr: Int) -> Bool { constr != minting_constr }
+        constr_not_in.constrs.all(
+          (constr: Int) -> { constr != minting_constr }
         )
       }
     }

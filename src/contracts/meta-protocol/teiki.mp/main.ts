@@ -38,13 +38,14 @@ export default function main({ teikiPlantNftMph }: Params): HeliosScript {
       own_mph: MintingPolicyHash = ctx.get_current_minting_policy_hash();
 
       redeemer.switch {
+
         Mint => {
           own_minted: Map[ByteArray]Int = tx.minted.get_policy(own_mph);
 
           teiki_plant_txout: TxOutput =
             tx.ref_inputs
               .find(
-                (input: TxInput) -> Bool {
+                (input: TxInput) -> {
                   input.output.value.get_safe(TEIKI_PLANT_NFT_ASSET_CLASS) == 1
                 }
               )
@@ -56,23 +57,26 @@ export default function main({ teikiPlantNftMph }: Params): HeliosScript {
               else => error("Invalid teiki-plant UTxO: missing inline datum")
             };
 
-          own_minted.all(
-            (token_name: ByteArray, _) -> Bool {
+          is_minting_rules_passed: Bool = teiki_plant_datum.rules.teiki_minting_rules.any(
+            (teiki_minting_predicate: MintingPredicate) -> {
+              does_tx_pass_minting_preciate_check(tx, teiki_minting_predicate)
+            }
+          );
+
+          is_only_teiki_minted: Bool = own_minted.all(
+            (token_name: ByteArray, _) -> {
               token_name == TEIKI_TOKEN_NAME
             }
-          )
-           && teiki_plant_datum.rules.teiki_minting_rules.all(
-                (teiki_minting_predicate: MintingPredicate) -> Bool {
-                  does_tx_pass_minting_preciate_check(tx, teiki_minting_predicate)
-                }
-              )
+          );
+
+          is_minting_rules_passed && is_only_teiki_minted
         },
 
         Burn => {
           own_minted: Map[ByteArray]Int = tx.minted.get_policy(own_mph);
 
           own_minted.all(
-            (token_name: ByteArray, amount: Int) -> Bool {
+            (token_name: ByteArray, amount: Int) -> {
               if (token_name == TEIKI_TOKEN_NAME) { amount < 0 }
               else { false }
             }
@@ -81,7 +85,7 @@ export default function main({ teikiPlantNftMph }: Params): HeliosScript {
 
         Evolve => {
           !tx.outputs.any(
-            (output: TxOutput) -> Bool {
+            (output: TxOutput) -> {
               output.value.contains_policy(own_mph)
             }
           )
