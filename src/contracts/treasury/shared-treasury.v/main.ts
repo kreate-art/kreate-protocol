@@ -38,7 +38,7 @@ export default function main({
       find_pparams_datum_from_inputs,
       max,
       is_tx_authorized_by,
-      scriptHashToStakingCredential
+      script_hash_to_staking_credential
     } from ${module("helpers")}
 
     import {

@@ -99,7 +99,7 @@ export default helios`
     AssetClass::new(mph, PROTOCOL_PARAMS_NFT_TOKEN_NAME)
   }
 
-  // TODO: Please don't do this
+  // TODO: PROTOCOL_NFT_MPH should be a global param
   func find_pparams_datum_from_inputs(
     inputs: []TxInput,
     protocol_nft_mph: MintingPolicyHash
@@ -109,7 +109,7 @@ export default helios`
     parse_pparams_datum(pparams_txinput.output)
   }
 
-  // TODO: Please don't do this
+  // TODO: PROTOCOL_NFT_MPH should be a global param
   func find_pparams_datum_from_outputs(
     outputs: []TxOutput,
     protocol_nft_mph: MintingPolicyHash
@@ -119,7 +119,7 @@ export default helios`
     parse_pparams_datum(pparams_txout)
   }
 
-  func stakingCredentialToSVH(staking_credential: StakingCredential) -> StakingValidatorHash {
+  func staking_credential_to_validator_hash(staking_credential: StakingCredential) -> StakingValidatorHash {
     staking_credential.switch {
       h: Hash => h.hash.switch {
         v: Validator => v.hash,
@@ -128,7 +128,7 @@ export default helios`
     }
   }
 
-  func scriptHashToStakingCredential(script_hash: ScriptHash) -> StakingCredential {
+  func script_hash_to_staking_credential(script_hash: ScriptHash) -> StakingCredential {
     StakingCredential::new_hash(
       StakingHash::new_validator(
         StakingValidatorHash::from_script_hash(script_hash)

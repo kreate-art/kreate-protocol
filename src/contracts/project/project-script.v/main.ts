@@ -29,10 +29,10 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       from ${module("common__types")}
 
     import {
-      scriptHashToStakingCredential,
+      script_hash_to_staking_credential,
       is_tx_authorized_by,
       find_pparams_datum_from_inputs,
-      stakingCredentialToSVH
+      staking_credential_to_validator_hash
     } from ${module("helpers")}
 
     import {
@@ -93,7 +93,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
           staking_script_hash: ScriptHash = own_input_txout.ref_script_hash.unwrap();
           staking_credential: StakingCredential =
-            scriptHashToStakingCredential(staking_script_hash);
+            script_hash_to_staking_credential(staking_script_hash);
 
           staking_validator_hash: StakingValidatorHash =
             StakingValidatorHash::from_script_hash(staking_script_hash);
@@ -225,7 +225,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                                 .latest
                             ),
                             Option[StakingCredential]::Some{
-                              scriptHashToStakingCredential(
+                              script_hash_to_staking_credential(
                                 pparams_datum.registry.protocol_staking_validator
                               )
                             }
@@ -278,7 +278,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                             UserTag::from_data(i.data).switch {
                               tag: TagProjectScriptClosed =>
                                 tag.project_id == datum.project_id
-                                  && tag.staking_validator == stakingCredentialToSVH(staking_credential),
+                                  && tag.staking_validator == staking_credential_to_validator_hash(staking_credential),
                                 else => false
                             },
                           else => false
@@ -313,7 +313,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                           .latest
                       ),
                       Option[StakingCredential]::Some{
-                        scriptHashToStakingCredential(
+                        script_hash_to_staking_credential(
                           pparams_datum.registry.protocol_staking_validator
                         )
                       }

@@ -33,7 +33,7 @@ export default function main({
       from ${module("v__project_script__types")}
 
     import {
-      scriptHashToStakingCredential,
+      script_hash_to_staking_credential,
       is_tx_authorized_by,
       find_pparams_datum_from_inputs
     } from ${module("helpers")}
@@ -84,7 +84,7 @@ export default function main({
             tx.inputs.find_safe(
               (input: TxInput) -> Bool {
                 input.output.value.get_safe(PROJECT_SCRIPT_AT_ASSET_CLASS) == 1
-                  && scriptHashToStakingCredential(input.output.ref_script_hash.unwrap())
+                  && script_hash_to_staking_credential(input.output.ref_script_hash.unwrap())
                       == rewarding.credential
               }
             );
@@ -138,7 +138,7 @@ export default function main({
                   tx.inputs.find(
                     (input: TxInput) -> Bool {
                       input.output.value.get_safe(PROJECT_SCRIPT_AT_ASSET_CLASS) == 1
-                        && scriptHashToStakingCredential(input.output.ref_script_hash.unwrap())
+                        && script_hash_to_staking_credential(input.output.ref_script_hash.unwrap())
                             == deregister.credential
                     }
                   );

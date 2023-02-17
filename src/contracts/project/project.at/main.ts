@@ -26,7 +26,7 @@ export default function main({ protocolNftMph }: Params) {
     import {
       find_pparams_datum_from_inputs,
       is_tx_authorized_by,
-      scriptHashToStakingCredential
+      script_hash_to_staking_credential
     } from ${module("helpers")}
 
     import {
@@ -81,7 +81,7 @@ export default function main({ protocolNftMph }: Params) {
                   None => false,
                   else => {
                     staking_validator: StakingCredential =
-                      scriptHashToStakingCredential(output.ref_script_hash.unwrap());
+                      script_hash_to_staking_credential(output.ref_script_hash.unwrap());
 
                     output.address
                       == Address::new(
@@ -119,7 +119,7 @@ export default function main({ protocolNftMph }: Params) {
             );
 
           staking_validator: StakingCredential
-            = scriptHashToStakingCredential(project_script_txout.ref_script_hash.unwrap());
+            = script_hash_to_staking_credential(project_script_txout.ref_script_hash.unwrap());
 
           project_detail_txout: TxOutput =
             tx.outputs.find (
@@ -233,7 +233,7 @@ export default function main({ protocolNftMph }: Params) {
                       pparams_datum.registry.dedicated_treasury_validator.latest
                     ),
                     Option[StakingCredential]::Some{
-                      scriptHashToStakingCredential(
+                      script_hash_to_staking_credential(
                         pparams_datum.registry.protocol_staking_validator
                       )
                     }

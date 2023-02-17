@@ -41,7 +41,7 @@ export default function main({
     import {
       find_pparams_datum_from_inputs,
       is_tx_authorized_by,
-      scriptHashToStakingCredential
+      script_hash_to_staking_credential
     } from ${module("helpers")}
 
     import {
@@ -506,7 +506,7 @@ export default function main({
 
                 ref_option_staking_credential: Option[StakingCredential] =
                   Option[StakingCredential]::Some{
-                    scriptHashToStakingCredential(
+                    script_hash_to_staking_credential(
                       project_script_txout.ref_script_hash.unwrap()
                     )
                   };
