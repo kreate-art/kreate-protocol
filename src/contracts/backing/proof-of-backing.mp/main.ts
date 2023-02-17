@@ -1,7 +1,7 @@
 import { PROOF_OF_BACKING_TOKEN_NAMES } from "@/contracts/common/constants";
 import { Hex } from "@/types";
 
-import { helios } from "../../program";
+import { header, helios, module } from "../../program";
 
 export type Params = {
   projectAtMph: Hex;
@@ -14,40 +14,35 @@ export default function main({
   protocolNftMph,
   teikiMph,
 }: Params) {
-  return helios("mp__proof_of_backing", [
-    "mp__proof_of_backing__types",
-    "v__backing__types",
-    "v__project__types",
-    "v__project_script__types",
-    "v__protocol_params__types",
-    "v__shared_treasury__types",
-    "common__types",
-    "helpers",
-    "constants",
-  ])`
-    minting mp__proof_of_backing
+  return helios`
+    ${header("minting", "mp__proof_of_backing")}
 
     import {
       Redeemer,
       Plant,
       PlantAccumulator,
       to_fruit
-    } from mp__proof_of_backing__types
-    import { Datum as BackingDatum } from v__backing__types
-    import { Datum as ProjectDatum } from v__project__types
-    import { Datum as ProjectScriptDatum } from v__project_script__types
-    import { Datum as PParamsDatum } from v__protocol_params__types
+    } from ${module("mp__proof_of_backing__types")}
+    import { Datum as BackingDatum }
+      from ${module("v__backing__types")}
+    import { Datum as ProjectDatum }
+      from ${module("v__project__types")}
+    import { Datum as ProjectScriptDatum }
+      from ${module("v__project_script__types")}
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
     import {
       Datum as SharedTreasuryDatum,
       Redeemer as SharedTreasuryRedeemer
-    } from v__shared_treasury__types
-    import { UserTag } from common__types
+    } from ${module("v__shared_treasury__types")}
+    import { UserTag }
+      from ${module("common__types")}
 
     import {
       find_pparams_datum_from_inputs,
       is_tx_authorized_by,
       scriptHashToStakingCredential
-    } from helpers
+    } from ${module("helpers")}
 
     import {
       ADA_MINTING_POLICY_HASH,
@@ -57,7 +52,7 @@ export default function main({
       PROOF_OF_BACKING_MIGRATE_IN,
       PROOF_OF_BACKING_PLANT_TX_TIME_SLIPPAGE,
       TEIKI_TOKEN_NAME
-    } from constants
+    } from ${module("constants")}
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
@@ -78,7 +73,8 @@ export default function main({
       AssetClass::new(TEIKI_MPH, TEIKI_TOKEN_NAME)
 
     const SEED_TOKEN_NAME: ByteArray = #${PROOF_OF_BACKING_TOKEN_NAMES.SEED}
-    const WILTED_FLOWER_TOKEN_NAME: ByteArray = #${PROOF_OF_BACKING_TOKEN_NAMES.WILTED_FLOWER}
+    const WILTED_FLOWER_TOKEN_NAME: ByteArray =
+      #${PROOF_OF_BACKING_TOKEN_NAMES.WILTED_FLOWER}
 
     func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;

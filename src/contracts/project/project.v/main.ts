@@ -1,6 +1,6 @@
 import { Hex } from "@/types";
 
-import { helios } from "../../program";
+import { header, helios, module } from "../../program";
 
 export type Params = {
   projectAtMph: Hex;
@@ -8,38 +8,33 @@ export type Params = {
 };
 
 export default function main({ projectAtMph, protocolNftMph }: Params) {
-  return helios("v__project", [
-    "v__project__types",
-    "constants",
-    "v__project_script__types",
-    "v__protocol_params__types",
-    "v__project_detail__types",
-    "v__open_treasury__types",
-    "common__types",
-    "helpers",
-    "constants",
-  ])`
-    spending  v__project
+  return helios`
+    ${header("spending", "v__project")}
 
-    import { Redeemer, Datum, ProjectStatus } from v__project__types
+    import { Redeemer, Datum, ProjectStatus }
+      from ${module("v__project__types")}
     import {
       PROJECT_IMMEDIATE_CLOSURE_TX_TIME_SLIPPAGE,
       PROJECT_SCRIPT_UTXO_ADA
-    } from constants
-    import { Datum as ProjectScriptDatum } from v__project_script__types
-    import { Datum as PParamsDatum } from v__protocol_params__types
+    } from ${module("constants")}
+    import { Datum as ProjectScriptDatum }
+      from ${module("v__project_script__types")}
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
     import {
       Datum as ProjectDetailDatum,
       Redeemer as ProjectDetailRedeemer
-    } from v__project_detail__types
-    import { Datum as OpenTreasuryDatum } from v__open_treasury__types
-    import { UserTag } from common__types
+    } from ${module("v__project_detail__types")}
+    import { Datum as OpenTreasuryDatum }
+      from ${module("v__open_treasury__types")}
+    import { UserTag }
+      from ${module("common__types")}
 
     import {
       find_pparams_datum_from_inputs,
       is_tx_authorized_by,
       scriptHashToStakingCredential
-    } from helpers
+    } from ${module("helpers")}
 
     import {
       ADA_MINTING_POLICY_HASH,
@@ -51,7 +46,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       PROJECT_DETAIL_AT_TOKEN_NAME,
       PROJECT_SCRIPT_AT_TOKEN_NAME,
       RATIO_MULTIPLIER
-    } from constants
+    } from ${module("constants")}
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${projectAtMph})

@@ -1,6 +1,6 @@
 import { Hex } from "@/types";
 
-import { helios } from "../../program";
+import { header, helios, module } from "../../program";
 
 export type Params = {
   projectAtMph: Hex;
@@ -8,36 +8,32 @@ export type Params = {
 };
 
 export default function main({ projectAtMph, protocolNftMph }: Params) {
-  return helios("v__project_script", [
-    "v__project_detail__types",
-    "v__project_script__types",
-    "v__project__types",
-    "at__project__types",
-    "v__protocol_params__types",
-    "v__open_treasury__types",
-    "common__types",
-    "helpers",
-    "constants",
-  ])`
-    spending v__project_script
+  return helios`
+    ${header("spending", "v__project_script")}
 
-    import { Datum, Redeemer } from v__project_script__types
-    import { Datum as ProjectDatum, ProjectStatus } from v__project__types
-    import { Datum as PParamsDatum } from v__protocol_params__types
+    import { Datum, Redeemer }
+      from ${module("v__project_script__types")}
+    import { Datum as ProjectDatum, ProjectStatus }
+      from ${module("v__project__types")}
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
     import {
       Datum as OpenTreasuryDatum,
       Redeemer as OpenTreasuryRedeemer
-    } from v__open_treasury__types
-    import { Redeemer as ProjectAtRedeemer } from at__project__types
-    import { Redeemer as ProjectDetailRedeemer } from v__project_detail__types
-    import { UserTag } from common__types
+    } from ${module("v__open_treasury__types")}
+    import { Redeemer as ProjectAtRedeemer }
+      from ${module("at__project__types")}
+    import { Redeemer as ProjectDetailRedeemer }
+      from ${module("v__project_detail__types")}
+    import { UserTag }
+      from ${module("common__types")}
 
     import {
       scriptHashToStakingCredential,
       is_tx_authorized_by,
       find_pparams_datum_from_inputs,
       stakingCredentialToSVH
-    } from helpers
+    } from ${module("helpers")}
 
     import {
       RATIO_MULTIPLIER,
@@ -47,7 +43,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       PROJECT_SCRIPT_AT_TOKEN_NAME,
       PROJECT_SCRIPT_DELIST_DISCOUNT_CENTS,
       PROJECT_SCRIPT_CLOSE_DISCOUNT_CENTS
-    } from constants
+    } from ${module("constants")}
 
     const PROJECTS_AT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${projectAtMph})

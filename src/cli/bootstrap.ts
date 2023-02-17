@@ -2,7 +2,7 @@
 import { Address, Lucid, Script } from "lucid-cardano";
 
 import { compile, exportScript } from "@/contracts/compile";
-import { HeliosSource, helios } from "@/contracts/program";
+import { HeliosScript, helios, header } from "@/contracts/program";
 import { getPaymentKeyHash, signAndSubmit } from "@/helpers/lucid";
 import { TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
 import { Registry } from "@/schema/teiki/protocol";
@@ -381,9 +381,9 @@ function sleep(ms: number): Promise<void> {
   });
 }
 
-function alwaysFalse(): HeliosSource {
-  return helios("v__locking", [])`
-    spending v__locking
+function alwaysFalse(): HeliosScript {
+  return helios`
+    ${header("spending", "v__locking")}
 
     func main() -> Bool {
       731211 == 731112

@@ -1,6 +1,6 @@
 import { Hex } from "@/types";
 
-import { helios } from "../../program";
+import { header, helios, module } from "../../program";
 
 export type Params = {
   projectAtMph: Hex;
@@ -8,38 +8,33 @@ export type Params = {
 };
 
 export default function main({ projectAtMph, protocolNftMph }: Params) {
-  return helios("v__dedicated_treasury", [
-    "v__dedicated_treasury__types",
-    "v__protocol_params__types",
-    "v__project_detail__types",
-    "v__project__types",
-    "v__shared_treasury__types",
-    "common__types",
-    "v__open_treasury__types",
-    "helpers",
-    "constants",
-  ])`
-    spending v__dedicated_treasury
+  return helios`
+    ${header("spending", "v__dedicated_treasury")}
 
-    import { Datum, Redeemer } from v__dedicated_treasury__types
-    import { Datum as PParamsDatum } from v__protocol_params__types
+    import { Datum, Redeemer }
+      from ${module("v__dedicated_treasury__types")}
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
     import {
       Datum as ProjectDetailDatum,
       Redeemer as ProjectDetailRedeemer
-    } from v__project_detail__types
+    } from ${module("v__project_detail__types")}
     import {
       Datum as ProjectDatum
-    } from v__project__types
-    import { Datum as SharedTreasuryDatum } from v__shared_treasury__types
-    import { UserTag } from common__types
-    import { Datum as OpenTreasuryDatum } from v__open_treasury__types
+    } from ${module("v__project__types")}
+    import { Datum as SharedTreasuryDatum }
+      from ${module("v__shared_treasury__types")}
+    import { UserTag }
+      from ${module("common__types")}
+    import { Datum as OpenTreasuryDatum }
+      from ${module("v__open_treasury__types")}
 
     import {
       find_pparams_datum_from_inputs,
       scriptHashToStakingCredential,
       is_tx_authorized_by,
       min, max
-    } from helpers
+    } from ${module("helpers")}
 
     import {
       RATIO_MULTIPLIER,

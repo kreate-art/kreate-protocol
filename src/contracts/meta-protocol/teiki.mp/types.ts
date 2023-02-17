@@ -1,7 +1,7 @@
-import { helios } from "../../program";
+import { header, helios } from "../../program";
 
-export default helios("mp__teiki__types")`
-  module mp__teiki__types
+export default helios`
+  ${header("module", "mp__teiki__types")}
 
   enum Redeemer {
     Mint

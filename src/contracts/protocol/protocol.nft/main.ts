@@ -1,32 +1,30 @@
 import { OutRef } from "@/types";
 
-import { helios, HeliosSource } from "../../program";
+import { header, helios, HeliosScript, module } from "../../program";
 
 export type Params = {
   protocolSeed: OutRef;
 };
 
-export default function main({ protocolSeed }: Params): HeliosSource {
-  return helios("nft__protocol", [
-    "nft__protocol__types",
-    "helpers",
-    "constants",
-  ])`
-    minting nft__protocol
+export default function main({ protocolSeed }: Params): HeliosScript {
+  return helios`
+    ${header("minting", "nft__protocol")}
 
-    import { Redeemer } from nft__protocol__types
+    import { Redeemer }
+      from ${module("nft__protocol__types")}
 
-    import { does_consume_input_with_output_id } from helpers
+    import { does_consume_input_with_output_id }
+      from ${module("helpers")}
 
     import {
       PROTOCOL_PARAMS_NFT_TOKEN_NAME,
       PROTOCOL_PROPOSAL_NFT_TOKEN_NAME
-    } from constants
+    } from ${module("constants")}
 
     const seed_output_id: TxOutputId =
       TxOutputId::new(
         TxId::new(#${protocolSeed.txHash}),
-        ${protocolSeed.outputIndex.toString()}
+        ${protocolSeed.outputIndex}
       )
 
     func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool {

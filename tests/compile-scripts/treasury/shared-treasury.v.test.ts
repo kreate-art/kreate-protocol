@@ -8,7 +8,6 @@ test("compile: V | Shared Treasury", () => {
       projectAtMph: "",
       protocolNftMph: "",
       teikiMph: "",
-      proofOfBackingMph: "",
     })
   );
   expect(size).toBeGreaterThan(0);

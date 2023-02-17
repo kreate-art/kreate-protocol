@@ -1,9 +1,9 @@
 import { bytesToHex } from "@hyperionbt/helios";
 
 import { compile } from "@/contracts/compile";
-import { HeliosSource } from "@/contracts/program";
+import { HeliosScript } from "@/contracts/program";
 
-export function compileAndLog(script: HeliosSource) {
+export function compileAndLog(script: HeliosScript) {
   const uplcProgram = compile(script);
   const size = uplcProgram.calcSize();
   console.log(`${size} | ${bytesToHex(uplcProgram.hash())}`);

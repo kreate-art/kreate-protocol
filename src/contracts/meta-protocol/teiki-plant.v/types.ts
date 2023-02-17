@@ -1,7 +1,7 @@
-import { helios } from "../../program";
+import { header, helios } from "../../program";
 
-export default helios("v__teiki_plant__types")`
-  module v__teiki_plant__types
+export default helios`
+  ${header("module", "v__teiki_plant__types")}
 
   enum MintingRedeemer {
     Any

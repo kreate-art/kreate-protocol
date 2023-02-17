@@ -1,21 +1,22 @@
 import { Hex } from "@/types";
 
-import { helios, HeliosSource } from "../../program";
+import { header, helios, HeliosScript, module } from "../../program";
 
 export type Params = {
   protocolNftMph: Hex;
 };
 
-export default function main({ protocolNftMph }: Params): HeliosSource {
-  return helios("v__protocol_script", ["v__protocol_params__types", "helpers"])`
-    spending v__protocol_script
+export default function main({ protocolNftMph }: Params): HeliosScript {
+  return helios`
+    ${header("spending", "v__protocol_script")}
 
-    import { Datum as PParamsDatum } from v__protocol_params__types
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
 
     import {
       find_pparams_datum_from_inputs,
       is_tx_authorized_by
-    } from helpers
+    } from ${module("helpers")}
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})

@@ -1,7 +1,7 @@
-import { helios } from "../program";
+import { header, helios } from "../program";
 
-export default helios("common__types")`
-  module common__types
+export default helios`
+  ${header("module", "common__types")}
 
   enum UserTag {
     TagProjectFundsWithdrawal { project_id: ByteArray }

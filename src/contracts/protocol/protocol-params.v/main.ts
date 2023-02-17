@@ -1,23 +1,22 @@
 import { Hex } from "@/types";
 
-import { helios, HeliosSource } from "../../program";
+import { header, helios, HeliosScript, module } from "../../program";
 
 export type Params = {
   protocolNftMph: Hex;
 };
 
-export default function main({ protocolNftMph }: Params): HeliosSource {
-  return helios("v__protocol_params", [
-    "v__protocol_params__types",
-    "v__protocol_proposal__types",
-    "constants",
-  ])`
-    spending v__protocol_params
+export default function main({ protocolNftMph }: Params): HeliosScript {
+  return helios`
+    ${header("spending", "v__protocol_params")}
 
-    import { Redeemer } from v__protocol_params__types
-    import { Redeemer as ProposalRedeemer } from v__protocol_proposal__types
+    import { Redeemer }
+      from ${module("v__protocol_params__types")}
+    import { Redeemer as ProposalRedeemer }
+      from ${module("v__protocol_proposal__types")}
 
-    import { PROTOCOL_PROPOSAL_NFT_TOKEN_NAME } from constants
+    import { PROTOCOL_PROPOSAL_NFT_TOKEN_NAME }
+      from ${module("constants")}
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})

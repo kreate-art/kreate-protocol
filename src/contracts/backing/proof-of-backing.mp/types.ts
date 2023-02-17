@@ -1,7 +1,7 @@
-import { helios } from "../../program";
+import { header, helios } from "../../program";
 
-export default helios("mp__proof_of_backing__types")`
-  module mp__proof_of_backing__types
+export default helios`
+  ${header("module", "mp__proof_of_backing__types")}
 
   struct Plant {
     is_matured: Bool

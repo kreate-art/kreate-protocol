@@ -13,7 +13,7 @@ import modCommonTypes from "./common/types";
 import modTeikiPlantNftTypes from "./meta-protocol/teiki-plant.nft/types";
 import modTeikiPlantVTypes from "./meta-protocol/teiki-plant.v/types";
 import modTeikiMpTypes from "./meta-protocol/teiki.mp/types";
-import { heliosModules, HeliosSource, newProgram } from "./program";
+import { loadModules, HeliosScript, newProgram } from "./program";
 import modProjectDetailVTypes from "./project/project-detail.v/types";
 import modProjectScriptVTypes from "./project/project-script.v/types";
 import modProjectAtTypes from "./project/project.at/types";
@@ -42,7 +42,7 @@ export function setDefaultOptions(
 
 setDefaultOptions({ simplify: true });
 
-const HELIOS_MODULES = heliosModules([
+const HELIOS_MODULES = loadModules([
   modConstants,
   modCommonTypes,
   modFraction,
@@ -64,9 +64,8 @@ const HELIOS_MODULES = heliosModules([
   modOpenTreasuryVTypes,
 ]);
 
-// TODO: Optimize compilation time by loading only needed modules
 export function compile(
-  main: HeliosSource,
+  main: HeliosScript,
   options?: CompileOptions
 ): UplcProgram {
   const opts = { ...defaultOptions, ...options };
@@ -75,7 +74,7 @@ export function compile(
     Object.entries(opts.parameters).forEach(([name, value]) =>
       program.changeParam(name, toDataJson(value))
     );
-  return program.compile(opts.simplify);
+  return program.compile(main.simplify ?? opts.simplify);
 }
 
 export function exportScript(uplcProgram: UplcProgram): Script {
