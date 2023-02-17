@@ -21,7 +21,7 @@ export default function main({ protocolNftMph }: Params) {
       find_pparams_datum_from_inputs,
       min, max,
       is_tx_authorized_by,
-      scriptHashToStakingCredential
+      script_hash_to_staking_credential
     } from ${module("helpers")}
 
     import {
@@ -68,7 +68,7 @@ export default function main({ protocolNftMph }: Params) {
               pparams_datum.registry.open_treasury_validator.latest
             ),
             Option[StakingCredential]::Some{
-              scriptHashToStakingCredential(
+              script_hash_to_staking_credential(
                 pparams_datum.registry.protocol_staking_validator
               )
             }

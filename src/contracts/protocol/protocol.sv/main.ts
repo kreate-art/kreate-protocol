@@ -17,8 +17,8 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
       is_tx_authorized_by,
       find_pparams_datum_from_inputs,
       find_pparams_datum_from_outputs,
-      stakingCredentialToSVH,
-      scriptHashToStakingCredential
+      staking_credential_to_validator_hash,
+      script_hash_to_staking_credential
     } from ${module("helpers")}
 
     import { Datum as OpenTreasuryDatum }
@@ -51,7 +51,7 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
               pparams_datum.registry.open_treasury_validator.latest
             ),
             Option[StakingCredential]::Some {
-              scriptHashToStakingCredential(
+              script_hash_to_staking_credential(
                 pparams_datum.registry.protocol_staking_validator
               )
             }
@@ -76,7 +76,7 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
           open_treasury_datum.governor_ada == governor_share_amount
             && open_treasury_datum.tag.switch {
               tag: TagProtocolStakingRewards => {
-                tag.staking_validator == stakingCredentialToSVH(own_staking_credential)
+                tag.staking_validator == staking_credential_to_validator_hash(own_staking_credential)
               },
               else => false
             }

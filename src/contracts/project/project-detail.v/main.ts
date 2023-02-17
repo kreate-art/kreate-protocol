@@ -32,7 +32,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
     import {
       find_pparams_datum_from_inputs,
       is_tx_authorized_by,
-      scriptHashToStakingCredential
+      script_hash_to_staking_credential
     } from ${module("helpers")}
 
     import {
@@ -148,7 +148,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   extract_project_id_from_project_script_datum(i.data).switch {
                     si: Some => {
                       if (si.some == project_id) {
-                        acc + withdrawals.get(scriptHashToStakingCredential(sh.some))
+                        acc + withdrawals.get(script_hash_to_staking_credential(sh.some))
                       } else {
                         acc
                       }
@@ -508,7 +508,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 output.address == Address::new(
                   own_input_txout.address.credential,
                   Option[StakingCredential]::Some{
-                    scriptHashToStakingCredential(
+                    script_hash_to_staking_credential(
                       pparams_datum.registry.protocol_staking_validator
                     )
                   }
@@ -549,7 +549,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 output.address == Address::new(
                   own_input_txout.address.credential,
                   Option[StakingCredential]::Some{
-                    scriptHashToStakingCredential(
+                    script_hash_to_staking_credential(
                       pparams_datum.registry.protocol_staking_validator
                     )
                   }
