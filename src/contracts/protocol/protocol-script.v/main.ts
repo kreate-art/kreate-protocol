@@ -10,13 +10,13 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
   return helios`
     ${header("spending", "v__protocol_script")}
 
+    import {
+      is_tx_authorized_by,
+      find_pparams_datum_from_inputs
+    } from ${module("helpers")}
+
     import { Datum as PParamsDatum }
       from ${module("v__protocol_params__types")}
-
-    import {
-      find_pparams_datum_from_inputs,
-      is_tx_authorized_by
-    } from ${module("helpers")}
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
