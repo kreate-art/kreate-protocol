@@ -128,7 +128,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   output.address == own_input_txout.address
                     && output.value == own_input_txout.value
                     && output.datum.switch {
-                      i:Inline => {
+                      i: Inline => {
                         output_datum: Datum = Datum::from_data(i.data);
 
                         output_datum.milestone_reached == record.new_milestone
@@ -167,7 +167,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   (output: TxOutput) -> Bool {
                     output.address == own_input_txout.address
                       && output.datum.switch {
-                        i:Inline => Datum::from_data(i.data) == datum,
+                        i: Inline => Datum::from_data(i.data) == datum,
                         else => error("Invalid project UTxO: missing inline datum")
                       }
                       && output.value.to_map().all(
@@ -276,7 +276,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     output.address == own_input_txout.address
                       && output.value == own_input_txout.value
                       && output.datum.switch {
-                        i:Inline => {
+                        i: Inline => {
                           output_datum: Datum = Datum::from_data(i.data);
 
                           output_datum.milestone_reached == datum.milestone_reached
@@ -310,7 +310,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     output.address == own_input_txout.address
                       && output.value == own_input_txout.value
                       && output.datum.switch {
-                        i:Inline => {
+                        i: Inline => {
                           output_datum: Datum = Datum::from_data(i.data);
 
                           output_datum.milestone_reached == datum.milestone_reached
@@ -350,7 +350,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     output.address == own_input_txout.address
                       && output.value == own_input_txout.value
                       && output.datum.switch {
-                        i:Inline => {
+                        i: Inline => {
                           output_datum: Datum = Datum::from_data(i.data);
 
                           output_datum.milestone_reached == datum.milestone_reached
@@ -391,7 +391,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     output.address == own_input_txout.address
                       && output.value == own_input_txout.value
                       && output.datum.switch {
-                        i:Inline => {
+                        i: Inline => {
                           output_datum: Datum = Datum::from_data(i.data);
 
                           output_datum.milestone_reached == datum.milestone_reached
@@ -462,7 +462,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                         }
                       )
                       && output.datum.switch {
-                        i:Inline => {
+                        i: Inline => {
                           output_datum: Datum = Datum::from_data(i.data);
 
                           output_datum.milestone_reached == datum.milestone_reached
@@ -585,7 +585,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                         }
                       )
                       && output.datum.switch {
-                        i:Inline => {
+                        i: Inline => {
                           output_datum: Datum = Datum::from_data(i.data);
 
                           output_datum.milestone_reached == datum.milestone_reached
