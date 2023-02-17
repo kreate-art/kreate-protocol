@@ -59,19 +59,19 @@ export default helios`
 
   func does_tx_pass_minting_preciate_check(tx: Tx, predicate: MintingPredicate) -> Bool {
     mph: MintingPolicyHash = predicate.minting_policy_hash;
-    minting_redeemer_data: Data =
+    minting_redeemer: Data =
       tx.redeemers.get(ScriptPurpose::new_minting(mph));
 
     predicate.redeemer.switch {
       Any => true,
       constr_in: ConstrIn => {
-        minting_constr_tag: Int = minting_redeemer_data.tag;
+        minting_constr_tag: Int = minting_redeemer.tag;
         constr_in.constrs.any(
           (constr: Int) -> { constr == minting_constr_tag }
         )
       },
       constr_not_in: ConstrNotIn => {
-        minting_constr_tag: Int = minting_redeemer_data.tag;
+        minting_constr_tag: Int = minting_redeemer.tag;
         constr_not_in.constrs.all(
           (constr: Int) -> { constr != minting_constr_tag }
         )

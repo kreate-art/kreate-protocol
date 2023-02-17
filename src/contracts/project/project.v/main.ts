@@ -104,11 +104,11 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     }
                   );
 
-              project_detail_script_purpose: ScriptPurpose =
+              project_detail_purpose: ScriptPurpose =
                 ScriptPurpose::new_spending(project_detail_txinput.output_id);
 
-              project_detail_redeemer_data: Data =
-                tx.redeemers.get(project_detail_script_purpose);
+              project_detail_redeemer: Data =
+                tx.redeemers.get(project_detail_purpose);
 
               assert(
                   record.new_milestone > datum.milestone_reached,
@@ -116,7 +116,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               );
 
               assert(
-                ProjectDetailRedeemer::from_data(project_detail_redeemer_data).switch {
+                ProjectDetailRedeemer::from_data(project_detail_redeemer).switch {
                   WithdrawFunds => true,
                   else => false
                 },
@@ -427,14 +427,14 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     }
                   );
 
-              project_detail_script_purpose: ScriptPurpose =
+              project_detail_purpose: ScriptPurpose =
                 ScriptPurpose::new_spending(project_detail_txinput.output_id);
 
-              project_detail_redeemer_data: Data =
-                tx.redeemers.get(project_detail_script_purpose);
+              project_detail_redeemer: Data =
+                tx.redeemers.get(project_detail_purpose);
 
               assert(
-                ProjectDetailRedeemer::from_data(project_detail_redeemer_data).switch {
+                ProjectDetailRedeemer::from_data(project_detail_redeemer).switch {
                   Close => true,
                   else => false
                 },
@@ -537,11 +537,11 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     }
                   );
 
-              project_detail_script_purpose: ScriptPurpose =
+              project_detail_purpose: ScriptPurpose =
                 ScriptPurpose::new_spending(project_detail_txinput.output_id);
 
-              project_detail_redeemer_data: Data =
-                tx.redeemers.get(project_detail_script_purpose);
+              project_detail_redeemer: Data =
+                tx.redeemers.get(project_detail_purpose);
 
               ada_to_treasury: Int =
                 own_input_txout.value.get_safe(AssetClass::ADA)
@@ -557,7 +557,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               );
 
               assert(
-                ProjectDetailRedeemer::from_data(project_detail_redeemer_data).switch {
+                ProjectDetailRedeemer::from_data(project_detail_redeemer).switch {
                   Delist => true,
                   else => false
                 },
