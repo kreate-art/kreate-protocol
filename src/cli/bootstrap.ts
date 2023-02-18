@@ -48,7 +48,7 @@ import { getLucid, requiredEnv } from "../commands/utils";
 
 // =======================BOOTSTRAP==========================
 // Protocol staking
-const POOL_ID = requiredEnv("BLOCKFROST_URL");
+const POOL_ID = requiredEnv("POOL_ID");
 
 // Staking manager address - only use payment credential
 const STAKING_MANAGER_ADDRESS = requiredEnv("STAKING_MANAGER_ADDRESS");
