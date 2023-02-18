@@ -193,7 +193,7 @@ export const SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS: ProtocolNonScriptParams = {
   // The rate is represented by a [0..1] number multiplied by 1E+6.
   projectTeikiBurnRate: 50_000n, // 5% per epoch
   // The length of an epoch in milliseconds - Cardano Protocol Params.
-  epochLength: { milliseconds: 432_000_000n }, // 5 days / epoch -- mainnet
+  epochLength: { milliseconds: 86_400_000n }, // 1 days / epoch -- testnet
   projectPledge: 500_000_000n,
   projectCreationFee: 10_000_000n,
   // Minimum project sponsorship fee ADA (in Lovelace). Higher number, higher position.
