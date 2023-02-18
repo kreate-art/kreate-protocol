@@ -831,13 +831,14 @@ function generateFlower(): Plant {
   const backedAt = {
     timestamp: getRandomTime(),
   };
-  const backedEpochs = Math.floor(Math.random() * 100);
+  const backedEpochs = 1 + Math.random() * 100;
   const unbackedAt = {
-    timestamp:
-      backedAt.timestamp +
-      BigInt(
-        backedEpochs * Number(protocolParamsDatum.epochLength.milliseconds)
-      ),
+    timestamp: BigInt(
+      Math.floor(
+        Number(backedAt.timestamp) +
+          backedEpochs * Number(protocolParamsDatum.epochLength.milliseconds)
+      )
+    ),
   };
   return {
     isMatured: false,

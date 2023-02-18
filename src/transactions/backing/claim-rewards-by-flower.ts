@@ -135,8 +135,8 @@ export function claimRewardsByFlowerTx(
     );
 
     const teikiRewards =
-      (flower.backingAmount * backingDuration) /
-      BigInt(protocolParams.epochLength.milliseconds) /
+      (flower.backingAmount *
+        (backingDuration / BigInt(protocolParams.epochLength.milliseconds))) /
       protocolParams.teikiCoefficient;
 
     totalTeikiRewards += teikiRewards;
