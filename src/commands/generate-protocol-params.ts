@@ -170,7 +170,7 @@ export function getProtocolRegistry(
 export const SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS: ProtocolNonScriptParams = {
   // The Protocol Governor’s share of the protocol revenue (ADA & Teiki).
   // The ratio is represented by a [0..1] number multiplied by 1E+6.
-  governorShareRatio: 800_000n, // 80%
+  governorShareRatio: 800_000n, // For Alpha testing only. The final goal for Gen I is 88.89%.
   // The Protocol’s share (including Protocol Governor’s) share of the raised funds.
   // The ratio is represented by a [0..1] number multiplied by 1E+6.
   protocolFundsShareRatio: 45_000n, // 4.5%
@@ -179,31 +179,32 @@ export const SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS: ProtocolNonScriptParams = {
   // Projects funding milestones in Lovelace.
   // Note that we can have a more compact format.
   projectMilestones: [
-    1_500_000_000n,
-    3_000_000_000n,
-    6_000_000_000n,
-    12_000_000_000n,
-    25_000_000_000n,
-    100_000_000_000n,
+    1_000_000n, // For Alpha testing only. Will eventually remove.
+    5_000_000_000n,
+    15_000_000_000n,
+    60_000_000_000n,
+    300_000_000_000n,
+    1_000_000_000_000n,
+    2_500_000_000_000n,
   ],
   // The r protocol parameter in @Teiki Tokenomics.
-  teikiCoefficient: 500n,
+  teikiCoefficient: 10n, // For Alpha testing only. Will eventually increase.
   // The burn rate of projects' Teiki per epoch.
   // The rate is represented by a [0..1] number multiplied by 1E+6.
   projectTeikiBurnRate: 50_000n, // 5% per epoch
   // The length of an epoch in milliseconds - Cardano Protocol Params.
-  epochLength: { milliseconds: 86_400_000n }, // 1 day / epoch -- preview
+  epochLength: { milliseconds: 432_000_000n }, // 5 days / epoch -- mainnet
   projectPledge: 500_000_000n,
   projectCreationFee: 10_000_000n,
   // Minimum project sponsorship fee ADA (in Lovelace). Higher number, higher position.
-  projectSponsorshipMinFee: 3_000_000_000n,
+  projectSponsorshipMinFee: 500_000_000n,
   // If the Project Owner paid the sponsorship fee, the project would be sponsored for this duration (in milliseconds).
-  projectSponsorshipDuration: { milliseconds: 864_000_000n }, // 10 days
+  projectSponsorshipDuration: { milliseconds: 2_592_000_000n }, // 30 days
   projectInformationUpdateFee: 1_000_000n,
-  projectAnnouncementFee: 500_000n,
+  projectAnnouncementFee: 1_000_000n,
   // The minimum number of shared treasuries need to be created (to receive Teiki) per milestone-reached event.
   // Note that this is closely related to `projectMilestones`.
-  minTreasuryPerMilestoneEvent: 10n,
+  minTreasuryPerMilestoneEvent: 1n, // For Alpha testing only. Will eventually increase.
   // The amount of ADA (in Lovelace) of a stake registration deposit - Cardano Protocol Params.
   stakeKeyDeposit: 2_000_000n,
   // Proposals have to go through a waiting period.
