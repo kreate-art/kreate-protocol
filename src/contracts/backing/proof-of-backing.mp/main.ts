@@ -427,15 +427,27 @@ export default function main({
                 assert(!tx.minted.contains_policy(TEIKI_MPH), "Must not mint any Teiki")
               };
 
-              seed_amount: Int =
-                produced_backing_outputs.length - consumed_backing_inputs.length;
+              add_seed =
+                (tokens: Map[ByteArray]Int) -> {
+                  seed_amount: Int =
+                    produced_backing_outputs.length - consumed_backing_inputs.length;
+                  if (seed_amount != 0) { tokens.prepend(SEED_TOKEN_NAME, seed_amount) }
+                  else { tokens }
+                };
+
+              add_wilted =
+                (tokens: Map[ByteArray]Int) -> {
+                  wilted_amount: Int = plant_accumulator.wilted_amount;
+                  if (wilted_amount != 0) { tokens.prepend(WILTED_FLOWER_TOKEN_NAME, wilted_amount) }
+                  else { tokens }
+                };
+
+              plants: Map[ByteArray]Int = plant_accumulator.plant_map;
 
               assert(
-                tx.minted.get_policy(own_mph)
-                  == plant_accumulator.plant_map
-                    .prepend(SEED_TOKEN_NAME, seed_amount)
-                    .prepend(WILTED_FLOWER_TOKEN_NAME, plant_accumulator.wilted_amount)
-                    .sort((t1: ByteArray, _, t2: ByteArray, _) -> { t1 < t2 }),
+                add_seed(add_wilted(plants))
+                  .sort((t1: ByteArray, _, t2: ByteArray, _) -> { t1 < t2 })
+                  == tx.minted.get_policy(own_mph),
                 "Incorrect Proof of Backing mint"
               );
 

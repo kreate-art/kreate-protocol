@@ -1,4 +1,4 @@
-import { Address, Lucid, Tx, UTxO } from "lucid-cardano";
+import { Address, Assets, Lucid, Tx, UTxO } from "lucid-cardano";
 
 import { PROOF_OF_BACKING_TOKEN_NAMES } from "@/contracts/common/constants";
 import {
@@ -129,33 +129,23 @@ export function plantTx(
 
     tx = tx.readFrom([projectInfo.projectScriptUtxo]);
   }
-
-  const seedTokenMintAmount =
-    numProducedBackingUtxos - backingInfo.backingUtxos.length;
-
   const seedUnit =
     backingInfo.proofOfBackingMph + PROOF_OF_BACKING_TOKEN_NAMES.SEED;
 
-  if (seedTokenMintAmount !== 0) {
-    tx = tx.mintAssets(
-      { [seedUnit]: BigInt(seedTokenMintAmount) },
-      proofOfBackingMintingRedeemer
-    );
-  }
-
   // TODO: @sk-saru Check whether the backer unback or not
-  if (backingInfo.amount <= 0n) {
+  if (backingInfo.amount <= 0n)
     tx = addCollectBackingInstruction(tx, backingInfo);
 
-    tx = addMintingInstruction(tx, {
-      backingInfo,
-      protocolParamsUtxo,
-      projectUtxo: projectInfo.projectUtxo,
-      teikiMintingInfo,
-      txTimeStart,
-      proofOfBackingMintingRedeemer,
-    });
-  }
+  tx = addMintingInstruction(tx, {
+    backingInfo,
+    protocolParamsUtxo,
+    projectUtxo: projectInfo.projectUtxo,
+    teikiMintingInfo,
+    txTimeStart,
+    proofOfBackingMintingRedeemer,
+    seedAmount: numProducedBackingUtxos - backingInfo.backingUtxos.length,
+    ignoreUnback: backingInfo.amount > 0,
+  });
 
   // Check whether a new backing UTxO should be produced
   if (remainBackingAmount > 0n) {
@@ -197,6 +187,8 @@ type MintingInstructionParams = {
   teikiMintingInfo?: TeikiMintingInfo;
   txTimeStart: number;
   proofOfBackingMintingRedeemer: Hex;
+  seedAmount: number;
+  ignoreUnback?: boolean;
 };
 
 function addMintingInstruction(
@@ -208,117 +200,127 @@ function addMintingInstruction(
     teikiMintingInfo,
     txTimeStart,
     proofOfBackingMintingRedeemer,
+    seedAmount,
+    ignoreUnback = false,
   }: MintingInstructionParams
 ) {
-  assert(
-    protocolParamsUtxo.datum != null,
-    "Invalid protocol params UTxO: Missing inline datum"
-  );
+  const minting: Assets = {};
 
-  assert(
-    projectUtxo.datum != null,
-    "Invalid project UTxO: Missing inline datum"
-  );
+  if (seedAmount !== 0)
+    minting[backingInfo.proofOfBackingMph + PROOF_OF_BACKING_TOKEN_NAMES.SEED] =
+      BigInt(seedAmount);
 
-  assert(
-    backingInfo.backingScriptRefUtxo,
-    "Missing backing validator reference script UTxO"
-  );
-
-  const { protocolParams } = parseProtocolParams(
-    S.fromCbor(protocolParamsUtxo.datum)
-  );
-
-  const projectDatum = S.fromData(S.fromCbor(projectUtxo.datum), ProjectDatum);
-
-  const unbackedAt = txTimeStart;
-  let totalTeikiRewards = 0n;
-  let wiltedFlowerMintAmount = 0n;
-
-  for (const backingUtxo of backingInfo.backingUtxos) {
+  // TODO: @sk-saru Check whether the backer unback or not
+  if (!ignoreUnback) {
     assert(
-      backingUtxo.datum != null,
-      "Invalid backing UTxO: Missing inline datum"
+      protocolParamsUtxo.datum != null,
+      "Invalid protocol params UTxO: Missing inline datum"
     );
 
-    const backingDatum = S.fromData(
-      S.fromCbor(backingUtxo.datum),
-      BackingDatum
+    assert(
+      projectUtxo.datum != null,
+      "Invalid project UTxO: Missing inline datum"
     );
 
-    const timePassed = BigInt(unbackedAt) - backingDatum.backedAt.timestamp;
+    assert(
+      backingInfo.backingScriptRefUtxo,
+      "Missing backing validator reference script UTxO"
+    );
 
-    if (timePassed < 0n) throw new Error("Invalid unbacking time");
-    if (timePassed >= protocolParams.epochLength.milliseconds) {
-      const backingAmount = BigInt(backingUtxo.assets.lovelace);
+    const { protocolParams } = parseProtocolParams(
+      S.fromCbor(protocolParamsUtxo.datum)
+    );
 
-      const isMatured =
-        backingDatum.milestoneBacked < projectDatum.milestoneReached &&
-        projectDatum.status.type !== "PreDelisted";
+    const projectDatum = S.fromData(
+      S.fromCbor(projectUtxo.datum),
+      ProjectDatum
+    );
 
-      const plant: Plant = {
-        isMatured,
-        backingOutputId: constructTxOutputId(backingUtxo),
-        backingAmount,
-        unbackedAt: { timestamp: BigInt(unbackedAt) },
-        ...backingDatum,
-      };
+    const unbackedAt = txTimeStart;
+    let totalTeikiRewards = 0n;
+    let wiltedFlowerMintAmount = 0;
 
-      const plantHash = constructPlantHashUsingBlake2b(plant);
-
-      tx = tx.mintAssets(
-        { [backingInfo.proofOfBackingMph + plantHash]: 1n },
-        proofOfBackingMintingRedeemer
+    for (const backingUtxo of backingInfo.backingUtxos) {
+      assert(
+        backingUtxo.datum != null,
+        "Invalid backing UTxO: Missing inline datum"
       );
 
-      tx = attachTeikiNftMetadata(tx, {
-        policyId: backingInfo.proofOfBackingMph,
-        assetName: plantHash,
-        nftName: getPlantNftName({ isMatured }),
-        projectId: backingDatum.projectId.id,
-        backingAmount,
-        duration: timePassed,
+      const backingDatum = S.fromData(
+        S.fromCbor(backingUtxo.datum),
+        BackingDatum
+      );
+
+      const timePassed = BigInt(unbackedAt) - backingDatum.backedAt.timestamp;
+
+      if (timePassed < 0n) throw new Error("Invalid unbacking time");
+      if (timePassed >= protocolParams.epochLength.milliseconds) {
+        const backingAmount = BigInt(backingUtxo.assets.lovelace);
+
+        const isMatured =
+          backingDatum.milestoneBacked < projectDatum.milestoneReached &&
+          projectDatum.status.type !== "PreDelisted";
+
+        const plant: Plant = {
+          isMatured,
+          backingOutputId: constructTxOutputId(backingUtxo),
+          backingAmount,
+          unbackedAt: { timestamp: BigInt(unbackedAt) },
+          ...backingDatum,
+        };
+
+        const plantHash = constructPlantHashUsingBlake2b(plant);
+
+        minting[backingInfo.proofOfBackingMph + plantHash] = 1n;
+
+        tx = attachTeikiNftMetadata(tx, {
+          policyId: backingInfo.proofOfBackingMph,
+          assetName: plantHash,
+          nftName: getPlantNftName({ isMatured }),
+          projectId: backingDatum.projectId.id,
+          backingAmount,
+          duration: timePassed,
+        });
+
+        const teikiRewards = isMatured
+          ? (backingAmount *
+              (BigInt(BigInt(unbackedAt) - backingDatum.backedAt.timestamp) /
+                BigInt(protocolParams.epochLength.milliseconds))) /
+            protocolParams.teikiCoefficient
+          : 0n;
+
+        totalTeikiRewards += teikiRewards;
+      } else {
+        wiltedFlowerMintAmount += 1;
+      }
+    }
+    if (wiltedFlowerMintAmount > 0) {
+      minting[
+        backingInfo.proofOfBackingMph +
+          PROOF_OF_BACKING_TOKEN_NAMES.WILTED_FLOWER
+      ] = BigInt(wiltedFlowerMintAmount);
+    }
+
+    if (totalTeikiRewards > 0) {
+      assert(teikiMintingInfo, "Missing teiki minting information");
+
+      assert(
+        teikiMintingInfo.teikiMpRefUtxo.scriptRef,
+        "Invalid teiki reference script UTxO: Missing inline datum"
+      );
+
+      tx = mintTeiki(tx, {
+        teikiMintingInfo,
+        totalTeikiRewards,
+        protocolParams,
+        projectDatum,
+        txTimeStart,
       });
-
-      const teikiRewards = isMatured
-        ? (backingAmount *
-            (BigInt(BigInt(unbackedAt) - backingDatum.backedAt.timestamp) /
-              BigInt(protocolParams.epochLength.milliseconds))) /
-          protocolParams.teikiCoefficient
-        : 0n;
-
-      totalTeikiRewards += teikiRewards;
-    } else {
-      wiltedFlowerMintAmount += 1n;
     }
   }
 
-  if (wiltedFlowerMintAmount > 0n) {
-    tx = tx.mintAssets(
-      {
-        [backingInfo.proofOfBackingMph +
-        PROOF_OF_BACKING_TOKEN_NAMES.WILTED_FLOWER]: wiltedFlowerMintAmount,
-      },
-      proofOfBackingMintingRedeemer
-    );
-  }
-
-  if (totalTeikiRewards > 0) {
-    assert(teikiMintingInfo, "Missing teiki minting information");
-
-    assert(
-      teikiMintingInfo.teikiMpRefUtxo.scriptRef,
-      "Invalid teiki reference script UTxO: Missing inline datum"
-    );
-
-    tx = mintTeiki(tx, {
-      teikiMintingInfo,
-      totalTeikiRewards,
-      protocolParams,
-      projectDatum,
-      txTimeStart,
-    });
-  }
+  if (Object.keys(minting))
+    tx = tx.mintAssets(minting, proofOfBackingMintingRedeemer);
 
   return tx;
 }

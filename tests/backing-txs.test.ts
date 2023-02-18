@@ -272,6 +272,67 @@ describe("backing transactions", () => {
     );
   });
 
+  it("plant tx - partial unback one backing", async () => {
+    expect.assertions(1);
+
+    lucid.selectWalletFromSeed(BACKER_ACCOUNT.seedPhrase);
+
+    const projectDatum: ProjectDatum = {
+      projectId: { id: projectId },
+      ownerAddress: constructAddress(ownerAddress),
+      milestoneReached: initialProjectMilestone,
+      isStakingDelegationManagedByProtocol: true,
+      status: { type: "Active" },
+    };
+
+    const projectUtxo: UTxO = generateProjectUtxo(projectDatum);
+
+    const backingUtxos = generateBackingUtxoList(1);
+    const [backingUtxo] = backingUtxos;
+    const unbackAmount = getRandomLovelaceAmount(
+      Number(backingUtxo.assets.lovelace - MIN_UTXO_LOVELACE)
+    );
+
+    attachUtxos(emulator, [
+      proofOfBackingMpRefUtxo,
+      projectUtxo,
+      projectScriptUtxo,
+      protocolParamsUtxo,
+      ...backingUtxos,
+      backingScriptRefUtxo,
+    ]);
+
+    emulator.awaitSlot(200);
+
+    const plantParams: PlantParams = {
+      protocolParamsUtxo,
+      projectInfo: {
+        id: projectId,
+        currentMilestone: initialProjectMilestone,
+        projectUtxo,
+        projectScriptUtxo,
+      },
+      backingInfo: {
+        amount: -unbackAmount,
+        backerAddress: BACKER_ACCOUNT.address,
+        backingUtxos,
+        backingScriptAddress,
+        backingScriptRefUtxo,
+        proofOfBackingMpRefUtxo,
+        proofOfBackingMph,
+      },
+    };
+
+    let tx = plantTx(lucid, plantParams);
+    tx = tx.addSigner(plantParams.backingInfo.backerAddress);
+
+    const txComplete = await tx.complete();
+
+    await expect(lucid.awaitTx(await signAndSubmit(txComplete))).resolves.toBe(
+      true
+    );
+  });
+
   it("plant tx - wilted flower only", async () => {
     expect.assertions(1);
 

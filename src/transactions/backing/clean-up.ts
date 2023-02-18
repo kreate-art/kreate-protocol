@@ -1,3 +1,4 @@
+// FIXME: Don't mintAssets more than once... Do the same treatment as plantTx
 import { Address, Lucid, Tx, UTxO, Unit } from "lucid-cardano";
 
 import {
