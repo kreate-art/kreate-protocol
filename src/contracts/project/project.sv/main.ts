@@ -112,7 +112,7 @@ export default function main({
 
             deregister: Deregister => {
               tx.inputs.any(
-                (input: TxInput) -> Bool {
+                (input: TxInput) -> {
                   output: TxOutput = input.output;
                   output.value.get_safe(PROJECT_SCRIPT_AT_ASSET_CLASS) == 1
                     && script_hash_to_staking_credential(output.ref_script_hash.unwrap())

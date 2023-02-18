@@ -222,7 +222,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
           milestone: Int =
             pparams_datum.project_milestones.fold(
               (acc: Int, lovelace: Int) -> Int {
-                if(new_withdrawn_funds > lovelace){
+                if (new_withdrawn_funds >= lovelace){
                   acc + 1
                 } else {
                   acc
