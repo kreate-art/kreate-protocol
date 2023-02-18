@@ -282,8 +282,8 @@ function addMintingInstruction(
 
       const teikiRewards = isMatured
         ? (backingAmount *
-            BigInt(BigInt(unbackedAt) - backingDatum.backedAt.timestamp)) /
-          BigInt(protocolParams.epochLength.milliseconds) /
+            (BigInt(BigInt(unbackedAt) - backingDatum.backedAt.timestamp) /
+              BigInt(protocolParams.epochLength.milliseconds))) /
           protocolParams.teikiCoefficient
         : 0n;
 
