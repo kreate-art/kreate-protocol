@@ -5,8 +5,6 @@ const JsonBig = JsonBigFactory({ useNativeBigInt: true });
 
 export default JsonBig;
 
-export type Json<_> = string;
-
 /**
  * Converts a JSON-formatted string to a JS value.
  *
@@ -14,7 +12,7 @@ export type Json<_> = string;
  * This function is the bigint-aware alternative of `JSON.parse`.
  */
 export function fromJson<T = unknown>(
-  text: Json<T>,
+  text: string,
   options?: { forceBigInt?: boolean }
 ): T {
   return options?.forceBigInt
@@ -30,6 +28,14 @@ export function fromJson<T = unknown>(
  * Values of `bigint` will be stringified properly.
  * This function is the bigint-aware alternative of `JSON.stringify`.
  */
-export function toJson<T = unknown>(value: T, space?: number): Json<T> {
+export function toJson(
+  value: string | number | bigint | boolean | object | unknown[],
+  space?: number
+): string;
+export function toJson(
+  value: undefined | symbol | ((...args: unknown[]) => unknown)
+): undefined;
+export function toJson(value: unknown, space?: number): string | undefined {
+  // JSON.stringify has bad typing
   return JsonBig.stringify(value, null, space);
 }
