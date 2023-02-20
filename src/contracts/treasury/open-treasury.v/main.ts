@@ -185,7 +185,6 @@ export default function main({ protocolNftMph }: Params) {
               .open_treasury_validator
               .migrations
               .get(own_validator_hash);
-
           tx.minted.get_safe(migration_asset_class) != 0
         }
       }

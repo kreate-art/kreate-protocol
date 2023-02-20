@@ -67,11 +67,10 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
             );
 
           open_treasury_datum: OpenTreasuryDatum =
-            open_treasury_output.datum
-              .switch {
-                i: Inline => OpenTreasuryDatum::from_data(i.data),
-                else => error("Invalid open treasury utxo: must inline datum")
-              };
+            open_treasury_output.datum.switch {
+              i: Inline => OpenTreasuryDatum::from_data(i.data),
+              else => error("Invalid open treasury utxo: must inline datum")
+            };
 
           open_treasury_datum.governor_ada == governor_share_amount
             && open_treasury_datum.tag.switch {

@@ -168,7 +168,11 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     s: Some => s.some
                   };
 
-              project_datum: ProjectDatum = get_project_datum(project_input.output);
+              project_datum: ProjectDatum =
+                project_input.output.datum.switch {
+                  i: Inline => ProjectDatum::from_data(i.data),
+                  else => error("Invalid Project utxo: missing inline datum")
+                };
               assert(project_datum.project_id == project_id, "Invalid project id");
 
               assert(
@@ -191,21 +195,22 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               own_address: Address = own_spending_output.address;
               own_value: Value = own_spending_output.value;
 
+              expected_datum: Datum =
+                Datum {
+                  project_id: project_id,
+                  sponsorship: datum.sponsorship,
+                  information_cid: datum.information_cid,
+                  last_announcement_cid: datum.last_announcement_cid,
+                  withdrawn_funds: new_withdrawn_funds
+                };
+
               assert(
                 tx.outputs.any(
                   (output: TxOutput) -> {
                     output.address == own_address
                       && output.value == own_value
                       && output.datum.switch {
-                          i: Inline => {
-                            output_datum: Datum = Datum::from_data(i.data);
-
-                            output_datum.project_id == project_id
-                              && output_datum.withdrawn_funds == new_withdrawn_funds
-                              && output_datum.sponsorship == datum.sponsorship
-                              && output_datum.information_cid == datum.information_cid
-                              && output_datum.last_announcement_cid == datum.last_announcement_cid
-                          },
+                          i: Inline => Datum::from_data(i.data) == expected_datum,
                           else => error("Invalid project detail UTxO: missing inline datum")
                         }
                   }
@@ -302,6 +307,9 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
                 owner_address: Address = project_datum.owner_address;
 
+                user_tag: UserTag =
+                  UserTag::TagProjectFundsWithdrawal {project_id: datum.project_id};
+
                 tx.outputs.any(
                   (output: TxOutput) -> Bool {
                     output.address == owner_address
@@ -315,12 +323,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                           }
                         )
                       && output.datum.switch {
-                          i: Inline =>
-                            UserTag::from_data(i.data).switch {
-                              tag: TagProjectFundsWithdrawal =>
-                                tag.project_id == datum.project_id,
-                              else => false
-                            },
+                          i: Inline => UserTag::from_data(i.data) == user_tag,
                           else => false
                         }
                   }
@@ -342,7 +345,11 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     s: Some => s.some
                   };
 
-              project_datum: ProjectDatum = get_project_datum(project_output);
+              project_datum: ProjectDatum =
+                project_output.datum.switch {
+                  i: Inline => ProjectDatum::from_data(i.data),
+                  else => error("Invalid Project utxo: missing inline datum")
+                };
               assert(project_datum.project_id == datum.project_id, "Invalid project id");
 
               assert(
@@ -366,7 +373,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                       && output.datum.switch {
                         i: Inline => {
                           output_datum: Datum = Datum::from_data(i.data);
-
                           output_datum.project_id == project_id
                             && output_datum.withdrawn_funds == datum.withdrawn_funds
                         },
@@ -524,6 +530,28 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 (input: TxInput) -> { is_project_output(input.output) }
               );
 
+              project_purpose: ScriptPurpose =
+                ScriptPurpose::new_spending(project_input.output_id);
+
+              project_redeemer: Data = tx.redeemers.get(project_purpose);
+
+              assert(
+                ProjectRedeemer::from_data(project_redeemer).switch {
+                  FinalizeClose => true,
+                  else => false
+                },
+                "Wrong project redeemer"
+              );
+
+              project_input.output.datum.switch {
+                i: Inline =>
+                  assert(
+                    ProjectDatum::from_data(i.data).project_id == project_id,
+                    "Invalid project id"
+                  ),
+                else => error("Invalid Project utxo: missing inline datum")
+              };
+
               expected_address: Address =
                 Address::new(
                     own_spending_output.address.credential,
@@ -534,39 +562,18 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     }
                 );
 
-              expected_value: Value =
-                own_spending_output.value;
+              expected_value: Value = own_spending_output.value;
 
-              is_producing_utxo_valid: Bool =
-                tx.outputs.any(
-                  (output: TxOutput) -> {
-                    output.address == expected_address
-                      && output.value == expected_value
-                      && output.datum.switch {
-                          i: Inline => Datum::from_data(i.data) == datum,
-                          else => error("Invalid project detail UTxO: missing inline datum")
-                        }
-                  }
-                );
-
-              project_purpose: ScriptPurpose =
-                ScriptPurpose::new_spending(project_input.output_id);
-
-              project_redeemer: Data = tx.redeemers.get(project_purpose);
-
-              does_consume_project_correctly: Bool =
-                ProjectRedeemer::from_data(project_redeemer).switch {
-                  FinalizeClose => true,
-                  else => false
-                };
-
-              assert(
-                get_project_datum(project_input.output).project_id == project_id,
-                "Invalid project id"
-              );
-
-              is_producing_utxo_valid
-                && does_consume_project_correctly
+              tx.outputs.any(
+                (output: TxOutput) -> {
+                  output.address == expected_address
+                    && output.value == expected_value
+                    && output.datum.switch {
+                        i: Inline => Datum::from_data(i.data) == datum,
+                        else => error("Invalid project detail UTxO: missing inline datum")
+                      }
+                }
+              )
             },
 
             Delist => {
@@ -574,6 +581,28 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 (input: TxInput) -> { is_project_output(input.output) }
               );
 
+              project_purpose: ScriptPurpose =
+                ScriptPurpose::new_spending(project_input.output_id);
+
+              project_redeemer: Data = tx.redeemers.get(project_purpose);
+
+              assert(
+                ProjectRedeemer::from_data(project_redeemer).switch {
+                  FinalizeDelist => true,
+                  else => false
+                },
+                "Wrong project redeemer"
+              );
+
+              project_input.output.datum.switch {
+                i: Inline =>
+                  assert(
+                    ProjectDatum::from_data(i.data).project_id == project_id,
+                    "Invalid project id"
+                  ),
+                else => error("Invalid Project utxo: missing inline datum")
+              };
+
               expected_address: Address =
                 Address::new(
                     own_spending_output.address.credential,
@@ -584,40 +613,18 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     }
                 );
 
-              expected_value: Value =
-                own_spending_output.value;
+              expected_value: Value = own_spending_output.value;
 
-              is_producing_utxo_valid: Bool =
-                tx.outputs.any(
-                  (output: TxOutput) -> {
-                    output.address == expected_address
-                      && output.value == expected_value
-                      && output.datum.switch {
-                          i: Inline => Datum::from_data(i.data) == datum,
-                          else => error("Invalid project detail UTxO: missing inline datum")
-                        }
-                  }
-                );
-
-              project_purpose: ScriptPurpose =
-                ScriptPurpose::new_spending(project_input.output_id);
-
-              project_redeemer: Data = tx.redeemers.get(project_purpose);
-
-              does_consume_project_correctly: Bool =
-                ProjectRedeemer::from_data(project_redeemer).switch {
-                  FinalizeDelist => true,
-                  else => false
-                };
-
-              assert(
-                get_project_datum(project_input.output).project_id == project_id,
-                "Invalid project id"
-              );
-
-              is_producing_utxo_valid
-                && does_consume_project_correctly
-
+              tx.outputs.any(
+                (output: TxOutput) -> {
+                  output.address == expected_address
+                    && output.value == expected_value
+                    && output.datum.switch {
+                        i: Inline => Datum::from_data(i.data) == datum,
+                        else => error("Invalid project detail UTxO: missing inline datum")
+                      }
+                }
+              )
             },
 
             else => false
