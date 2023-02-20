@@ -13,17 +13,19 @@ export default helios`
     denominator: Int
 
     func multiply(self, other: Fraction) -> Fraction {
-      temp: Fraction = Fraction
-         { numerator: self.numerator * other.numerator
-         , denominator: self.denominator * other.denominator
-         };
+      t_numerator: Int = self.numerator * other.numerator;
+      t_denominator: Int = self.denominator * other.denominator;
+      t_sum: Int = t_numerator + t_denominator;
 
-      if (temp.numerator + temp.denominator <= FRACTION_LIMIT) {
-        temp
+      if (t_sum > FRACTION_LIMIT) {
+        Fraction {
+          numerator: t_numerator * FRACTION_LIMIT / t_sum,
+          denominator: t_denominator * FRACTION_LIMIT / t_sum
+        }
       } else {
-        Fraction
-        { numerator: temp.numerator * FRACTION_LIMIT / (temp.numerator + temp.denominator)
-        , denominator: temp.denominator * FRACTION_LIMIT / (temp.numerator + temp.denominator)
+        Fraction {
+          numerator: t_numerator,
+          denominator: t_denominator
         }
       }
     }
