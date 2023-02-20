@@ -11,7 +11,7 @@ export default helios`
       staking_validator: StakingValidatorHash
     }
     TagInactiveBacking { backing_output_id: TxOutputId }
-    TagTreasuryWithdrawal { treasury_output_id: Option[TxOutputId] }
+    TagTreasuryWithdrawal { treasury_output_id: TxOutputId }
   }
 
   enum TreasuryTag {

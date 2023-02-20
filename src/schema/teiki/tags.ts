@@ -11,7 +11,7 @@ export const UserTag = Enum("kind", {
     stakingValidator: StakingValidatorHash,
   },
   TagInactiveBacking: { backingOutputId: TxOutputId },
-  TagTreasuryWithdrawal: { treasuryOutputId: Option(TxOutputId) },
+  TagTreasuryWithdrawal: { treasuryOutputId: TxOutputId },
 });
 export type UserTag = Static<typeof UserTag>;
 

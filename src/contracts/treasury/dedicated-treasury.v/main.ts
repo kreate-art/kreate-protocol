@@ -291,9 +291,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               );
 
             governor_tag: UserTag =
-              UserTag::TagTreasuryWithdrawal {
-                treasury_output_id: Option[TxOutputId]::Some { own_spending_output_id }
-              };
+              UserTag::TagTreasuryWithdrawal {treasury_output_id: own_spending_output_id};
 
             tx.outputs.any(
               (output: TxOutput) -> {
