@@ -5,7 +5,6 @@ import {
   constructAddress,
   constructPlantHashUsingBlake2b,
   constructTxOutputId,
-  parseProtocolParams,
 } from "@/helpers/schema";
 import { getTxTimeRange, TimeProvider } from "@/helpers/time";
 import * as S from "@/schema";
@@ -16,6 +15,7 @@ import {
   ProofOfBackingMintingRedeemer,
 } from "@/schema/teiki/backing";
 import { ProjectDatum } from "@/schema/teiki/project";
+import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { Hex, TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
@@ -227,8 +227,9 @@ function addMintingInstruction(
       "Missing backing validator reference script UTxO"
     );
 
-    const { protocolParams } = parseProtocolParams(
-      S.fromCbor(protocolParamsUtxo.datum)
+    const protocolParams = S.fromData(
+      S.fromCbor(protocolParamsUtxo.datum),
+      ProtocolParamsDatum
     );
 
     const projectDatum = S.fromData(

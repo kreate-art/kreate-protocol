@@ -7,10 +7,7 @@ import * as S from "@/schema";
 import { Plant } from "@/schema/teiki/backing";
 import { TeikiMintingRedeemer } from "@/schema/teiki/meta-protocol";
 import { ProjectDatum } from "@/schema/teiki/project";
-import {
-  ProtocolParamsDatum,
-  LegacyProtocolParamsDatum,
-} from "@/schema/teiki/protocol";
+import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import {
   BurnAction,
   ProjectTeiki,
@@ -47,7 +44,7 @@ export type TeikiMintingInfo = {
 export type MintTeikiParams = {
   teikiMintingInfo: TeikiMintingInfo;
   totalTeikiRewards: bigint;
-  protocolParams: ProtocolParamsDatum | LegacyProtocolParamsDatum;
+  protocolParams: ProtocolParamsDatum;
   projectDatum: ProjectDatum;
   txTimeStart: number;
 };
