@@ -56,7 +56,7 @@
     "typecheck:watch": "tsc --noEmit --strict --watch"
   },
   "dependencies": {
-    "@hyperionbt/helios": "^0.12.1",
+    "@hyperionbt/helios": "^0.12.3",
     "@shinka-network/json-bigint": "^1.0.2",
     "@sinclair/typebox": "^0.25.23",
     "lucid-cardano": "^0.9.4"
@@ -64,8 +64,8 @@
   "devDependencies": {
     "@types/jest": "^29.4.0",
     "@types/node": "^18.14.0",
-    "@typescript-eslint/eslint-plugin": "^5.52.0",
-    "@typescript-eslint/parser": "^5.52.0",
+    "@typescript-eslint/eslint-plugin": "^5.53.0",
+    "@typescript-eslint/parser": "^5.53.0",
     "eslint": "^8.34.0",
     "eslint-config-prettier": "^8.6.0",
     "eslint-import-resolver-typescript": "^3.5.3",

@@ -12,7 +12,9 @@ export default helios`
   }
 
   enum Redeemer {
-    CollectDelayedStakingRewards { staking_withdrawals: Map[StakingValidatorHash]Int}
+    CollectDelayedStakingRewards {
+      staking_withdrawals: Map[StakingValidatorHash]Int
+    }
     WithdrawAda
     Migrate
   }

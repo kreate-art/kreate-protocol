@@ -10,12 +10,11 @@ export default function main({ protocolNftMph }: Params) {
   return helios`
     ${header("spending", "v__open_treasury")}
 
-    import { Datum, Redeemer }
-      from ${module("v__open_treasury__types")}
-    import { Datum as PParamsDatum }
-      from ${module("v__protocol_params__types")}
-    import { UserTag }
-      from ${module("common__types")}
+    import {
+      RATIO_MULTIPLIER,
+      TREASURY_MIN_WITHDRAWAL_ADA,
+      TREASURY_WITHDRAWAL_DISCOUNT_RATIO
+    } from ${module("constants")}
 
     import {
       find_pparams_datum_from_inputs,
@@ -24,161 +23,204 @@ export default function main({ protocolNftMph }: Params) {
       script_hash_to_staking_credential
     } from ${module("helpers")}
 
-    import {
-      RATIO_MULTIPLIER,
-      TREASURY_MIN_WITHDRAWAL_ADA,
-      TREASURY_WITHDRAWAL_DISCOUNT_RATIO
-    } from ${module("constants")}
+    import { UserTag, TreasuryTag }
+      from ${module("common__types")}
+
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
+
+    import { Datum, Redeemer }
+      from ${module("v__open_treasury__types")}
 
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
 
     func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
-      own_input_txinput: TxInput = ctx.get_current_input();
-
-      own_validator_hash: ValidatorHash = ctx.get_current_validator_hash();
-
-      pparams_datum: PParamsDatum =
-        find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
-
       redeemer.switch {
-        collecting: CollectDelayedStakingRewards => {
-          total_withdrawals: Int =
-            collecting.staking_withdrawals
-              .fold(
-                (acc: Int, _, withdrawal: Int) -> Int {
-                  acc + withdrawal
-                },
-                0
-              );
 
-          own_output_txouts: []TxOutput = tx.outputs_locked_by(ctx.get_current_validator_hash());
+        collect: CollectDelayedStakingRewards => {
+          own_spending_output: TxOutput = ctx.get_current_input().output;
 
-          own_output_txout: TxOutput = own_output_txouts.head;
+          own_credential: Credential = own_spending_output.address.credential;
 
-          own_output_datum: Datum =
-            own_output_txout.datum.switch {
-              i: Inline => Datum::from_data(i.data),
-              else => error("Invalid open treasury UTxO: Missing inline datum")
-            };
+          pparams_datum: PParamsDatum =
+            find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
 
-          own_input_txinput.output.address == Address::new(
-            Credential::new_validator(
-              pparams_datum.registry.open_treasury_validator.latest
-            ),
-            Option[StakingCredential]::Some{
-              script_hash_to_staking_credential(
-                pparams_datum.registry.protocol_staking_validator
+          own_credential.switch {
+            PubKey => error("unreachable"),
+            v: Validator =>
+              assert(
+                v.hash == pparams_datum.registry.open_treasury_validator.latest,
+                "Wrong script version"
               )
-            }
-          )
-            && own_output_txouts.length == 1
-            && own_output_txout.value == Value::lovelace(
-              own_input_txinput.output.value.get_safe(AssetClass::ADA) + total_withdrawals
-            )
-            && own_output_datum.governor_ada
-                == datum.governor_ada + total_withdrawals * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER
-            && own_output_datum.tag.switch {
-              tag: TagProjectDelayedStakingRewards =>
-                tag.staking_validator.switch {
-                  None => true,
-                  else => false
-                }
-              ,
-              else => false
-            }
-            && own_validator_hash
-                == pparams_datum.registry.open_treasury_validator.latest
-        },
-        WithdrawAda => {
-          treasury_txinputs: []TxInput =
-            tx.inputs
-              .filter (
-                (input: TxInput) -> Bool {
-                  input.output.address.credential == Credential::new_validator(own_validator_hash)
-                }
-              );
+          };
 
-          is_not_min_txinput: Bool =
-            treasury_txinputs.any(
-              (input: TxInput) -> Bool {
-                input.output_id < own_input_txinput.output_id
+          assert(
+            tx.inputs.fold(
+              (acc: Int, input: TxInput) -> {
+                if (input.output.address.credential == own_credential) { acc + 1 }
+                else { acc }
+              },
+              0
+            ) == 1,
+            "Must consume only one open treasury"
+          );
+
+          total_withdrawal: Int =
+            collect.staking_withdrawals.fold(
+              (acc: Int, _, withdrawal: Int) -> { acc + withdrawal }, 0
+            );
+
+          producing_address: Address =
+            Address::new(
+              own_credential,
+              Option[StakingCredential]::Some{
+                script_hash_to_staking_credential(
+                  pparams_datum.registry.protocol_staking_validator
+                )
               }
             );
 
-          if (is_not_min_txinput) {
-            true
-          } else {
-            in_w: Int =
-              treasury_txinputs.fold(
-                (acc: Int, input: TxInput) -> Int {
-                  acc + input.output.value.get_safe(AssetClass::ADA)
+          producing_value: Value =
+            Value::lovelace(
+              own_spending_output.value.get(AssetClass::ADA) + total_withdrawal
+            );
+
+          producing_datum: Datum =
+            Datum {
+              governor_ada:
+                datum.governor_ada
+                  + total_withdrawal * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER,
+              tag: TreasuryTag::TagProjectDelayedStakingRewards {
+                staking_validator: Option[StakingValidatorHash]::None
+              }
+            };
+
+          tx.outputs.any(
+            (output: TxOutput) -> {
+              output.address == producing_address
+                && output.value == producing_value
+                && output.datum.switch {
+                    i: Inline => Datum::from_data(i.data) == producing_datum,
+                    else => error("Invalid open treasury UTxO: missing inline datum")
+                  }
+            }
+          )
+        },
+
+        WithdrawAda => {
+          own_spending_input: TxInput = ctx.get_current_input();
+
+          own_spending_output_id: TxOutputId = own_spending_input.output_id;
+          own_spending_output: TxOutput = own_spending_input.output;
+
+          own_address: Address = own_spending_output.address;
+          own_credential: Credential = own_address.credential;
+
+          empty: []TxOutput = []TxOutput {};
+
+          treasury_outputs: []TxOutput =
+            tx.inputs
+              .fold_lazy(
+                (input: TxInput, next: () -> []TxOutput) -> {
+                  output: TxOutput = input.output;
+                  if (output.address.credential == own_credential) {
+                    if (input.output_id < own_spending_output_id) { empty }
+                    else { next().prepend(output) }
+                  } else { next() }
                 },
-                0
+                empty
               );
 
-            in_g: Int =
-              treasury_txinputs.fold(
-                (acc: Int, input: TxInput) -> Int {
-                  treasury_datum: Datum = input.output.datum.switch {
-                    i: Inline => Datum::from_data(i.data),
-                    else => error("Invalid treasury UTxO: missing inline datum")
-                  };
+          if (!treasury_outputs.is_empty()) {
+            pparams_datum: PParamsDatum =
+              find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
 
-                  acc + min(max(0, treasury_datum.governor_ada), input.output.value.get_safe(AssetClass::ADA))
-                },
-                0
-              );
+            own_credential.switch {
+              PubKey => error("unreachable"),
+              v: Validator =>
+                assert(
+                  v.hash == pparams_datum.registry.open_treasury_validator.latest,
+                  "Wrong script version"
+                )
+            };
 
-            own_output_txout: TxOutput =
-              tx.outputs_locked_by(ctx.get_current_validator_hash())
-                .head;
-
-            own_output_datum: Datum =
-              own_output_txout.datum.switch {
-                i: Inline => Datum::from_data(i.data),
-                else => error("Invalid open treasury UTxO: Missing inline datum")
+            producing_datum: Datum =
+              Datum {
+                governor_ada: 0,
+                tag: TreasuryTag::TagContinuation {former: own_spending_output_id}
               };
 
-            out_w: Int = own_output_txout.value.get_safe(AssetClass::ADA);
+            producing_output: TxOutput =
+              tx.outputs.find(
+                (output: TxOutput) -> {
+                  output.address == own_address
+                    && output.datum.switch {
+                        i: Inline => Datum::from_data(i.data) == producing_datum,
+                        else => error("Invalid open treasury UTxO: Missing inline datum")
+                      }
+                }
+              );
+
+            (in_w: Int, in_g: Int) =
+              treasury_outputs.fold(
+                (acc: () -> (Int, Int), output: TxOutput) -> {
+                  (aw: Int, ag: Int) = acc();
+                  governor_ada: Int = output.datum.switch {
+                    i: Inline => Datum::from_data(i.data).governor_ada,
+                    else => error("Invalid treasury UTxO: missing inline datum")
+                  };
+                  w: Int = output.value.get(AssetClass::ADA);
+                  g: Int = min(max(0, governor_ada), w);
+                  () -> {(aw + w, ag + g)}
+                },
+                () -> {(0, 0)}
+              )();
+
+            out_w: Int = producing_output.value.get(AssetClass::ADA);
 
             delta: Int = in_w - out_w;
 
-            own_validator_hash
-              == pparams_datum.registry.open_treasury_validator.latest
-              && own_output_datum.governor_ada == 0
-              && own_output_datum.tag.switch {
-                tag: TagContinuation => {
-                  tag.former == own_input_txinput.output_id
-                },
-                else => false
-              }
-              && delta == in_g
-              && if(!is_tx_authorized_by(tx, pparams_datum.governor_address.credential)){
-                delta >= TREASURY_MIN_WITHDRAWAL_ADA
-                  && tx.outputs.any(
-                    (output: TxOutput) -> Bool {
-                      output.address == pparams_datum.governor_address
-                        && output.value == Value::lovelace(delta * (RATIO_MULTIPLIER - TREASURY_WITHDRAWAL_DISCOUNT_RATIO) / RATIO_MULTIPLIER)
-                        && output.datum.switch {
-                          i: Inline =>
-                            UserTag::from_data(i.data).switch {
-                              tag: TagTreasuryWithdrawal =>
-                                tag.treasury_output_id.unwrap() == own_input_txinput.output_id,
-                                else => false
-                            }
-                          ,
-                          else => false
-                        }
-                    }
-                  )
-              } else {
-                delta > 0
-              }
-          }
+            assert(delta == in_g, "Governor ada must be balanced");
+
+            governor_address: Address = pparams_datum.governor_address;
+            if (is_tx_authorized_by(tx, governor_address.credential)) {
+              assert(delta > 0, "Governor withdrawal must be positive")
+            } else {
+              assert(
+                delta >= TREASURY_MIN_WITHDRAWAL_ADA,
+                "Withdrawal must exceed minimum amount"
+              );
+              governor_value: Value =
+                Value::lovelace(
+                  delta * (RATIO_MULTIPLIER - TREASURY_WITHDRAWAL_DISCOUNT_RATIO) / RATIO_MULTIPLIER
+                );
+              governor_tag: UserTag =
+                UserTag::TagTreasuryWithdrawal {treasury_output_id: own_spending_output_id};
+              assert(
+                tx.outputs.any(
+                  (output: TxOutput) -> {
+                    output.address == governor_address
+                      && output.value == governor_value
+                      && output.datum.switch {
+                        i: Inline => UserTag::from_data(i.data) == governor_tag,
+                        else => false
+                      }
+                  }
+                ),
+                "Must pay to governor"
+              )
+            }
+          };
+
+          true
         },
+
         Migrate => {
+          own_validator_hash: ValidatorHash = ctx.get_current_validator_hash();
+          pparams_datum: PParamsDatum =
+            find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
           migration_asset_class: AssetClass =
             pparams_datum
               .registry
@@ -187,6 +229,7 @@ export default function main({ protocolNftMph }: Params) {
               .get(own_validator_hash);
           tx.minted.get_safe(migration_asset_class) != 0
         }
+
       }
     }
   `;

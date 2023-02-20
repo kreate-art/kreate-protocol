@@ -185,16 +185,17 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     tx.withdrawals.get(staking_credential);
 
                   if (withdrawn_rewards != 0) {
+                    treasury_credential: Credential =
+                      Credential::new_validator(
+                        pparams_datum.registry
+                          .open_treasury_validator
+                          .latest
+                      );
                     if (withdrawn_rewards < TREASURY_UTXO_MIN_ADA) {
                       open_treasury_input: TxInput =
                         tx.inputs.find(
                           (input: TxInput) -> Bool {
-                            input.output.address.credential
-                              == Credential::new_validator(
-                                  pparams_datum.registry
-                                    .open_treasury_validator
-                                    .latest
-                                )
+                            input.output.address.credential == treasury_credential
                           }
                         );
 
@@ -217,11 +218,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     } else {
                       treasury_address: Address =
                         Address::new(
-                          Credential::new_validator(
-                            pparams_datum.registry
-                              .open_treasury_validator
-                              .latest
-                          ),
+                          treasury_credential,
                           Option[StakingCredential]::Some {
                             script_hash_to_staking_credential(
                               pparams_datum.registry.protocol_staking_validator
