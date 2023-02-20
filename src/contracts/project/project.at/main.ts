@@ -28,6 +28,9 @@ export default function main({ protocolNftMph }: Params) {
       script_hash_to_staking_credential
     } from ${module("helpers")}
 
+    import { TreasuryTag }
+      from ${module("common__types")}
+
     import { Datum as PParamsDatum }
       from ${module("v__protocol_params__types")}
 
@@ -83,7 +86,11 @@ export default function main({ protocolNftMph }: Params) {
             Credential::new_validator(
               pparams_datum.registry.project_script_validator.latest
             );
-          stake_key_deposit: Int = pparams_datum.stake_key_deposit;
+          project_script_datum: ProjectScriptDatum =
+            ProjectScriptDatum {
+              project_id: project_id,
+              stake_key_deposit: pparams_datum.stake_key_deposit
+            };
           project_script_output: TxOutput =
             tx.outputs.find(
               (output: TxOutput) -> {
@@ -99,12 +106,7 @@ export default function main({ protocolNftMph }: Params) {
                     output.value == project_script_value
                       && output.address == project_script_address
                       && output.datum.switch {
-                        i: Inline => {
-                          project_script_datum: ProjectScriptDatum =
-                            ProjectScriptDatum::from_data(i.data);
-                          project_script_datum.project_id == project_id
-                            && project_script_datum.stake_key_deposit == stake_key_deposit
-                        },
+                        i: Inline => ProjectScriptDatum::from_data(i.data) == project_script_datum,
                         else => false
                       }
                   },
@@ -230,22 +232,19 @@ export default function main({ protocolNftMph }: Params) {
                 )
               }
             );
+          treasury_datum: DedicatedTreasuryDatum =
+            DedicatedTreasuryDatum {
+              project_id: project_id,
+              governor_ada: governor_ada,
+              tag: TreasuryTag::TagOriginated {seed: project_seed}
+            };
           does_produce_treasury_correctly: Bool =
             tx.outputs.any(
               (output: TxOutput) -> {
                 output.value == treasury_value
                   && output.address == treasury_address
                   && output.datum.switch {
-                    i: Inline => {
-                      treasury_datum: DedicatedTreasuryDatum =
-                        DedicatedTreasuryDatum::from_data(i.data);
-                      treasury_datum.project_id == project_id
-                        && treasury_datum.governor_ada == governor_ada
-                        && treasury_datum.tag.switch {
-                          tag: TagOriginated => tag.seed == project_seed,
-                          else => false
-                        }
-                    },
+                    i: Inline => DedicatedTreasuryDatum::from_data(i.data) == treasury_datum,
                     else => false
                   }
               }

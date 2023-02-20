@@ -65,11 +65,10 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
           .head;
 
       own_output_datum: Datum =
-        own_output_txout.datum
-          .switch {
-            i: Inline => Datum::from_data(i.data),
-            else => error("Invalid proposal UTxO: missing inline datum")
-          };
+        own_output_txout.datum.switch {
+          i: Inline => Datum::from_data(i.data),
+          else => error("Invalid proposal UTxO: missing inline datum")
+        };
 
       pparams_input: TxInput =
         (tx.inputs + tx.ref_inputs)

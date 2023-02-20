@@ -30,7 +30,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       staking_credential_to_validator_hash
     } from ${module("helpers")}
 
-    import { UserTag }
+    import { UserTag, TreasuryTag }
       from ${module("common__types")}
 
     import { Datum as ProjectDatum, ProjectStatus }
@@ -214,7 +214,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                         "Incorrect open treasury redeemer"
                       )
                     } else {
-                      treasurya_address: Address =
+                      treasury_address: Address =
                         Address::new(
                           Credential::new_validator(
                             pparams_datum.registry
@@ -227,27 +227,26 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                             )
                           }
                         );
+
                       treasury_value: Value =
                         Value::lovelace(withdrawn_rewards);
-                      governor_ada: Int =
-                        withdrawn_rewards * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER;
+
+                      treasury_datum: OpenTreasuryDatum =
+                        OpenTreasuryDatum {
+                          governor_ada:
+                            withdrawn_rewards * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER,
+                          tag: TreasuryTag::TagProjectDelayedStakingRewards {
+                            staking_validator: Option[StakingValidatorHash]::Some { staking_validator_hash }
+                          }
+                        };
 
                       assert(
                         tx.outputs.any(
                           (output: TxOutput) -> {
-                            output.address == treasurya_address
+                            output.address == treasury_address
                               && output.value == treasury_value
                               && output.datum.switch {
-                                i: Inline => {
-                                  open_treasury_datum: OpenTreasuryDatum = OpenTreasuryDatum::from_data(i.data);
-                                  open_treasury_datum.governor_ada == governor_ada
-                                    && open_treasury_datum.tag.switch {
-                                      tag: TagProjectDelayedStakingRewards => {
-                                        tag.staking_validator.unwrap() == staking_validator_hash
-                                      },
-                                      else => false
-                                    }
-                                },
+                                i: Inline => OpenTreasuryDatum::from_data(i.data) == treasury_datum,
                                 else => false
                               }
                           }
@@ -275,6 +274,11 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
                 owner_address: Address = project_datum.owner_address;
 
+                user_tag: UserTag =
+                  UserTag::TagProjectScriptClosed {
+                    project_id: project_id,
+                    staking_validator: staking_validator_hash
+                  };
                 tx.outputs.any(
                   (output: TxOutput) -> {
                     output.address == owner_address
@@ -288,13 +292,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                           }
                         )
                       && output.datum.switch {
-                        i: Inline =>
-                          UserTag::from_data(i.data).switch {
-                            tag: TagProjectScriptClosed =>
-                              tag.project_id == project_id
-                                && tag.staking_validator == staking_validator_hash,
-                            else => false
-                          },
+                        i: Inline => UserTag::from_data(i.data) == user_tag,
                         else => false
                       }
                   }
@@ -342,6 +340,11 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               governor_share_ratio: Int =
                 pparams_datum.governor_share_ratio;
 
+              open_treasury_tag: TreasuryTag =
+                TreasuryTag::TagProjectScriptDelisted {
+                  project_id: datum.project_id,
+                  staking_validator: staking_validator_hash
+                };
               tx.outputs.any(
                 (output: TxOutput) -> {
                   if (
@@ -353,12 +356,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                       && output.datum.switch {
                         i: Inline => {
                           open_treasury_datum: OpenTreasuryDatum = OpenTreasuryDatum::from_data(i.data);
-                          open_treasury_datum.tag.switch {
-                                  tag: TagProjectScriptDelisted =>
-                                    tag.project_id == datum.project_id
-                                      && tag.staking_validator == staking_validator_hash,
-                                  else => false
-                                }
+                          open_treasury_datum.tag == open_treasury_tag
                             && open_treasury_datum.governor_ada
                               == treasury_ada * governor_share_ratio / RATIO_MULTIPLIER
                         },

@@ -249,6 +249,10 @@ export default function main({
                       error("Invalid unback time")
                     } else if (time_passed < epoch_length) {
                       if (cleanup) {
+                        user_tag: UserTag =
+                          UserTag::TagInactiveBacking {
+                            backing_output_id: backing_input.output_id
+                          };
                         assert(
                           tx.outputs.any(
                             (output: TxOutput) -> {
@@ -266,12 +270,7 @@ export default function main({
                                     }
                                   )
                                 && output.datum.switch {
-                                  i: Inline =>
-                                    UserTag::from_data(i.data).switch {
-                                      tag: TagInactiveBacking =>
-                                        tag.backing_output_id == backing_input.output_id,
-                                        else => false
-                                    },
+                                  i: Inline => UserTag::from_data(i.data) == user_tag,
                                   else => error("Invalid output UTxO, missing inline datum")
                                 }
                             }
@@ -321,6 +320,10 @@ export default function main({
                         };
 
                       if (cleanup) {
+                        user_tag: UserTag =
+                          UserTag::TagInactiveBacking {
+                            backing_output_id: backing_input.output_id
+                          };
                         assert(
                           tx.outputs.any(
                             (output: TxOutput) -> Bool {
@@ -340,12 +343,7 @@ export default function main({
                                     }
                                   )
                                 && output.datum.switch {
-                                  i: Inline =>
-                                    UserTag::from_data(i.data).switch {
-                                      tag: TagInactiveBacking =>
-                                        tag.backing_output_id == backing_input.output_id,
-                                        else => false
-                                    },
+                                  i: Inline => UserTag::from_data(i.data) == user_tag,
                                   else => error("Invalid output UTxO, missing inline datum")
                                 }
                             }

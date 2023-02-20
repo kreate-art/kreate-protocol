@@ -31,7 +31,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       script_hash_to_staking_credential
     } from ${module("helpers")}
 
-    import { UserTag }
+    import { UserTag, TreasuryTag }
       from ${module("common__types")}
 
     import { Datum as PParamsDatum }
@@ -84,7 +84,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               .project_validator
               .migrations
               .get(own_validator_hash);
-
           tx.minted.get_safe(migration_asset_class) != 0
         },
 
@@ -133,21 +132,22 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Wrong project detail redeemer"
               );
 
+              expected_datum: Datum =
+                Datum {
+                  project_id: datum.project_id,
+                  owner_address: datum.owner_address,
+                  is_staking_delegation_managed_by_protocol:
+                    datum.is_staking_delegation_managed_by_protocol,
+                  status: datum.status,
+                  milestone_reached: record.new_milestone
+                };
+
               tx.outputs.any(
                 (output: TxOutput) -> Bool {
                   output.address == own_spending_output.address
                     && output.value == own_spending_output.value
                     && output.datum.switch {
-                      i: Inline => {
-                        output_datum: Datum = Datum::from_data(i.data);
-
-                        output_datum.milestone_reached == record.new_milestone
-                          && output_datum.project_id == project_id
-                          && output_datum.owner_address == datum.owner_address
-                          && output_datum.status == datum.status
-                          && output_datum.is_staking_delegation_managed_by_protocol
-                              == datum.is_staking_delegation_managed_by_protocol
-                      },
+                      i: Inline => Datum::from_data(i.data) == expected_datum,
                       else => error("Invalid project UTxO: missing inline datum")
                     }
                 }
@@ -222,18 +222,19 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   Option[StakingCredential]::Some { new_staking_credential }
               );
 
+              project_script_datum: ProjectScriptDatum =
+                ProjectScriptDatum {
+                  project_id: datum.project_id,
+                  stake_key_deposit: pparams_datum.stake_key_deposit
+                };
+
               assert(
                 tx.outputs.any(
                   (output: TxOutput) -> {
                     output.address == project_script_address
                       && output.value == project_script_value
                       && output.datum.switch {
-                          i: Inline => {
-                            project_script_datum: ProjectScriptDatum = ProjectScriptDatum::from_data(i.data);
-
-                            project_script_datum.project_id == datum.project_id
-                              && project_script_datum.stake_key_deposit == pparams_datum.stake_key_deposit
-                          },
+                          i: Inline => ProjectScriptDatum::from_data(i.data) == project_script_datum,
                           else => false
                         }
                       && StakingValidatorHash::from_script_hash(output.ref_script_hash.unwrap())
@@ -274,21 +275,22 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               own_address: Address = own_spending_output.address;
               own_value: Value = own_spending_output.value;
 
+              expected_datum: Datum =
+                Datum {
+                  project_id: datum.project_id,
+                  milestone_reached: datum.milestone_reached,
+                  owner_address: owner_address,
+                  status: project_status,
+                  is_staking_delegation_managed_by_protocol: false
+                };
+
               assert(
                 tx.outputs.any(
                   (output: TxOutput) -> {
                     output.address == own_address
                       && output.value == own_value
                       && output.datum.switch {
-                        i: Inline => {
-                          output_datum: Datum = Datum::from_data(i.data);
-
-                          output_datum.project_id == datum.project_id
-                            && output_datum.milestone_reached == datum.milestone_reached
-                            && output_datum.owner_address == owner_address
-                            && output_datum.status == project_status
-                            && output_datum.is_staking_delegation_managed_by_protocol == false
-                        },
+                        i: Inline => Datum::from_data(i.data) == expected_datum,
                         else => error("Invalid project UTxO: missing inline datum")
                       }
                   }
@@ -356,28 +358,25 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               own_address: Address = own_spending_output.address;
               own_value: Value = own_spending_output.value;
 
+              expected_datum: Datum =
+                Datum {
+                  project_id: datum.project_id,
+                  milestone_reached: datum.milestone_reached,
+                  owner_address: datum.owner_address,
+                  is_staking_delegation_managed_by_protocol:
+                    datum.is_staking_delegation_managed_by_protocol,
+                  status: ProjectStatus::PreDelisted {
+                    pending_until: tx.time_range.end + pparams_datum.project_delist_waiting_period
+                  }
+                };
+
               assert(
                 tx.outputs.any(
                   (output: TxOutput) -> {
                     output.address == own_address
                       && output.value == own_value
                       && output.datum.switch {
-                        i: Inline => {
-                          output_datum: Datum = Datum::from_data(i.data);
-
-                          output_datum.project_id == datum.project_id
-                            && output_datum.milestone_reached == datum.milestone_reached
-                            && output_datum.owner_address == datum.owner_address
-                            && output_datum.is_staking_delegation_managed_by_protocol
-                                == datum.is_staking_delegation_managed_by_protocol
-                            && output_datum.status.switch {
-                                pre_delisted: PreDelisted => {
-                                  pre_delisted.pending_until
-                                    == tx.time_range.end + pparams_datum.project_delist_waiting_period
-                                },
-                                else => false
-                              }
-                        },
+                        i: Inline => Datum::from_data(i.data) == expected_datum,
                         else => error("Invalid project UTxO: missing inline datum")
                       }
                   }
@@ -400,25 +399,23 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               own_address: Address = own_spending_output.address;
               own_value: Value = own_spending_output.value;
 
+              expected_datum: Datum =
+                Datum {
+                  project_id: datum.project_id,
+                  milestone_reached: datum.milestone_reached,
+                  owner_address: datum.owner_address,
+                  is_staking_delegation_managed_by_protocol:
+                    datum.is_staking_delegation_managed_by_protocol,
+                  status: ProjectStatus::Active
+                };
+
               assert(
                 tx.outputs.any(
                   (output: TxOutput) -> {
                     output.address == own_address
                       && output.value == own_value
                       && output.datum.switch {
-                        i: Inline => {
-                          output_datum: Datum = Datum::from_data(i.data);
-
-                          output_datum.project_id == datum.project_id
-                            && output_datum.milestone_reached == datum.milestone_reached
-                            && output_datum.owner_address == datum.owner_address
-                            && output_datum.is_staking_delegation_managed_by_protocol
-                                == datum.is_staking_delegation_managed_by_protocol
-                            && output_datum.status.switch {
-                                Active => true,
-                                else => false
-                              }
-                        },
+                        i: Inline => Datum::from_data(i.data) == expected_datum,
                         else => error("Invalid project UTxO: missing inline datum")
                       }
                   }
@@ -463,6 +460,8 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 "Wrong Project detail redeemer"
               );
 
+              owner_address: Address = datum.owner_address;
+
               expected_producing_address: Address =
                 Address::new(
                   Credential::new_validator(own_validator_hash),
@@ -481,7 +480,15 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   }
                 );
 
-              owner_address: Address = datum.owner_address;
+              expected_producing_datum: Datum =
+                Datum {
+                  project_id: project_id,
+                  milestone_reached: datum.milestone_reached,
+                  owner_address: owner_address,
+                  is_staking_delegation_managed_by_protocol:
+                    datum.is_staking_delegation_managed_by_protocol,
+                  status: ProjectStatus::Closed {closed_at: tx_time_start}
+                };
 
               assert(
                 tx.outputs.any(
@@ -489,19 +496,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     output.address == expected_producing_address
                       && output.value == expected_producing_value
                       && output.datum.switch {
-                        i: Inline => {
-                          output_datum: Datum = Datum::from_data(i.data);
-
-                          output_datum.project_id == project_id
-                            && output_datum.milestone_reached == datum.milestone_reached
-                            && output_datum.owner_address == owner_address
-                            && output_datum.is_staking_delegation_managed_by_protocol
-                                == datum.is_staking_delegation_managed_by_protocol
-                            && output_datum.status.switch {
-                                closed: Closed => closed.closed_at == tx_time_start,
-                                else => false
-                              }
-                        },
+                        i: Inline => Datum::from_data(i.data) == expected_producing_datum,
                         else => error("Invalid project UTxO: missing inline datum")
                       }
                   }
@@ -533,18 +528,15 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     - (pparams_datum.discount_cent_price * PROJECT_CLOSE_DISCOUNT_CENTS / RATIO_MULTIPLIER);
 
                 if (ada_to_owner > 0) {
+                  user_tag: UserTag =
+                    UserTag::TagProjectClosed {project_id: project_id};
                   tx.outputs.any(
                     (output: TxOutput) -> {
                       output.address == owner_address
                         && output.value.to_map().length == 1
                         && output.value.get(AssetClass::ADA) >= ada_to_owner
                         && output.datum.switch {
-                          i: Inline =>
-                            UserTag::from_data(i.data).switch {
-                              tag: TagProjectClosed =>
-                                tag.project_id == project_id,
-                              else => false
-                            },
+                          i: Inline => UserTag::from_data(i.data) == user_tag,
                           else => false
                         }
                     }
@@ -617,25 +609,23 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   }
                 );
 
+              expected_datum: Datum =
+                Datum {
+                  project_id: project_id,
+                  milestone_reached: datum.milestone_reached,
+                  owner_address: datum.owner_address,
+                  is_staking_delegation_managed_by_protocol:
+                    datum.is_staking_delegation_managed_by_protocol,
+                  status: ProjectStatus::Delisted {delisted_at: tx_time_start}
+                };
+
               assert(
                 tx.outputs.any(
                   (output: TxOutput) -> {
                     output.address == expected_producing_address
                       && output.value == expected_producing_value
                       && output.datum.switch {
-                        i: Inline => {
-                          output_datum: Datum = Datum::from_data(i.data);
-
-                          output_datum.project_id == project_id
-                            && output_datum.milestone_reached == datum.milestone_reached
-                            && output_datum.owner_address == datum.owner_address
-                            && output_datum.is_staking_delegation_managed_by_protocol
-                                == datum.is_staking_delegation_managed_by_protocol
-                            && output_datum.status.switch {
-                                delisted: Delisted => delisted.delisted_at == tx_time_start,
-                                else => false
-                              }
-                        },
+                        i: Inline => Datum::from_data(i.data) == expected_datum,
                         else => error("Invalid project UTxO: missing inline datum")
                       }
                   }
@@ -661,6 +651,9 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                     }
                   );
 
+                open_treasury_tag: TreasuryTag =
+                  TreasuryTag::TagProjectDelisted {project_id: project_id};
+
                 tx.outputs.any(
                   (output: TxOutput) -> {
                     if (
@@ -672,11 +665,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                         && output.datum.switch {
                           i: Inline => {
                             open_treasury_datum: OpenTreasuryDatum = OpenTreasuryDatum::from_data(i.data);
-                            open_treasury_datum.tag.switch {
-                              tag_delisted: TagProjectDelisted =>
-                                tag_delisted.project_id == project_id,
-                              else => false
-                            }
+                            open_treasury_datum.tag == open_treasury_tag
                               && open_treasury_datum.governor_ada
                                 == treasury_ada * pparams_datum.governor_share_ratio / RATIO_MULTIPLIER
                           },
