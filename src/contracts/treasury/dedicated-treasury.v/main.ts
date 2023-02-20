@@ -66,7 +66,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
     func main(datum: Datum, redeemer: Redeemer, ctx:ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
-      own_spending_input: TxInput = ctx.get_current_input();
 
       own_validator_hash: ValidatorHash = ctx.get_current_validator_hash();
 
@@ -118,6 +117,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             "Wrong project detail redeemer"
           );
 
+          own_spending_input: TxInput = ctx.get_current_input();
           own_spending_output: TxOutput = own_spending_input.output;
 
           treasury_tag: TreasuryTag =
@@ -242,6 +242,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             "Missing valid project utxo in reference inputs or outputs"
           );
 
+          own_spending_input: TxInput = ctx.get_current_input();
           own_spending_output: TxOutput = own_spending_input.output;
           own_spending_output_id: TxOutputId = own_spending_input.output_id;
 
@@ -340,6 +341,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             "Missing valid project utxo in reference inputs or outputs"
           );
 
+          own_spending_input: TxInput = ctx.get_current_input();
           own_spending_output: TxOutput = own_spending_input.output;
 
           ada_to_treasury: Int =

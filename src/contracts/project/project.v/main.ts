@@ -70,8 +70,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       tx: Tx = ctx.tx;
       own_validator_hash: ValidatorHash = ctx.get_current_validator_hash();
 
-      own_spending_output: TxOutput = ctx.get_current_input().output;
-
       pparams_datum: PParamsDatum =
         find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
 
@@ -93,6 +91,8 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               == pparams_datum.registry.project_validator.latest,
             "Wrong script version"
           );
+
+          own_spending_output: TxOutput = ctx.get_current_input().output;
 
           redeemer.switch {
             record: RecordNewMilestone => {

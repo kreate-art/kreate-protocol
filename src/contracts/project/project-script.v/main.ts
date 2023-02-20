@@ -75,7 +75,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
     func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
 
-      own_spending_output: TxOutput = ctx.get_current_input().output;
       own_validator_hash: ValidatorHash = ctx.get_current_validator_hash();
 
       pparams_datum: PParamsDatum =
@@ -100,6 +99,8 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
               == pparams_datum.registry.project_script_validator.latest,
             "Wrong script version"
           );
+
+          own_spending_output: TxOutput = ctx.get_current_input().output;
 
           staking_script_hash: ScriptHash = own_spending_output.ref_script_hash.unwrap();
 

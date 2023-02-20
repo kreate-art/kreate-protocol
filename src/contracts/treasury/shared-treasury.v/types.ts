@@ -27,11 +27,6 @@ export default helios`
     BurnEntirely
   }
 
-  struct BurnActionResult {
-    new_project_teiki: ProjectTeiki
-    project_rewards: Int
-  }
-
   enum Redeemer {
     UpdateTeiki {
       burn_action: BurnAction
