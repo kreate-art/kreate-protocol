@@ -58,14 +58,13 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
     func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
 
-      own_input_txout: TxOutput = ctx.get_current_input().output;
+      own_spending_output: TxOutput = ctx.get_current_input().output;
 
-      own_output_txout: TxOutput =
-        tx.outputs_locked_by(ctx.get_current_validator_hash())
-          .head;
+      own_producing_output: TxOutput =
+        tx.outputs_locked_by(ctx.get_current_validator_hash()).head;
 
       own_output_datum: Datum =
-        own_output_txout.datum.switch {
+        own_producing_output.datum.switch {
           i: Inline => Datum::from_data(i.data),
           else => error("Invalid proposal UTxO: missing inline datum")
         };
@@ -89,8 +88,8 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
 
       assert(
         are_output_value_and_address_valid(
-          own_output_txout,
-          own_input_txout.address,
+          own_producing_output,
+          own_spending_output.address,
           PROTOCOL_PROPOSAL_NFT_TOKEN_NAME
         ),
         "Invalid proposal output value and address"

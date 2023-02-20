@@ -36,7 +36,7 @@ export default function main({ teikiPlantNftMph }: Params): HeliosScript {
 
     func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
-      own_input: TxInput = ctx.get_current_input();
+      own_spending_input: TxInput = ctx.get_current_input();
       own_validator_hash: ValidatorHash = ctx.get_current_validator_hash();
 
       produced_output: TxOutput = tx.outputs_locked_by(own_validator_hash).head;
@@ -85,7 +85,7 @@ export default function main({ teikiPlantNftMph }: Params): HeliosScript {
 
         Propose => {
           assert(
-            produced_output.address == own_input.output.address,
+            produced_output.address == own_spending_input.output.address,
             "Teiki Plant UTxO Address must be preserved"
           );
 
@@ -122,7 +122,7 @@ export default function main({ teikiPlantNftMph }: Params): HeliosScript {
           );
 
           assert(
-            produced_output.address == own_input.output.address,
+            produced_output.address == own_spending_input.output.address,
             "Teiki Plant UTxO Address must be preserved"
           );
 
