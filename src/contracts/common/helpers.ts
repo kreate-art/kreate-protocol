@@ -79,34 +79,21 @@ export default helios`
     }
   }
 
-  func parse_pparams_datum(output: TxOutput) -> PParamsDatum {
-    output.datum.switch {
-      i: Inline => PParamsDatum::from_data(i.data),
-      else => error("Invalid protocol params UTxO: missing inline datum")
-    }
-  }
-
-  func find_tx_input_with_auth_token(inputs: []TxInput, auth_token: AssetClass) -> TxInput {
-    inputs.find((input: TxInput) -> { input.output.value.get_safe(auth_token) == 1 })
-  }
-
-  func find_tx_output_with_auth_token(outputs: []TxOutput, auth_token: AssetClass) -> TxOutput {
-    outputs.find((output: TxOutput) -> { output.value.get_safe(auth_token) == 1 })
-  }
-
-  // TODO: Please don't do this
-  func get_protocol_params_nft(mph: MintingPolicyHash) -> AssetClass {
-    AssetClass::new(mph, PROTOCOL_PARAMS_NFT_TOKEN_NAME)
-  }
-
   // TODO: PROTOCOL_NFT_MPH should be a global param
   func find_pparams_datum_from_inputs(
     inputs: []TxInput,
     protocol_nft_mph: MintingPolicyHash
   ) -> PParamsDatum {
-    protocol_params_nft: AssetClass = get_protocol_params_nft(protocol_nft_mph);
-    pparams_input: TxInput = find_tx_input_with_auth_token(inputs, protocol_params_nft);
-    parse_pparams_datum(pparams_input.output)
+    protocol_params_nft: AssetClass =
+      AssetClass::new(protocol_nft_mph, PROTOCOL_PARAMS_NFT_TOKEN_NAME);
+    inputs
+      .map((input: TxInput) -> { input.output })
+      .find((output: TxOutput) -> { output.value.get_safe(protocol_params_nft) == 1 })
+      .datum
+      .switch {
+        i: Inline => PParamsDatum::from_data(i.data),
+        else => error("Invalid protocol params UTxO: missing inline datum")
+      }
   }
 
   // TODO: PROTOCOL_NFT_MPH should be a global param
@@ -114,9 +101,15 @@ export default helios`
     outputs: []TxOutput,
     protocol_nft_mph: MintingPolicyHash
   ) -> PParamsDatum {
-    protocol_params_nft: AssetClass = get_protocol_params_nft(protocol_nft_mph);
-    pparams_output: TxOutput = find_tx_output_with_auth_token(outputs, protocol_params_nft);
-    parse_pparams_datum(pparams_output)
+    protocol_params_nft: AssetClass =
+      AssetClass::new(protocol_nft_mph, PROTOCOL_PARAMS_NFT_TOKEN_NAME);
+    outputs
+      .find((output: TxOutput) -> { output.value.get_safe(protocol_params_nft) == 1 })
+      .datum
+      .switch {
+        i: Inline => PParamsDatum::from_data(i.data),
+        else => error("Invalid protocol params UTxO: missing inline datum")
+      }
   }
 
   func staking_credential_to_validator_hash(staking_credential: StakingCredential) -> StakingValidatorHash {

@@ -16,10 +16,8 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
       PROTOCOL_PROPOSAL_NFT_TOKEN_NAME
     } from ${module("constants")}
 
-    import {
-      parse_pparams_datum,
-      is_tx_authorized_by
-    } from ${module("helpers")}
+    import { is_tx_authorized_by }
+      from ${module("helpers")}
 
     import { Datum as PParamsDatum }
       from ${module("v__protocol_params__types")}
@@ -79,7 +77,11 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
             (input: TxInput) -> { input.output.value.get_safe(PROTOCOL_PARAMS_NFT) == 1 }
           );
 
-      pparams_datum: PParamsDatum = parse_pparams_datum(pparams_input.output);
+      pparams_datum: PParamsDatum =
+        pparams_input.output.datum.switch {
+          i: Inline => PParamsDatum::from_data(i.data),
+          else => error("Invalid protocol params UTxO: missing inline datum")
+        };
 
       assert(
         is_tx_authorized_by(tx, pparams_datum.governor_address.credential),
@@ -107,14 +109,18 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
         Apply => {
           proposal: Proposal = datum.proposal.unwrap();
 
-          new_pparams: TxOutput =
+          new_pparams_output: TxOutput =
             tx.outputs
               .find((output: TxOutput) -> { output.value.get_safe(PROTOCOL_PARAMS_NFT) == 1 });
 
-          new_pparams_datum: PParamsDatum = parse_pparams_datum(new_pparams);
+          new_pparams_datum: PParamsDatum =
+            new_pparams_output.datum.switch {
+              i: Inline => PParamsDatum::from_data(i.data),
+              else => error("Invalid protocol params UTxO: missing inline datum")
+            };
 
           are_output_value_and_address_valid(
-            new_pparams,
+            new_pparams_output,
             pparams_input.output.address,
             PROTOCOL_PARAMS_NFT_TOKEN_NAME
           )
