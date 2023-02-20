@@ -11,31 +11,6 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
   return helios`
     ${header("spending", "v__project")}
 
-    import { Redeemer, Datum, ProjectStatus }
-      from ${module("v__project__types")}
-    import {
-      PROJECT_IMMEDIATE_CLOSURE_TX_TIME_SLIPPAGE,
-      PROJECT_SCRIPT_UTXO_ADA
-    } from ${module("constants")}
-    import { Datum as ProjectScriptDatum }
-      from ${module("v__project_script__types")}
-    import { Datum as PParamsDatum }
-      from ${module("v__protocol_params__types")}
-    import {
-      Datum as ProjectDetailDatum,
-      Redeemer as ProjectDetailRedeemer
-    } from ${module("v__project_detail__types")}
-    import { Datum as OpenTreasuryDatum }
-      from ${module("v__open_treasury__types")}
-    import { UserTag }
-      from ${module("common__types")}
-
-    import {
-      find_pparams_datum_from_inputs,
-      is_tx_authorized_by,
-      script_hash_to_staking_credential
-    } from ${module("helpers")}
-
     import {
       ADA_MINTING_POLICY_HASH,
       ADA_TOKEN_NAME,
@@ -45,8 +20,36 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
       PROJECT_DELIST_DISCOUNT_CENTS,
       PROJECT_DETAIL_AT_TOKEN_NAME,
       PROJECT_SCRIPT_AT_TOKEN_NAME,
+      PROJECT_IMMEDIATE_CLOSURE_TX_TIME_SLIPPAGE,
+      PROJECT_SCRIPT_UTXO_ADA,
       RATIO_MULTIPLIER
     } from ${module("constants")}
+
+    import {
+      find_pparams_datum_from_inputs,
+      is_tx_authorized_by,
+      script_hash_to_staking_credential
+    } from ${module("helpers")}
+
+    import { UserTag }
+      from ${module("common__types")}
+
+    import { Datum as PParamsDatum }
+      from ${module("v__protocol_params__types")}
+
+    import { Datum as OpenTreasuryDatum }
+      from ${module("v__open_treasury__types")}
+
+    import { Datum as ProjectScriptDatum }
+      from ${module("v__project_script__types")}
+
+    import {
+      Datum as ProjectDetailDatum,
+      Redeemer as ProjectDetailRedeemer
+    } from ${module("v__project_detail__types")}
+
+    import { Redeemer, Datum, ProjectStatus }
+      from ${module("v__project__types")}
 
     const PROJECT_AT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${projectAtMph})
@@ -73,6 +76,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
         find_pparams_datum_from_inputs(tx.ref_inputs, PROTOCOL_NFT_MPH);
 
       redeemer.switch {
+
         Migrate => {
           migration_asset_class: AssetClass =
             pparams_datum
@@ -83,6 +87,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
           tx.minted.get_safe(migration_asset_class) != 0
         },
+
         else => {
           assert(
             own_validator_hash

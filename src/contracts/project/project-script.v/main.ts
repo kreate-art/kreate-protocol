@@ -75,7 +75,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
     func main(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
 
-      own_output: TxOutput = ctx.get_current_input().output;
+      own_spending_output: TxOutput = ctx.get_current_input().output;
       own_validator_hash: ValidatorHash = ctx.get_current_validator_hash();
 
       pparams_datum: PParamsDatum =
@@ -101,7 +101,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
             "Wrong script version"
           );
 
-          staking_script_hash: ScriptHash = own_output.ref_script_hash.unwrap();
+          staking_script_hash: ScriptHash = own_spending_output.ref_script_hash.unwrap();
 
           staking_credential: StakingCredential =
             script_hash_to_staking_credential(staking_script_hash);
@@ -334,7 +334,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                 );
 
               min_treasury_ada: Int =
-                own_output.value.get(AssetClass::ADA)
+                own_spending_output.value.get(AssetClass::ADA)
                   + withdrawn_rewards
                   + datum.stake_key_deposit
                   - pparams_datum.discount_cent_price * PROJECT_SCRIPT_DELIST_DISCOUNT_CENTS;
@@ -344,25 +344,29 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
 
               tx.outputs.any(
                 (output: TxOutput) -> {
-                  treasury_ada: Int = output.value.get(AssetClass::ADA);
-
-                  output.address == treasury_address
-                    && output.value.to_map().length == 1
-                    && treasury_ada >= min_treasury_ada
-                    && output.datum.switch {
-                      i: Inline => {
-                        open_treasury_datum: OpenTreasuryDatum = OpenTreasuryDatum::from_data(i.data);
-                        open_treasury_datum.governor_ada
-                            == treasury_ada * governor_share_ratio / RATIO_MULTIPLIER
-                          && open_treasury_datum.tag.switch {
-                                tag: TagProjectScriptDelisted =>
-                                  tag.project_id == datum.project_id
-                                    && tag.staking_validator == staking_validator_hash,
-                                else => false
-                              }
-                      },
-                      else => false
-                    }
+                  if (
+                    output.address == treasury_address
+                      && output.value.to_map().length == 1
+                  ) {
+                    treasury_ada: Int = output.value.get(AssetClass::ADA);
+                    treasury_ada >= min_treasury_ada
+                      && output.datum.switch {
+                        i: Inline => {
+                          open_treasury_datum: OpenTreasuryDatum = OpenTreasuryDatum::from_data(i.data);
+                          open_treasury_datum.governor_ada
+                              == treasury_ada * governor_share_ratio / RATIO_MULTIPLIER
+                            && open_treasury_datum.tag.switch {
+                                  tag: TagProjectScriptDelisted =>
+                                    tag.project_id == datum.project_id
+                                      && tag.staking_validator == staking_validator_hash,
+                                  else => false
+                                }
+                        },
+                        else => false
+                      }
+                  } else {
+                    false
+                  }
                 }
               )
             },
