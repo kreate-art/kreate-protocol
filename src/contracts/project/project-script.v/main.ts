@@ -333,7 +333,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                   }
                 );
 
-              min_treasury_ada: Int =
+              ada_to_treasury: Int =
                 own_spending_output.value.get(AssetClass::ADA)
                   + withdrawn_rewards
                   + datum.stake_key_deposit
@@ -349,18 +349,18 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                       && output.value.to_map().length == 1
                   ) {
                     treasury_ada: Int = output.value.get(AssetClass::ADA);
-                    treasury_ada >= min_treasury_ada
+                    treasury_ada >= ada_to_treasury
                       && output.datum.switch {
                         i: Inline => {
                           open_treasury_datum: OpenTreasuryDatum = OpenTreasuryDatum::from_data(i.data);
-                          open_treasury_datum.governor_ada
-                              == treasury_ada * governor_share_ratio / RATIO_MULTIPLIER
-                            && open_treasury_datum.tag.switch {
+                          open_treasury_datum.tag.switch {
                                   tag: TagProjectScriptDelisted =>
                                     tag.project_id == datum.project_id
                                       && tag.staking_validator == staking_validator_hash,
                                   else => false
                                 }
+                            && open_treasury_datum.governor_ada
+                              == treasury_ada * governor_share_ratio / RATIO_MULTIPLIER
                         },
                         else => false
                       }
