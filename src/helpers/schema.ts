@@ -7,22 +7,11 @@ import {
   Lucid,
   OutRef,
   toHex,
-  Data,
 } from "lucid-cardano";
 
 import * as S from "@/schema";
 import { Plant } from "@/schema/teiki/backing";
-import {
-  LegacyProjectDatum,
-  LegacyProjectDetailDatum,
-  ProjectDatum,
-  ProjectDetailDatum,
-} from "@/schema/teiki/project";
-import {
-  MigratableScript,
-  ProtocolParamsDatum,
-  LegacyProtocolParamsDatum,
-} from "@/schema/teiki/protocol";
+import { MigratableScript } from "@/schema/teiki/protocol";
 import { Hex } from "@/types";
 import { assert } from "@/utils";
 
@@ -131,64 +120,4 @@ export function deconstructAddress(
 
 export function hashBlake2b256(cbor: Hex): Hex {
   return toHex(C.hash_blake2b256(fromHex(cbor)));
-}
-
-export function parseProtocolParams(
-  data: Data
-):
-  | { legacy: false; protocolParams: ProtocolParamsDatum }
-  | { legacy: true; protocolParams: LegacyProtocolParamsDatum } {
-  try {
-    return {
-      legacy: false,
-      protocolParams: S.fromData(data, ProtocolParamsDatum),
-    };
-  } catch (e) {
-    try {
-      return {
-        legacy: true,
-        protocolParams: S.fromData(data, LegacyProtocolParamsDatum),
-      };
-    } catch {
-      throw e;
-    }
-  }
-}
-
-export function parseProjectDatum(
-  data: Data
-):
-  | { legacy: false; project: ProjectDatum }
-  | { legacy: true; project: LegacyProjectDatum } {
-  try {
-    return { legacy: false, project: S.fromData(data, ProjectDatum) };
-  } catch (e) {
-    try {
-      return { legacy: true, project: S.fromData(data, LegacyProjectDatum) };
-    } catch {
-      throw e;
-    }
-  }
-}
-
-export function parseProjectDetailDatum(
-  data: Data
-):
-  | { legacy: false; projectDetail: ProjectDetailDatum }
-  | { legacy: true; projectDetail: LegacyProjectDetailDatum } {
-  try {
-    return {
-      legacy: false,
-      projectDetail: S.fromData(data, ProjectDetailDatum),
-    };
-  } catch (e) {
-    try {
-      return {
-        legacy: true,
-        projectDetail: S.fromData(data, LegacyProjectDetailDatum),
-      };
-    } catch {
-      throw e;
-    }
-  }
 }

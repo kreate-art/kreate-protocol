@@ -4,9 +4,9 @@ import {
   constructTxOutputId,
   deconstructAddress,
   extractPaymentPubKeyHash,
-  parseProtocolParams,
 } from "@/helpers/schema";
 import * as S from "@/schema";
+import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { UserTag } from "@/schema/teiki/tags";
 import {
   OpenTreasuryDatum,
@@ -41,8 +41,9 @@ export function withdrawAdaTx(
     "Invalid protocol params UTxO: Missing inline datum"
   );
 
-  const { protocolParams } = parseProtocolParams(
-    S.fromCbor(protocolParamsUtxo.datum)
+  const protocolParams = S.fromData(
+    S.fromCbor(protocolParamsUtxo.datum),
+    ProtocolParamsDatum
   );
 
   const protocolGovernorPkh = extractPaymentPubKeyHash(
