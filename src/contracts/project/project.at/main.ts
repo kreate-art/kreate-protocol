@@ -89,12 +89,12 @@ export default function main({ protocolNftMph }: Params) {
               (output: TxOutput) -> {
                 output.ref_script_hash.switch {
                   s: Some => {
-                    staking_validator: StakingCredential =
+                    staking_credential: StakingCredential =
                       script_hash_to_staking_credential(s.some);
                     project_script_address: Address =
                       Address::new(
                         project_script_credential,
-                        Option[StakingCredential]::Some { staking_validator }
+                        Option[StakingCredential]::Some { staking_credential }
                       );
                     output.value == project_script_value
                       && output.address == project_script_address
@@ -113,7 +113,7 @@ export default function main({ protocolNftMph }: Params) {
               }
             );
 
-          staking_validator: StakingCredential =
+          staking_credential: StakingCredential =
             script_hash_to_staking_credential(project_script_output.ref_script_hash.unwrap());
 
           project_detail_value: Value =
@@ -128,7 +128,7 @@ export default function main({ protocolNftMph }: Params) {
               Credential::new_validator(
                 pparams_datum.registry.project_detail_validator.latest
               ),
-              Option[StakingCredential]::Some { staking_validator }
+              Option[StakingCredential]::Some { staking_credential }
             );
           project_sponsorship_min_fee: Int =
             pparams_datum.project_sponsorship_min_fee;
@@ -180,7 +180,7 @@ export default function main({ protocolNftMph }: Params) {
               Credential::new_validator(
                 pparams_datum.registry.project_validator.latest
               ),
-              Option[StakingCredential]::Some { staking_validator }
+              Option[StakingCredential]::Some { staking_credential }
             );
           governor_address_credential: Credential =
             pparams_datum.governor_address.credential;
@@ -255,7 +255,7 @@ export default function main({ protocolNftMph }: Params) {
             tx.dcerts.any(
               (dcert: DCert) -> {
                 dcert.switch {
-                  register: Register => register.credential == staking_validator,
+                  register: Register => register.credential == staking_credential,
                   else => false
                 }
               }

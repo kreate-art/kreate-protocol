@@ -75,7 +75,9 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
 
       pparams_input: TxInput =
         (tx.inputs + tx.ref_inputs)
-          .find((input: TxInput) -> { input.output.value.get_safe(PROTOCOL_PARAMS_NFT) == 1 });
+          .find(
+            (input: TxInput) -> { input.output.value.get_safe(PROTOCOL_PARAMS_NFT) == 1 }
+          );
 
       pparams_datum: PParamsDatum = parse_pparams_datum(pparams_input.output);
 

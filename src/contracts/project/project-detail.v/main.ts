@@ -298,7 +298,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                       0
                     };
 
-                owner_ada: Int = total_withdrawal - fees - discount;
+                ada_to_owner: Int = total_withdrawal - fees - discount;
 
                 owner_address: Address = project_datum.owner_address;
 
@@ -308,7 +308,7 @@ export default function main({ projectAtMph, protocolNftMph }: Params) {
                       && output.value.to_map().all(
                           (mph: MintingPolicyHash, tokens: Map[ByteArray]Int) -> {
                             if (mph == ADA_MINTING_POLICY_HASH) {
-                              tokens.get(ADA_TOKEN_NAME) >= owner_ada
+                              tokens.get(ADA_TOKEN_NAME) >= ada_to_owner
                             } else {
                               false
                             }
