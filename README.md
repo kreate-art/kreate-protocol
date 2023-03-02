@@ -1,10 +1,10 @@
-# :warning: [WIP] Teiki Protocol :construction:
+# :warning: [Alpha] Teiki Protocol :construction:
 
 ![Teiki protocol](docs/protocol.png)
 
 We currently maintain the [Teiki protocol specifications on Notion](https://shinka-network.notion.site/Teiki-Protocol-ae97c4c66db447278ea8da9cd7b860a2).
 
-This repository contains the implementation in Generation I. The code is a **work in progress** and is **not production ready**. We plan to launch a public testnet in January and a mainnet beta in February 2023.
+This repository contains the implementation in Generation I. It is currently at the Alpha stage for mainnet testing.
 
 ## Getting Started
 
@@ -33,11 +33,13 @@ npm run deploy
 
 #### Propose Teiki minting rules
 
-Update information in `src/cli/meta-protocol/propose.ts` and `src/cli/meta-protocol/apply.ts`. Need to wait for the proposal duration before applying.
+1. Update information in `src/cli/meta-protocol/propose.ts` and `src/cli/meta-protocol/apply.ts` then propose:
 
 ```
 npm run meta-protocol:propose
 ```
+
+2. Wait for the proposal duration before applying:
 
 ```
 npm run meta-protocol:apply
@@ -51,4 +53,4 @@ npm test
 
 ---
 
-Please feel free to connect: [Website](https://teiki.network), [Medium](https://teikinetwork.medium.com), [Discord](https://discord.gg/Nfs2Wbr28H), [Twitter](https://twitter.com/TeikiNetwork), [Telegram](https://t.me/teiki_announcement). We are very open to discussions, questions, and feedback :seedling:.
+Feel free to connect: [Website](https://teiki.network), [Medium](https://teikinetwork.medium.com), [Discord](https://discord.gg/n9wZZTY6XA), [Twitter](https://twitter.com/TeikiNetwork), [Telegram](https://t.me/teiki_announcement). We are very open to discussions, questions, and feedback :seedling:.
