@@ -5,7 +5,7 @@ import * as S from "@/schema";
 import { Plant, ProofOfBackingMintingRedeemer } from "@/schema/teiki/backing";
 import { ProjectDatum } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
-import { Hex, TimeDifference } from "@/types";
+import { Hex, TimeDifference, UnixTime } from "@/types";
 import { assert } from "@/utils";
 
 import { attachTeikiNftMetadata } from "../meta-data";
@@ -17,7 +17,7 @@ export type Params = {
   projectUtxo: UTxO; // project status is not `PreDelisted`
   backingInfo: BackingInfo;
   teikiMintingInfo: TeikiMintingInfo;
-  txTime: TimeDifference;
+  txTime: UnixTime;
   txTtl?: TimeDifference;
 };
 

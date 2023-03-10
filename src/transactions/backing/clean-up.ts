@@ -21,7 +21,7 @@ import {
 import { ProjectDatum } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { UserTag } from "@/schema/teiki/tags";
-import { Hex, TimeDifference } from "@/types";
+import { Hex, TimeDifference, UnixTime } from "@/types";
 import { assert } from "@/utils";
 
 import { attachTeikiNftMetadata, getPlantNftName } from "../meta-data";
@@ -57,7 +57,7 @@ export type CleanUpParams = {
   projectInfo: ProjectInfo;
   cleanUpInfo: CleanUpInfo;
   teikiMintingInfo: TeikiMintingInfo;
-  txTime: TimeDifference;
+  txTime: UnixTime;
   txTtl?: TimeDifference;
 };
 

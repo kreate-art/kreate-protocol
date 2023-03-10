@@ -12,7 +12,7 @@ import {
 } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { DedicatedTreasuryDatum } from "@/schema/teiki/treasury";
-import { TimeDifference } from "@/types";
+import { UnixTime } from "@/types";
 import { assert } from "@/utils";
 
 import {
@@ -35,7 +35,7 @@ export type CreateProjectParams = {
   projectATPolicyId: PolicyId;
   projectStakeValidator: Script;
   seedUtxo: UTxO;
-  txTime: TimeDifference;
+  txTime: UnixTime;
 };
 
 export function createProjectTx(

@@ -13,7 +13,7 @@ import {
   DedicatedTreasuryDatum,
   DedicatedTreasuryRedeemer,
 } from "@/schema/teiki/treasury";
-import { TimeDifference } from "@/types";
+import { UnixTime } from "@/types";
 import { assert } from "@/utils";
 
 import { PROJECT_SPONSORSHIP_RESOLUTION, RATIO_MULTIPLIER } from "../constants";
@@ -28,7 +28,7 @@ export type UpdateProjectParams = {
   newSponsorshipAmount?: bigint;
   newInformationCid?: IpfsCid;
   newAnnouncementCid?: IpfsCid;
-  txTime: TimeDifference;
+  txTime: UnixTime;
 };
 
 type Result = { tx: Tx; sponsorshipFee: bigint };

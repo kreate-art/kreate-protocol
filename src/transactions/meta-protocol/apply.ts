@@ -5,13 +5,13 @@ import {
   TeikiPlantDatum,
   TeikiPlantRedeemer,
 } from "@/schema/teiki/meta-protocol";
-import { TimeDifference } from "@/types";
+import { UnixTime } from "@/types";
 import { assert } from "@/utils";
 
 export type ApplyMetaProtocolTxParams = {
   teikiPlantUtxo: UTxO;
   teikiPlantScriptUtxo: UTxO;
-  txTime: TimeDifference;
+  txTime: UnixTime;
 };
 
 export function applyMetaProtocolProposalTx(

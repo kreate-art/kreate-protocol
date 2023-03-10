@@ -8,7 +8,7 @@ import {
 } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
 import { OpenTreasuryDatum } from "@/schema/teiki/treasury";
-import { TimeDifference } from "@/types";
+import { UnixTime } from "@/types";
 import { assert } from "@/utils";
 
 import {
@@ -27,7 +27,7 @@ export type FinalizeDelistParams = {
   projectVRefScriptUtxo: UTxO;
   projectDetailVRefScriptUtxo: UTxO;
   protocolParamsUtxo: UTxO;
-  txTime: TimeDifference;
+  txTime: UnixTime;
 };
 
 export function finalizeDelistTx(
