@@ -8,21 +8,15 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { getTime } from "../../helpers/time";
-
 export type ApplyMetaProtocolTxParams = {
   teikiPlantUtxo: UTxO;
   teikiPlantScriptUtxo: UTxO;
-  txTimePadding?: TimeDifference;
+  txTime: TimeDifference;
 };
 
 export function applyMetaProtocolProposalTx(
   lucid: Lucid,
-  {
-    teikiPlantUtxo,
-    teikiPlantScriptUtxo,
-    txTimePadding = 20000,
-  }: ApplyMetaProtocolTxParams
+  { teikiPlantUtxo, teikiPlantScriptUtxo, txTime }: ApplyMetaProtocolTxParams
 ) {
   assert(
     teikiPlantUtxo.datum != null,
@@ -37,7 +31,6 @@ export function applyMetaProtocolProposalTx(
     teikiPlantDatum.proposal,
     "Invalid Teiki plant datum: Proposed rule cannot be null"
   );
-  const txTimeStart = getTime({ lucid }) - txTimePadding;
   const teikiPlantRedeemer: TeikiPlantRedeemer = { case: "Apply" };
 
   const appliedTeikiPlantDatum: TeikiPlantDatum = {
@@ -57,5 +50,5 @@ export function applyMetaProtocolProposalTx(
       { inline: S.toCbor(S.toData(appliedTeikiPlantDatum, TeikiPlantDatum)) },
       teikiPlantUtxo.assets
     )
-    .validFrom(txTimeStart);
+    .validFrom(txTime);
 }

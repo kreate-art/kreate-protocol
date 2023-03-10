@@ -11,7 +11,6 @@ import {
 } from "@/contracts/common/constants";
 import { exportScript } from "@/contracts/compile";
 import { getPaymentKeyHash, signAndSubmit } from "@/helpers/lucid";
-import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import { RulesProposal, TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
 import { MIN_UTXO_LOVELACE } from "@/transactions/constants";
@@ -90,14 +89,15 @@ describe("meta-protocol transactions", () => {
       proposal: null,
     };
 
+    emulator.awaitBlock(100);
+
     const params: BootstrapMetaProtocolTxParams = {
       seedUtxo,
       teikiPlantDatum,
       teikiPlantNftPolicy,
       teikiPlantAddress,
+      txTime: emulator.now(),
     };
-
-    emulator.awaitBlock(100);
 
     const tx = bootstrapMetaProtocolTx(lucid, params);
 
@@ -153,7 +153,7 @@ describe("meta-protocol transactions", () => {
     };
 
     const proposedRules: RulesProposal = {
-      inEffectAt: { timestamp: BigInt(getTime({ lucid }) + 50_000) },
+      inEffectAt: { timestamp: BigInt(emulator.now() + 5_000_000) },
       rules: {
         ...teikiPlantDatum.rules,
         proposalWaitingPeriod: { milliseconds: 10_000n },
@@ -180,6 +180,7 @@ describe("meta-protocol transactions", () => {
       teikiPlantUtxo,
       teikiPlantScriptUtxo,
       proposedRules,
+      txValidUntil: emulator.now() + 600_000,
     };
 
     const tx = proposeMetaProtocolProposalTx(lucid, params).addSigner(
@@ -244,7 +245,7 @@ describe("meta-protocol transactions", () => {
     const proposedTeikiPlantDatum: TeikiPlantDatum = {
       ...teikiPlantDatum,
       proposal: {
-        inEffectAt: { timestamp: BigInt(getTime({ lucid }) + 50_000) },
+        inEffectAt: { timestamp: BigInt(emulator.now() + 50_000) },
         rules: {
           ...teikiPlantDatum.rules,
           proposalWaitingPeriod: { milliseconds: 10_000n },
@@ -331,7 +332,7 @@ describe("meta-protocol transactions", () => {
     const proposedTeikiPlantDatum: TeikiPlantDatum = {
       ...teikiPlantDatum,
       proposal: {
-        inEffectAt: { timestamp: BigInt(getTime({ lucid }) + 50_000) },
+        inEffectAt: { timestamp: BigInt(emulator.now() + 50_000) },
         rules: {
           ...teikiPlantDatum.rules,
           proposalWaitingPeriod: { milliseconds: 10_000n },
@@ -355,12 +356,13 @@ describe("meta-protocol transactions", () => {
 
     attachUtxos(emulator, [teikiPlantUtxo, teikiPlantScriptUtxo]);
 
+    emulator.awaitSlot(100);
+
     const params: ApplyMetaProtocolTxParams = {
       teikiPlantUtxo,
       teikiPlantScriptUtxo,
+      txTime: emulator.now(),
     };
-
-    emulator.awaitSlot(100);
 
     const tx = applyMetaProtocolProposalTx(lucid, params).addSigner(
       governorAddress

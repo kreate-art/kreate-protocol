@@ -3,7 +3,6 @@ import { Data, Lucid, PolicyId, Unit, UTxO } from "lucid-cardano";
 import { PROJECT_AT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { addressFromScriptHashes } from "@/helpers/lucid";
 import { deconstructAddress } from "@/helpers/schema";
-import { getTxTimeRange } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   ProjectDatum,
@@ -48,8 +47,8 @@ export type Params = {
   projectAtPolicyId: PolicyId;
   projectAtScriptUtxo: UTxO;
   openTreasuryInfo?: OpenTreasuryInfo;
-  txTimeStartPadding?: TimeDifference;
-  txTimeEndPadding?: TimeDifference;
+  txTime: TimeDifference;
+  txTtl?: TimeDifference;
 };
 
 export function finalizeCloseTx(
@@ -65,8 +64,8 @@ export function finalizeCloseTx(
     projectAtPolicyId,
     projectAtScriptUtxo,
     openTreasuryInfo,
-    txTimeStartPadding = 60_000,
-    txTimeEndPadding = 60_000,
+    txTime,
+    txTtl = 600_000,
   }: Params
 ) {
   assert(
@@ -135,11 +134,7 @@ export function finalizeCloseTx(
   const projectAtUnit: Unit =
     projectAtPolicyId + PROJECT_AT_TOKEN_NAMES.PROJECT_SCRIPT;
 
-  const [txTimeStart, txTimeEnd] = getTxTimeRange({
-    lucid,
-    txTimeStartPadding,
-    txTimeEndPadding,
-  });
+  const txTimeStart = txTime;
 
   let tx = lucid
     .newTx()
@@ -188,10 +183,8 @@ export function finalizeCloseTx(
     .addSigner(deconstructAddress(lucid, project.ownerAddress))
     .validFrom(txTimeStart)
     .validTo(
-      Math.min(
-        txTimeEnd,
-        txTimeStart + Number(PROJECT_IMMEDIATE_CLOSURE_TX_TIME_SLIPPAGE)
-      )
+      txTimeStart +
+        Math.min(txTtl, Number(PROJECT_IMMEDIATE_CLOSURE_TX_TIME_SLIPPAGE))
     );
 
   const openTreasuryScriptAddress = addressFromScriptHashes(

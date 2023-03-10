@@ -10,6 +10,7 @@ import { signAndSubmit } from "@/helpers/lucid";
 import { constructAddress } from "@/helpers/schema";
 import { ProtocolParamsDatum, Registry } from "@/schema/teiki/protocol";
 import { proposeProtocolProposalTx } from "@/transactions/protocol/propose";
+import { trimToSlot } from "@/utils";
 
 const lucid = await getLucid();
 const governorAddress = await lucid.wallet.address();
@@ -71,11 +72,14 @@ const proposedProtocolParamsDatum: ProtocolParamsDatum = {
   ...proposedNonScriptParams,
 };
 
+const txValidUntil = trimToSlot(Date.now()) + 600_000;
+
 const tx = proposeProtocolProposalTx(lucid, {
   protocolParamsUtxo,
   proposedProtocolParamsDatum,
   protocolProposalUtxo,
   protocolProposalRefScriptUtxo,
+  txValidUntil,
 });
 
 const txComplete = await tx.complete();

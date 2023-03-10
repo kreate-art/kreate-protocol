@@ -9,13 +9,11 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { getTime } from "../../helpers/time";
-
 export type ProposeMetaProtocolTxParams = {
   teikiPlantUtxo: UTxO;
   teikiPlantScriptUtxo: UTxO;
   proposedRules: RulesProposal;
-  txTimePadding?: TimeDifference;
+  txValidUntil: TimeDifference;
 };
 
 export function proposeMetaProtocolProposalTx(
@@ -24,7 +22,7 @@ export function proposeMetaProtocolProposalTx(
     teikiPlantUtxo,
     teikiPlantScriptUtxo,
     proposedRules,
-    txTimePadding = 20000,
+    txValidUntil,
   }: ProposeMetaProtocolTxParams
 ) {
   assert(
@@ -56,5 +54,5 @@ export function proposeMetaProtocolProposalTx(
       { inline: S.toCbor(S.toData(newTeikiPlantDatum, TeikiPlantDatum)) },
       teikiPlantUtxo.assets
     )
-    .validTo(getTime({ lucid }) + txTimePadding);
+    .validTo(txValidUntil);
 }

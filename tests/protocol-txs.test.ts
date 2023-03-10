@@ -16,7 +16,6 @@ import {
   signAndSubmit,
 } from "@/helpers/lucid";
 import { constructAddress, constructTxOutputId } from "@/helpers/schema";
-import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   ProtocolParamsDatum,
@@ -107,6 +106,8 @@ describe("protocol transactions", () => {
 
     const registry = generateProtocolRegistry(protocolSvHash);
 
+    emulator.awaitBlock(100);
+
     const params: BootstrapProtocolParams = {
       protocolParams: SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
       seedUtxo,
@@ -119,9 +120,8 @@ describe("protocol transactions", () => {
       protocolProposalAddress,
       protocolStakeAddress,
       protocolStakeValidator,
+      txTime: emulator.now(),
     };
-
-    emulator.awaitBlock(100);
 
     const tx = bootstrapProtocolTx(lucid, params);
 
@@ -206,6 +206,7 @@ describe("protocol transactions", () => {
       proposedProtocolParamsDatum,
       protocolProposalUtxo,
       protocolProposalRefScriptUtxo,
+      txValidUntil: emulator.now() + 600_000,
     };
 
     const tx = proposeProtocolProposalTx(lucid, params);
@@ -361,7 +362,7 @@ describe("protocol transactions", () => {
       proposal: {
         params: { ...protocolParamsDatum, projectPledge: 2_000_000_000n },
         base: constructTxOutputId(protocolParamsUtxo),
-        inEffectAt: { timestamp: BigInt(getTime({ lucid })) },
+        inEffectAt: { timestamp: BigInt(emulator.now()) },
       },
     };
 
@@ -398,6 +399,7 @@ describe("protocol transactions", () => {
         protocolParamsScriptUtxo,
         protocolProposalRefScriptUtxo,
       ],
+      txTime: emulator.now(),
     };
 
     emulator.awaitSlot(200);

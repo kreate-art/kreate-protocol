@@ -1,6 +1,5 @@
 import { getAddressDetails, Lucid, UTxO } from "lucid-cardano";
 
-import { getTxTimeRange } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   ProjectDatum,
@@ -28,8 +27,7 @@ export type FinalizeDelistParams = {
   projectVRefScriptUtxo: UTxO;
   projectDetailVRefScriptUtxo: UTxO;
   protocolParamsUtxo: UTxO;
-  txTimeStartPadding?: TimeDifference;
-  txTimeEndPadding?: TimeDifference;
+  txTime: TimeDifference;
 };
 
 export function finalizeDelistTx(
@@ -39,8 +37,7 @@ export function finalizeDelistTx(
     projectVRefScriptUtxo,
     projectDetailVRefScriptUtxo,
     protocolParamsUtxo,
-    txTimeStartPadding = 60_000,
-    txTimeEndPadding = 60_000,
+    txTime,
   }: FinalizeDelistParams
 ) {
   assert(
@@ -53,11 +50,7 @@ export function finalizeDelistTx(
     ProtocolParamsDatum
   );
 
-  const [txTimeStart, txTimeEnd] = getTxTimeRange({
-    lucid,
-    txTimeStartPadding,
-    txTimeEndPadding,
-  });
+  const txTimeStart = txTime;
 
   let tx = lucid
     .newTx()
@@ -66,8 +59,7 @@ export function finalizeDelistTx(
       projectDetailVRefScriptUtxo,
       protocolParamsUtxo,
     ])
-    .validFrom(txTimeStart)
-    .validTo(txTimeEnd);
+    .validFrom(txTimeStart);
 
   const protocolStakeCredential = lucid.utils.scriptHashToCredential(
     protocolParams.registry.protocolStakingValidator.script.hash

@@ -1,7 +1,6 @@
 import { Address, Lucid, PolicyId, Script, Unit, UTxO } from "lucid-cardano";
 
 import { TEIKI_PLANT_NFT_TOKEN_NAME } from "@/contracts/common/constants";
-import { getTxTimeRange, TimeProvider } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   TeikiPlantDatum,
@@ -14,9 +13,8 @@ export type BootstrapMetaProtocolTxParams = {
   teikiPlantDatum: TeikiPlantDatum;
   teikiPlantNftPolicy: Script;
   teikiPlantAddress: Address;
-  txTimeStartPadding?: TimeDifference;
-  txTimeEndPadding?: TimeDifference;
-  timeProvider?: TimeProvider;
+  txTime: TimeDifference;
+  txTtl?: TimeDifference;
 };
 
 export function bootstrapMetaProtocolTx(
@@ -26,18 +24,10 @@ export function bootstrapMetaProtocolTx(
     seedUtxo,
     teikiPlantNftPolicy,
     teikiPlantAddress,
-    txTimeStartPadding = 60_000,
-    txTimeEndPadding = 60_000,
-    timeProvider,
+    txTime,
+    txTtl = 600_000,
   }: BootstrapMetaProtocolTxParams
 ) {
-  const [txTimeStart, txTimeEnd] = getTxTimeRange({
-    lucid,
-    timeProvider,
-    txTimeStartPadding,
-    txTimeEndPadding,
-  });
-
   const teikiPlantNftPolicyId: PolicyId =
     lucid.utils.mintingPolicyToId(teikiPlantNftPolicy);
   const teikiPlantNftUnit: Unit =
@@ -56,6 +46,6 @@ export function bootstrapMetaProtocolTx(
       { inline: S.toCbor(S.toData(teikiPlantDatum, TeikiPlantDatum)) },
       { [teikiPlantNftUnit]: 1n }
     )
-    .validFrom(txTimeStart)
-    .validTo(txTimeEnd);
+    .validFrom(txTime)
+    .validTo(txTime + txTtl);
 }

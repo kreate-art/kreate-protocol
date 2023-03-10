@@ -1,17 +1,15 @@
 import { Lucid, UTxO } from "lucid-cardano";
 
-import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import { ProjectDatum, ProjectRedeemer } from "@/schema/teiki/project";
-import { TimeDifference, UnixTime } from "@/types";
+import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
 export type Params = {
   protocolParamsUtxo: UTxO;
   projectUtxo: UTxO;
   projectVRefScriptUtxo: UTxO;
-  scheduledClosingTime: UnixTime;
-  txTimePadding?: TimeDifference;
+  txValidUntil: TimeDifference;
 };
 
 export function initiateCloseTx(
@@ -20,8 +18,7 @@ export function initiateCloseTx(
     protocolParamsUtxo,
     projectUtxo,
     projectVRefScriptUtxo,
-    scheduledClosingTime,
-    txTimePadding = 60_000,
+    txValidUntil,
   }: Params
 ) {
   assert(
@@ -34,8 +31,6 @@ export function initiateCloseTx(
     "Invalid project UTxO: Missing inline datum"
   );
   const project = S.fromData(S.fromCbor(projectUtxo.datum), ProjectDatum);
-
-  const txTimeEnd = getTime({ lucid }) + txTimePadding;
 
   return lucid
     .newTx()
@@ -53,7 +48,7 @@ export function initiateCloseTx(
               ...project,
               status: {
                 type: "PreClosed",
-                pendingUntil: { timestamp: BigInt(scheduledClosingTime) },
+                pendingUntil: { timestamp: BigInt(txValidUntil) },
               },
             },
             ProjectDatum
@@ -62,5 +57,5 @@ export function initiateCloseTx(
       },
       projectUtxo.assets
     )
-    .validTo(txTimeEnd);
+    .validTo(txValidUntil);
 }

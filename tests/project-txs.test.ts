@@ -32,7 +32,6 @@ import {
   constructProjectIdUsingBlake2b,
   constructTxOutputId,
 } from "@/helpers/schema";
-import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   ProjectDatum,
@@ -495,13 +494,11 @@ async function testInitiateCloseProjectTx() {
 
   emulator.awaitBlock(10);
 
-  const time = getTime({ lucid });
-
   const params: InitiateCloseParams = {
     protocolParamsUtxo,
     projectUtxo,
     projectVRefScriptUtxo,
-    scheduledClosingTime: time + 8_640_000,
+    txValidUntil: emulator.now() + 8_640_000,
   };
 
   const tx = initiateCloseTx(lucid, params).addSigner(projectOwnerAddress);
@@ -674,6 +671,7 @@ function generateCreateProjectParams({
     projectStakeValidator: projectSvScript,
     protocolParamsUtxo,
     seedUtxo,
+    txTime: emulator.now(),
   };
 }
 
@@ -724,6 +722,7 @@ function generateUpdateProjectParams({
       cid: "QmaMS3jikf86AN1aGpUVD2wn3jFv1SaeVBChhkNDit5XQy",
     },
     dedicatedTreasuryUtxo,
+    txTime: emulator.now(),
   };
 }
 
@@ -993,22 +992,6 @@ async function testFinalizeCloseProject({
     datum: S.toCbor(S.toData(openTreasuryDatum, OpenTreasuryDatum)),
   };
 
-  const params: FinalizeCloseParams = {
-    protocolParamsUtxo,
-    projectUtxo,
-    projectDetailUtxo,
-    projectVRefScriptUtxo,
-    projectDetailVRefScriptUtxo,
-    projectScriptVRefScriptUtxo,
-    projectScriptInfoList: [{ projectScriptUtxo, rewardAmount }],
-    openTreasuryInfo: {
-      openTreasuryUtxo,
-      openTreasuryVRefScriptUtxo,
-    },
-    projectAtPolicyId: projectAtMph,
-    projectAtScriptUtxo: projectAtMpRefScriptUtxo,
-  };
-
   attachUtxos(emulator, [
     protocolParamsUtxo,
     projectUtxo,
@@ -1039,6 +1022,23 @@ async function testFinalizeCloseProject({
 
   emulator.distributeRewards(rewardAmount);
   emulator.awaitBlock(100);
+
+  const params: FinalizeCloseParams = {
+    protocolParamsUtxo,
+    projectUtxo,
+    projectDetailUtxo,
+    projectVRefScriptUtxo,
+    projectDetailVRefScriptUtxo,
+    projectScriptVRefScriptUtxo,
+    projectScriptInfoList: [{ projectScriptUtxo, rewardAmount }],
+    openTreasuryInfo: {
+      openTreasuryUtxo,
+      openTreasuryVRefScriptUtxo,
+    },
+    projectAtPolicyId: projectAtMph,
+    projectAtScriptUtxo: projectAtMpRefScriptUtxo,
+    txTime: emulator.now(),
+  };
 
   const tx = finalizeCloseTx(lucid, params);
   const txComplete = await tx.complete();

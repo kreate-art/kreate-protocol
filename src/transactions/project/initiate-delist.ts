@@ -1,6 +1,5 @@
 import { Lucid, UTxO } from "lucid-cardano";
 
-import { getTxTimeRange } from "@/helpers/time";
 import * as S from "@/schema";
 import { ProjectDatum, ProjectRedeemer } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
@@ -11,8 +10,7 @@ export type InitiateDelistParams = {
   projectUtxos: UTxO[];
   projectVRefScriptUtxo: UTxO;
   protocolParamsUtxo: UTxO;
-  txTimeStartPadding?: TimeDifference;
-  txTimeEndPadding?: TimeDifference;
+  txValidUntil: TimeDifference;
 };
 
 export function initiateDelistTx(
@@ -21,8 +19,7 @@ export function initiateDelistTx(
     projectUtxos,
     projectVRefScriptUtxo,
     protocolParamsUtxo,
-    txTimeStartPadding = 60_000,
-    txTimeEndPadding = 60_000,
+    txValidUntil,
   }: InitiateDelistParams
 ) {
   assert(
@@ -35,12 +32,6 @@ export function initiateDelistTx(
     ProtocolParamsDatum
   );
 
-  const [txTimeStart, txTimeEnd] = getTxTimeRange({
-    lucid,
-    txTimeStartPadding,
-    txTimeEndPadding,
-  });
-
   let tx = lucid
     .newTx()
     .readFrom([projectVRefScriptUtxo, protocolParamsUtxo])
@@ -48,8 +39,7 @@ export function initiateDelistTx(
       projectUtxos,
       S.toCbor(S.toData({ case: "InitiateDelist" }, ProjectRedeemer))
     )
-    .validFrom(txTimeStart)
-    .validTo(txTimeEnd);
+    .validTo(txValidUntil);
 
   for (const projectUtxo of projectUtxos) {
     assert(
@@ -68,7 +58,7 @@ export function initiateDelistTx(
         type: "PreDelisted",
         pendingUntil: {
           timestamp:
-            BigInt(txTimeEnd) +
+            BigInt(txValidUntil) +
             protocolParams.projectDelistWaitingPeriod.milliseconds,
         },
       },

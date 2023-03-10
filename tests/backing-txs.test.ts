@@ -24,7 +24,6 @@ import {
   constructProjectIdUsingBlake2b,
   constructTxOutputId,
 } from "@/helpers/schema";
-import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import { BackingDatum, Plant } from "@/schema/teiki/backing";
 import { TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
@@ -260,6 +259,7 @@ describe("backing transactions", () => {
         proofOfBackingMpRefUtxo,
         proofOfBackingMph,
       },
+      txTime: emulator.now(),
     };
 
     let tx = plantTx(lucid, plantParams);
@@ -321,6 +321,7 @@ describe("backing transactions", () => {
         proofOfBackingMpRefUtxo,
         proofOfBackingMph,
       },
+      txTime: emulator.now(),
     };
 
     let tx = plantTx(lucid, plantParams);
@@ -385,6 +386,7 @@ describe("backing transactions", () => {
         proofOfBackingMpRefUtxo,
         proofOfBackingMph,
       },
+      txTime: emulator.now(),
     };
 
     let tx = plantTx(lucid, plantParams);
@@ -411,7 +413,7 @@ describe("backing transactions", () => {
       projectTeiki: {
         teikiCondition: "TeikiBurntPeriodically",
         available: availableTeiki,
-        lastBurnAt: { timestamp: BigInt(getTime({ lucid })) },
+        lastBurnAt: { timestamp: BigInt(emulator.now()) },
       },
       tag: {
         kind: "TagContinuation",
@@ -448,6 +450,7 @@ describe("backing transactions", () => {
         backingUtxos,
         backerAddress: BACKER_ACCOUNT.address,
       },
+      txTime: emulator.now(),
     };
 
     let tx = plantTx(lucid, plantParams);
@@ -474,7 +477,7 @@ describe("backing transactions", () => {
       projectTeiki: {
         teikiCondition: "TeikiBurntPeriodically",
         available: availableTeiki,
-        lastBurnAt: { timestamp: BigInt(getTime({ lucid })) },
+        lastBurnAt: { timestamp: BigInt(emulator.now()) },
       },
       tag: {
         kind: "TagContinuation",
@@ -511,6 +514,7 @@ describe("backing transactions", () => {
         backingUtxos,
         backerAddress: BACKER_ACCOUNT.address,
       },
+      txTime: emulator.now(),
     };
 
     let tx = plantTx(lucid, plantParams);
@@ -572,6 +576,7 @@ describe("backing transactions", () => {
         backingUtxos,
         backerAddress: BACKER_ACCOUNT.address,
       },
+      txTime: emulator.now(),
     };
 
     let tx = plantTx(lucid, plantParams);
@@ -633,6 +638,7 @@ describe("backing transactions", () => {
         backingUtxos,
         backerAddress: BACKER_ACCOUNT.address,
       },
+      txTime: emulator.now(),
     };
 
     let tx = plantTx(lucid, plantParams);
@@ -671,7 +677,7 @@ describe("backing transactions", () => {
       {
         type: "Delisted",
         delistedAt: {
-          timestamp: BigInt(getTime({ lucid }) + 150_000),
+          timestamp: BigInt(emulator.now() + 150_000),
         },
       },
       governorTeiki,
@@ -709,6 +715,7 @@ describe("backing transactions", () => {
         backingUtxos,
       },
       teikiMintingInfo: plantParams.teikiMintingInfo,
+      txTime: emulator.now(),
     };
 
     const tx = cleanUpTx(lucid, cleaupParams);
@@ -753,7 +760,7 @@ describe("backing transactions", () => {
       projectTeiki: {
         teikiCondition: "TeikiBurntPeriodically",
         available: availableTeiki,
-        lastBurnAt: { timestamp: BigInt(getTime({ lucid })) },
+        lastBurnAt: { timestamp: BigInt(emulator.now()) },
       },
       tag: {
         kind: "TagContinuation",
@@ -769,6 +776,8 @@ describe("backing transactions", () => {
       availableTeiki
     );
 
+    emulator.awaitBlock(20);
+
     const params = {
       protocolParamsUtxo,
       projectUtxo: generatedParams.projectInfo.projectUtxo,
@@ -779,9 +788,8 @@ describe("backing transactions", () => {
         proofOfBackingMph: generatedParams.backingInfo.proofOfBackingMph,
       },
       teikiMintingInfo: generatedParams.teikiMintingInfo,
+      txTime: emulator.now(),
     };
-
-    emulator.awaitBlock(20);
 
     const tx = claimRewardsByFlowerTx(lucid, params);
 
@@ -920,5 +928,5 @@ function generateFlowerList(size: number): Plant[] {
 }
 
 function getRandomTime() {
-  return BigInt(getTime({ lucid }) + Math.floor(Math.random() * 100_000));
+  return BigInt(emulator.now() + Math.floor(Math.random() * 100_000));
 }
