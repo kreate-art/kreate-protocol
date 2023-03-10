@@ -7,7 +7,7 @@ import {
   ProtocolProposalDatum,
   ProtocolProposalRedeemer,
 } from "@/schema/teiki/protocol";
-import { TimeDifference } from "@/types";
+import { UnixTime } from "@/types";
 import { assert } from "@/utils";
 
 import { extractPaymentPubKeyHash } from "../../helpers/schema";
@@ -16,7 +16,7 @@ export type ApplyProtocolTxParams = {
   protocolParamsUtxo: UTxO;
   protocolProposalUtxo: UTxO;
   protocolScriptUtxos: UTxO[];
-  txTime: TimeDifference;
+  txTime: UnixTime;
 };
 
 export function applyProtocolProposalTx(

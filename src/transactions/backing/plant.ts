@@ -15,7 +15,7 @@ import {
 } from "@/schema/teiki/backing";
 import { ProjectDatum } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
-import { Hex, TimeDifference } from "@/types";
+import { Hex, TimeDifference, UnixTime } from "@/types";
 import { assert } from "@/utils";
 
 import { PROOF_OF_BACKING_PLANT_TX_TIME_SLIPPAGE } from "../constants";
@@ -55,7 +55,7 @@ export type PlantParams = {
   projectInfo: ProjectInfo;
   backingInfo: BackingInfo;
   teikiMintingInfo?: TeikiMintingInfo;
-  txTime: TimeDifference;
+  txTime: UnixTime;
   txTtl?: TimeDifference;
 };
 

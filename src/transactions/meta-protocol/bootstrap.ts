@@ -6,14 +6,14 @@ import {
   TeikiPlantDatum,
   TeikiPlantNftMintingRedeemer,
 } from "@/schema/teiki/meta-protocol";
-import { TimeDifference } from "@/types";
+import { TimeDifference, UnixTime } from "@/types";
 
 export type BootstrapMetaProtocolTxParams = {
   seedUtxo: UTxO;
   teikiPlantDatum: TeikiPlantDatum;
   teikiPlantNftPolicy: Script;
   teikiPlantAddress: Address;
-  txTime: TimeDifference;
+  txTime: UnixTime;
   txTtl?: TimeDifference;
 };
 

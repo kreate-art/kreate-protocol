@@ -17,7 +17,7 @@ import {
   ProtocolParamsDatum,
   Registry,
 } from "@/schema/teiki/protocol";
-import { TimeDifference } from "@/types";
+import { TimeDifference, UnixTime } from "@/types";
 
 import { constructAddress } from "../../helpers/schema";
 
@@ -33,7 +33,7 @@ export type BootstrapProtocolParams = {
   protocolProposalAddress: Address;
   protocolStakeAddress: Address;
   protocolStakeValidator: Script;
-  txTime: TimeDifference;
+  txTime: UnixTime;
   txTtl?: TimeDifference;
 };
 

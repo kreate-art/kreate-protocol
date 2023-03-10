@@ -16,7 +16,7 @@ import {
   OpenTreasuryDatum,
   OpenTreasuryRedeemer,
 } from "@/schema/teiki/treasury";
-import { TimeDifference } from "@/types";
+import { TimeDifference, UnixTime } from "@/types";
 import { assert } from "@/utils";
 
 import {
@@ -47,7 +47,7 @@ export type Params = {
   projectAtPolicyId: PolicyId;
   projectAtScriptUtxo: UTxO;
   openTreasuryInfo?: OpenTreasuryInfo;
-  txTime: TimeDifference;
+  txTime: UnixTime;
   txTtl?: TimeDifference;
 };
 
