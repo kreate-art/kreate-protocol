@@ -6,7 +6,6 @@ import {
   constructPlantHashUsingBlake2b,
   constructTxOutputId,
 } from "@/helpers/schema";
-import { getTxTimeRange, TimeProvider } from "@/helpers/time";
 import * as S from "@/schema";
 import {
   BackingDatum,
@@ -56,9 +55,8 @@ export type PlantParams = {
   projectInfo: ProjectInfo;
   backingInfo: BackingInfo;
   teikiMintingInfo?: TeikiMintingInfo;
-  txTimeStartPadding?: TimeDifference;
-  txTimeEndPadding?: TimeDifference;
-  timeProvider?: TimeProvider;
+  txTime: TimeDifference;
+  txTtl?: TimeDifference;
 };
 
 // clean up is splitted to another transaction
@@ -69,9 +67,8 @@ export function plantTx(
     projectInfo,
     backingInfo,
     teikiMintingInfo,
-    txTimeStartPadding = 60_000,
-    txTimeEndPadding = 60_000,
-    timeProvider,
+    txTime,
+    txTtl = 600_000,
   }: PlantParams
 ) {
   const proofOfBackingMpRefUtxo = backingInfo.proofOfBackingMpRefUtxo;
@@ -85,12 +82,7 @@ export function plantTx(
     S.toData({ case: "Plant", cleanup: false }, ProofOfBackingMintingRedeemer)
   );
 
-  const [txTimeStart, txTimeEnd] = getTxTimeRange({
-    lucid,
-    timeProvider,
-    txTimeStartPadding,
-    txTimeEndPadding,
-  });
+  const txTimeStart = txTime;
 
   const totalBackingAmount = backingInfo.backingUtxos.reduce(
     (acc, backingUtxo) => acc + BigInt(backingUtxo.assets.lovelace),
@@ -113,10 +105,8 @@ export function plantTx(
     ])
     .validFrom(txTimeStart)
     .validTo(
-      Math.min(
-        txTimeEnd,
-        txTimeStart + Number(PROOF_OF_BACKING_PLANT_TX_TIME_SLIPPAGE)
-      )
+      txTimeStart +
+        Math.min(txTtl, Number(PROOF_OF_BACKING_PLANT_TX_TIME_SLIPPAGE))
     );
 
   // NOTE: We may only need to produce multiple backing UTxOs in case of cleanup

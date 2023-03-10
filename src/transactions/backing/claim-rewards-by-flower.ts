@@ -1,7 +1,6 @@
 import { Assets, Lucid, UTxO } from "lucid-cardano";
 
 import { constructPlantHashUsingBlake2b } from "@/helpers/schema";
-import { getTxTimeRange, TimeProvider } from "@/helpers/time";
 import * as S from "@/schema";
 import { Plant, ProofOfBackingMintingRedeemer } from "@/schema/teiki/backing";
 import { ProjectDatum } from "@/schema/teiki/project";
@@ -18,9 +17,8 @@ export type Params = {
   projectUtxo: UTxO; // project status is not `PreDelisted`
   backingInfo: BackingInfo;
   teikiMintingInfo: TeikiMintingInfo;
-  txTimeStartPadding?: TimeDifference;
-  txTimeEndPadding?: TimeDifference;
-  timeProvider?: TimeProvider;
+  txTime: TimeDifference;
+  txTtl?: TimeDifference;
 };
 
 export type BackingInfo = {
@@ -46,9 +44,8 @@ export function claimRewardsByFlowerTx(
     projectUtxo,
     backingInfo,
     teikiMintingInfo,
-    txTimeStartPadding = 60_000,
-    txTimeEndPadding = 60_000,
-    timeProvider,
+    txTime,
+    txTtl = 600_000,
   }: Params
 ) {
   assert(
@@ -91,12 +88,8 @@ export function claimRewardsByFlowerTx(
   const projectId = projectDatum.projectId.id;
   const currentProjectMilestone = projectDatum.milestoneReached;
 
-  const [txTimeStart, txTimeEnd] = getTxTimeRange({
-    lucid,
-    timeProvider,
-    txTimeStartPadding,
-    txTimeEndPadding,
-  });
+  const txTimeStart = txTime;
+  const txTimeEnd = txTime + txTtl;
 
   let tx = lucid
     .newTx()

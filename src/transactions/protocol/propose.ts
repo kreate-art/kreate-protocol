@@ -13,14 +13,13 @@ import {
   constructTxOutputId,
   extractPaymentPubKeyHash,
 } from "../../helpers/schema";
-import { getTime } from "../../helpers/time";
 
 export type ProposeProtocolTxParams = {
   protocolParamsUtxo: UTxO;
   proposedProtocolParamsDatum: ProtocolParamsDatum;
   protocolProposalUtxo: UTxO;
   protocolProposalRefScriptUtxo: UTxO;
-  txTimePadding?: TimeDifference;
+  txValidUntil: TimeDifference;
 };
 
 export function proposeProtocolProposalTx(
@@ -30,7 +29,7 @@ export function proposeProtocolProposalTx(
     proposedProtocolParamsDatum,
     protocolProposalUtxo,
     protocolProposalRefScriptUtxo,
-    txTimePadding = 200000,
+    txValidUntil,
   }: ProposeProtocolTxParams
 ) {
   assert(protocolParamsUtxo.datum, "Protocol params utxo must have datum");
@@ -43,13 +42,11 @@ export function proposeProtocolProposalTx(
     protocolParams.governorAddress
   );
 
-  const txTimeEnd = getTime({ lucid }) + txTimePadding;
-
   const protocolProposalDatum: ProtocolProposalDatum = {
     proposal: {
       inEffectAt: {
         timestamp:
-          BigInt(txTimeEnd) +
+          BigInt(txValidUntil) +
           protocolParams.proposalWaitingPeriod.milliseconds +
           1n,
       },
@@ -75,5 +72,5 @@ export function proposeProtocolProposalTx(
       },
       protocolProposalUtxo.assets
     )
-    .validTo(txTimeEnd);
+    .validTo(txValidUntil);
 }

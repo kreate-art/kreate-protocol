@@ -16,7 +16,6 @@ import {
 import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
-import { getTime } from "../../helpers/time";
 import { PROJECT_SPONSORSHIP_RESOLUTION, RATIO_MULTIPLIER } from "../constants";
 
 export type UpdateProjectParams = {
@@ -29,7 +28,7 @@ export type UpdateProjectParams = {
   newSponsorshipAmount?: bigint;
   newInformationCid?: IpfsCid;
   newAnnouncementCid?: IpfsCid;
-  txTimePadding?: TimeDifference;
+  txTime: TimeDifference;
 };
 
 type Result = { tx: Tx; sponsorshipFee: bigint };
@@ -46,7 +45,7 @@ export function updateProjectTx(
     newSponsorshipAmount,
     newInformationCid,
     newAnnouncementCid,
-    txTimePadding = 20000,
+    txTime,
   }: UpdateProjectParams
 ): Result {
   assert(
@@ -92,7 +91,7 @@ export function updateProjectTx(
     DedicatedTreasuryDatum
   );
 
-  const txTimeStart = getTime({ lucid }) - txTimePadding;
+  const txTimeStart = txTime;
 
   let sponsorshipFee = 0n;
   if (newSponsorshipAmount != null) {

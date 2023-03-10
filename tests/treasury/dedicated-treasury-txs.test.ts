@@ -13,7 +13,6 @@ import {
   constructProjectIdUsingBlake2b,
   constructTxOutputId,
 } from "@/helpers/schema";
-import { getTime } from "@/helpers/time";
 import * as S from "@/schema";
 import { ProjectDatum } from "@/schema/teiki/project";
 import { ProtocolParamsDatum } from "@/schema/teiki/protocol";
@@ -191,7 +190,7 @@ describe("dedicated treasury transactions", () => {
       isStakingDelegationManagedByProtocol: true,
       status: {
         type: "Closed",
-        closedAt: { timestamp: BigInt(getTime({ lucid })) },
+        closedAt: { timestamp: BigInt(emulator.now()) },
       },
     };
 
@@ -236,7 +235,7 @@ describe("dedicated treasury transactions", () => {
       isStakingDelegationManagedByProtocol: true,
       status: {
         type: "Delisted",
-        delistedAt: { timestamp: BigInt(getTime({ lucid })) },
+        delistedAt: { timestamp: BigInt(emulator.now()) },
       },
     };
 

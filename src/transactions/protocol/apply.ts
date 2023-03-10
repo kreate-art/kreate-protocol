@@ -11,13 +11,12 @@ import { TimeDifference } from "@/types";
 import { assert } from "@/utils";
 
 import { extractPaymentPubKeyHash } from "../../helpers/schema";
-import { getTime } from "../../helpers/time";
 
 export type ApplyProtocolTxParams = {
   protocolParamsUtxo: UTxO;
   protocolProposalUtxo: UTxO;
   protocolScriptUtxos: UTxO[];
-  txTimePadding?: TimeDifference;
+  txTime: TimeDifference;
 };
 
 export function applyProtocolProposalTx(
@@ -26,7 +25,7 @@ export function applyProtocolProposalTx(
     protocolParamsUtxo,
     protocolProposalUtxo,
     protocolScriptUtxos,
-    txTimePadding = 20000,
+    txTime,
   }: ApplyProtocolTxParams
 ) {
   assert(protocolParamsUtxo.datum, "Protocol params utxo must have datum");
@@ -74,5 +73,5 @@ export function applyProtocolProposalTx(
       },
       protocolParamsUtxo.assets
     )
-    .validFrom(getTime({ lucid }) - txTimePadding);
+    .validFrom(txTime);
 }

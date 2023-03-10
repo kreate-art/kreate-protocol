@@ -6,7 +6,7 @@ import { signAndSubmit } from "@/helpers/lucid";
 import * as S from "@/schema";
 import { RulesProposal, TeikiPlantDatum } from "@/schema/teiki/meta-protocol";
 import { proposeMetaProtocolProposalTx } from "@/transactions/meta-protocol/propose";
-import { assert } from "@/utils";
+import { assert, trimToSlot } from "@/utils";
 
 const lucid = await getLucid();
 const teikiPlantNftMph = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
@@ -44,10 +44,13 @@ const proposedRules: RulesProposal = {
   },
 };
 
+const txValidUntil = trimToSlot(Date.now()) + 600_000;
+
 const tx = proposeMetaProtocolProposalTx(lucid, {
   teikiPlantUtxo,
   teikiPlantScriptUtxo,
   proposedRules,
+  txValidUntil,
 });
 
 const txComplete = await tx.complete();

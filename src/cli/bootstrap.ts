@@ -19,6 +19,7 @@ import {
   bootstrapProtocolTx,
 } from "@/transactions/protocol/bootstrap";
 import { Hex } from "@/types";
+import { trimToSlot } from "@/utils";
 
 import {
   compileTeikiPlantNftScript,
@@ -177,11 +178,14 @@ async function runBootstrapMetaProtocol(lucid: Lucid) {
     proposal: null,
   };
 
+  const txTime = trimToSlot(Date.now());
+
   const params: BootstrapMetaProtocolTxParams = {
     seedUtxo,
     teikiPlantDatum,
     teikiPlantNftPolicy,
     teikiPlantAddress,
+    txTime,
   };
 
   const tx = bootstrapMetaProtocolTx(lucid, params);
@@ -300,6 +304,8 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
     teikiPlantNftMph,
   });
 
+  const txTime = trimToSlot(Date.now());
+
   const params: BootstrapProtocolParams = {
     protocolParams: SAMPLE_PROTOCOL_NON_SCRIPT_PARAMS,
     seedUtxo: seedUtxo,
@@ -312,6 +318,7 @@ async function runBootstapProtocol(lucid: Lucid, teikiPlantNftMph: Hex) {
     protocolProposalAddress,
     protocolStakeAddress,
     protocolStakeValidator: protocolSvScript,
+    txTime,
   };
 
   const tx = bootstrapProtocolTx(lucid, params);

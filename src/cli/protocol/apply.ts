@@ -4,6 +4,7 @@ import { getLucid } from "@/commands/utils";
 import { PROTOCOL_NFT_TOKEN_NAMES } from "@/contracts/common/constants";
 import { signAndSubmit } from "@/helpers/lucid";
 import { applyProtocolProposalTx } from "@/transactions/protocol/apply";
+import { trimToSlot } from "@/utils";
 
 const lucid = await getLucid();
 
@@ -29,6 +30,8 @@ const protocolParamsRefScriptUtxo = (
   await lucid.utxosByOutRef([{ txHash: "", outputIndex: 1 }])
 )[0];
 
+const txTime = trimToSlot(Date.now());
+
 const tx = applyProtocolProposalTx(lucid, {
   protocolParamsUtxo,
   protocolProposalUtxo,
@@ -36,6 +39,7 @@ const tx = applyProtocolProposalTx(lucid, {
     protocolParamsRefScriptUtxo,
     protocolProposalRefScriptUtxo,
   ],
+  txTime,
 });
 
 const txComplete = await tx.complete();

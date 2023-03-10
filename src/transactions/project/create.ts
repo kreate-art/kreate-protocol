@@ -20,7 +20,6 @@ import {
   constructProjectIdUsingBlake2b,
   constructTxOutputId,
 } from "../../helpers/schema";
-import { getTime } from "../../helpers/time";
 import {
   PROJECT_DETAIL_UTXO_ADA,
   PROJECT_SCRIPT_UTXO_ADA,
@@ -36,7 +35,7 @@ export type CreateProjectParams = {
   projectATPolicyId: PolicyId;
   projectStakeValidator: Script;
   seedUtxo: UTxO;
-  txTimePadding?: TimeDifference;
+  txTime: TimeDifference;
 };
 
 export function createProjectTx(
@@ -50,7 +49,7 @@ export function createProjectTx(
     projectATPolicyId,
     projectStakeValidator,
     seedUtxo,
-    txTimePadding = 20000,
+    txTime,
   }: CreateProjectParams
 ) {
   assert(protocolParamsUtxo.datum != null, "Invalid protocol params UTxO");
@@ -109,8 +108,6 @@ export function createProjectTx(
 
   const totalFees = protocolParams.projectCreationFee + sponsorshipAmount;
 
-  const txTimeStart = getTime({ lucid }) - txTimePadding;
-
   const projectScriptDatum: ProjectScriptDatum = {
     projectId: { id: projectId },
     stakingKeyDeposit: protocolParams.stakeKeyDeposit,
@@ -125,7 +122,7 @@ export function createProjectTx(
             amount: sponsorshipAmount,
             until: {
               timestamp:
-                BigInt(txTimeStart) +
+                BigInt(txTime) +
                 protocolParams.projectSponsorshipDuration.milliseconds,
             },
           }
@@ -209,5 +206,5 @@ export function createProjectTx(
       { lovelace: totalFees }
     )
     .registerStake(projectStakeAddress)
-    .validFrom(txTimeStart);
+    .validFrom(txTime);
 }
