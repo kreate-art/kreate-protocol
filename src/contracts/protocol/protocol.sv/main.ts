@@ -30,7 +30,7 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
     const PROTOCOL_NFT_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${protocolNftMph})
 
-    func main(ctx: ScriptContext) -> Bool {
+    func main(_, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
 
       ctx.get_script_purpose().switch {

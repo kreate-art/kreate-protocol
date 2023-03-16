@@ -29,7 +29,7 @@ export default function main({ proofOfBackingMph, protocolNftMph }: Params) {
     const PROOF_OF_BACKING_MPH: MintingPolicyHash =
       MintingPolicyHash::new(#${proofOfBackingMph})
 
-    func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool {
+    func main(_, redeemer: Redeemer, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
 
       redeemer.switch {

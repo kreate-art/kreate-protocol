@@ -56,17 +56,17 @@
     "typecheck:watch": "tsc --noEmit --strict --watch"
   },
   "dependencies": {
-    "@hyperionbt/helios": "^0.12.12",
+    "@hyperionbt/helios": "^0.13.3",
     "@shinka-network/json-bigint": "^1.0.2",
     "@sinclair/typebox": "^0.25.24",
     "lucid-cardano": "^0.9.4"
   },
   "devDependencies": {
-    "@types/jest": "^29.4.0",
-    "@types/node": "^18.15.0",
-    "@typescript-eslint/eslint-plugin": "^5.54.1",
-    "@typescript-eslint/parser": "^5.54.1",
-    "eslint": "^8.35.0",
+    "@types/jest": "^29.4.4",
+    "@types/node": "^18.15.3",
+    "@typescript-eslint/eslint-plugin": "^5.55.0",
+    "@typescript-eslint/parser": "^5.55.0",
+    "eslint": "^8.36.0",
     "eslint-config-prettier": "^8.7.0",
     "eslint-import-resolver-typescript": "^3.5.3",
     "eslint-plugin-import": "^2.27.5",

@@ -18,7 +18,7 @@ export default function main({ governorPkh }: Params): HeliosScript {
         PubKeyHash::new(#${governorPkh})
       )
 
-    func main(ctx: ScriptContext) -> Bool {
+    func main(_, ctx: ScriptContext) -> Bool {
       tx: Tx = ctx.tx;
 
       is_tx_authorized_by(tx, SAMPLE_GOVERNOR_CREDENTIAL)
