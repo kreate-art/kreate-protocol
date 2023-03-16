@@ -26,7 +26,7 @@ export default function main({ protocolNftMph }: Params): HeliosScript {
     const PROTOCOL_PROPOSAL_NFT_ASSET_CLASS: AssetClass =
       AssetClass::new(PROTOCOL_NFT_MPH, PROTOCOL_PROPOSAL_NFT_TOKEN_NAME)
 
-    func main(redeemer: Redeemer, ctx: ScriptContext) -> Bool{
+    func main(_, redeemer: Redeemer, ctx: ScriptContext) -> Bool{
       tx: Tx = ctx.tx;
 
       redeemer.switch {

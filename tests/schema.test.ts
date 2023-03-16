@@ -1,10 +1,11 @@
 import * as helios from "@hyperionbt/helios";
 import { Lucid } from "lucid-cardano";
 
+import { asBool } from "@/helpers/helios";
 import { constructAddress, deconstructAddress } from "@/helpers/schema";
 import { fromJson, toJson } from "@/json";
 import * as S from "@/schema";
-import { OutRef, Hex } from "@/types";
+import { Hex, OutRef } from "@/types";
 
 describe("complex schema", () => {
   const OneStruct = S.Struct(S.Inline(S.ByteArray));
@@ -142,8 +143,8 @@ describe("complex schema", () => {
         helios.UplcData.fromCbor(helios.hexToBytes(cbor))
       ),
     ]);
-    expect(result).toBeInstanceOf(helios.UplcBool);
-    expect((result as helios.UplcBool).bool).toBe(true);
+    expect(result).toBeInstanceOf(helios.UplcValue);
+    expect(asBool(result as helios.UplcValue)).toBe(true);
   });
 
   it("address", async () => {
