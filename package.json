@@ -1,17 +1,17 @@
 {
-  "name": "@teiki/protocol",
+  "name": "@kreate/protocol",
   "version": "0.1.0",
-  "description": "Teiki Protocol implementation in Generation I",
+  "description": "Kreate Protocol implementation in Generation I",
   "keywords": [
     "Crowdfunding"
   ],
-  "homepage": "https://github.com/teiki-network/teiki-protocol#readme",
+  "homepage": "https://github.com/kreate-community/kreate-protocol#readme",
   "bugs": {
-    "url": "https://github.com/teiki-network/teiki-protocol/issues"
+    "url": "https://github.com/kreate-community/kreate-protocol/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/teiki-network/teiki-protocol.git"
+    "url": "https://github.com/kreate-community/kreate-protocol.git"
   },
   "license": "GPL-3.0",
   "author": "Shinka Network",
