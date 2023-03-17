@@ -1,10 +1,10 @@
-# :warning: [Alpha] Teiki Protocol :construction:
+# :warning: [Alpha] Kreate Protocol :construction:
 
-![Teiki protocol](docs/protocol.png)
+![Kreate protocol](docs/protocol.png)
 
-We currently maintain the [Teiki protocol specifications on Notion](https://shinka-network.notion.site/Teiki-Protocol-ae97c4c66db447278ea8da9cd7b860a2).
+We currently maintain the [Kreate protocol specifications on Notion](https://shinka-network.notion.site/Kreate-Protocol-ae97c4c66db447278ea8da9cd7b860a2).
 
-This repository contains the implementation in Generation I. It is currently at the Alpha stage for mainnet testing.
+This repository contains the implementation in Gen I. It is currently at the Alpha stage for mainnet testing.
 
 ## Getting Started
 
@@ -31,7 +31,7 @@ export POOL_ID=poolxxxxxxxxxxxxxxxxxxxxxxx
 npm run deploy
 ```
 
-#### Propose Teiki minting rules
+#### Propose minting rules
 
 1. Update information in `src/cli/meta-protocol/propose.ts` and `src/cli/meta-protocol/apply.ts` then propose:
 
@@ -50,7 +50,3 @@ npm run meta-protocol:apply
 ```
 npm test
 ```
-
----
-
-Feel free to connect: [Website](https://teiki.network), [Medium](https://teikinetwork.medium.com), [Discord](https://discord.gg/n9wZZTY6XA), [Twitter](https://twitter.com/TeikiNetwork), [Telegram](https://t.me/teiki_announcement). We are very open to discussions, questions, and feedback :seedling:.
