@@ -1,10 +1,10 @@
-# :warning: [Alpha] Kreate Protocol :construction:
+# :warning: [Beta] Kreate Protocol :construction:
 
 ![Kreate protocol](docs/protocol.png)
 
 We currently maintain the [Kreate protocol specifications on Notion](https://shinka-network.notion.site/Kreate-Protocol-ae97c4c66db447278ea8da9cd7b860a2).
 
-This repository contains the implementation in Gen I. It is currently at the Alpha stage for mainnet testing.
+This repository contains the implementation in Gen I. It is currently at the Beta stage for mainnet testing.
 
 ## Getting Started
 
