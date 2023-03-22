@@ -14,6 +14,7 @@ import {
 } from "lucid-cardano";
 
 import { addressFromScriptHashes } from "@/helpers/lucid";
+import { Kolour } from "@/schema/teiki/kolours";
 import { Hex } from "@/types";
 import { assert } from "@/utils";
 
@@ -130,4 +131,16 @@ export function generateWalletAddress(lucid: Lucid): Address {
   return lucid.utils.credentialToAddress(
     lucid.utils.keyHashToCredential(generateBlake2b224Hash())
   );
+}
+
+export function generateKolour(): Kolour {
+  return toHex(loadCrypto().getRandomValues(new Uint8Array(3)));
+}
+
+export function generateCid(): Hex {
+  return "Qm" + toHex(loadCrypto().getRandomValues(new Uint8Array(22)));
+}
+
+export function generateReferral(): Hex {
+  return toHex(loadCrypto().getRandomValues(new Uint8Array(32)));
 }

@@ -1,0 +1,2 @@
+export const KOLOUR_TX_MAX_DURATION = 600_000n; // 10 minutes
+export const KOLOUR_TX_DEADLINE = 2_208_988_799_999n; // 2039/12/31 23:59:59 GMT
