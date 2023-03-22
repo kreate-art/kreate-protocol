@@ -31,6 +31,13 @@ export POOL_ID=poolxxxxxxxxxxxxxxxxxxxxxxx
 npm run deploy
 ```
 
+##### Bootstrap kolour NFT
+
+```sh
+export KOLOUR_NFT_PUB_KEY_HASH=xxxxxxxxxxxxxxxxxxxxxxxx
+export KREATION_NFT_PUB_KEY_HASH=xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
 #### Propose minting rules
 
 1. Update information in `src/cli/meta-protocol/propose.ts` and `src/cli/meta-protocol/apply.ts` then propose:
