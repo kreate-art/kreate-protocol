@@ -6,11 +6,14 @@ import {
   UnixTime,
   C,
   Core,
-  fromHex,
   fromText,
+  Address,
 } from "lucid-cardano";
 
-import { getPaymentKeyHash } from "@/helpers/lucid";
+import {
+  extractWitnessKeyHashes,
+  getWalletAddressKeyHashes,
+} from "@/helpers/lucid";
 import { fromJson } from "@/json";
 import * as S from "@/schema";
 import {
@@ -28,6 +31,7 @@ export type MintKolourNftTxParams = {
   producerPkh: Hex;
   txTimeStart: UnixTime;
   txTimeEnd: UnixTime;
+  receivedNftAddress?: Address;
 };
 
 export type VerifyKolourNftTxParams = {
@@ -47,6 +51,7 @@ export function buildMintKolourNftTx(
     producerPkh,
     txTimeStart,
     txTimeEnd,
+    receivedNftAddress,
   }: MintKolourNftTxParams
 ) {
   assert(
@@ -58,7 +63,10 @@ export function buildMintKolourNftTx(
     kolourNftRefScriptUtxo.scriptRef
   );
   const { kolours, userAddress, feeAddress, referral, expiration } = quotation;
+  const { paymentKeyHash: userPkh, stakeKeyHash: userSkh } =
+    getWalletAddressKeyHashes(userAddress);
   let tx = lucid.newTx().readFrom([kolourNftRefScriptUtxo]);
+  if (userSkh) tx = tx.addSignerKey(userSkh);
 
   let totalMintFees = 0n;
   const nftMetadata = new Map();
@@ -82,7 +90,7 @@ export function buildMintKolourNftTx(
         { [kolourNftUnit]: 1n },
         S.toCbor(S.toData({ case: "Mint" }, KolourNftMintingRedeemer))
       )
-      .payToAddress(userAddress, { [kolourNftUnit]: 1n });
+      .payToAddress(receivedNftAddress ?? userAddress, { [kolourNftUnit]: 1n });
 
     totalMintFees += BigInt(fee);
   }
@@ -92,7 +100,7 @@ export function buildMintKolourNftTx(
   };
 
   return tx
-    .addSigner(userAddress)
+    .addSignerKey(userPkh)
     .addSignerKey(producerPkh)
     .attachMetadata(721, metadata)
     .payToAddress(feeAddress, { lovelace: totalMintFees })
@@ -101,7 +109,7 @@ export function buildMintKolourNftTx(
       Math.min(
         txTimeEnd,
         txTimeStart + Number(KOLOUR_TX_MAX_DURATION),
-        expiration
+        expiration * 1_000 // to timestamp
       )
     );
 }
@@ -111,37 +119,25 @@ export function verifyKolourNftMintingTx(
   { tx, quotation, kolourNftMph, txId, txBody, txExp }: VerifyKolourNftTxParams
 ) {
   const { kolours, userAddress, feeAddress, referral, expiration } = quotation;
-
+  const { paymentKeyHash: userPkh, stakeKeyHash: userSkh } =
+    getWalletAddressKeyHashes(userAddress);
+  const expirationTimestamp = expiration * 1_000;
   const body = txBody ? txBody : tx.body();
   const txHash = txId ? txId : C.hash_transaction(body).to_hex();
   const witnesses = tx.witness_set();
   const txTimeEnd = body.ttl()?.to_str();
   assert(
-    (txExp && txExp < expiration) ||
+    (txExp && txExp < expirationTimestamp) ||
       (txTimeEnd &&
-        lucid.utils.slotToUnixTime(parseInt(txTimeEnd)) < expiration),
+        lucid.utils.slotToUnixTime(parseInt(txTimeEnd)) < expirationTimestamp),
     "Invalid transaction time range upper bound"
   );
 
-  //https://github.com/spacebudz/lucid/blob/2d73e7d71d180c3aab7db654f3558279efb5dbb5/src/provider/emulator.ts#L280
-  const keyHashes = (() => {
-    const keyHashes = [];
-    for (let i = 0; i < (witnesses.vkeys()?.len() || 0); i++) {
-      const witness = witnesses.vkeys()?.get(i);
-      if (!witness) continue;
-      const publicKey = witness.vkey().public_key();
-      const keyHash = publicKey.hash().to_hex();
-
-      if (!publicKey.verify(fromHex(txHash), witness.signature())) {
-        throw new Error(`Invalid vkey witness. Key hash: ${keyHash}`);
-      }
-      keyHashes.push(keyHash);
-    }
-    return keyHashes;
-  })();
+  const keyHashes = extractWitnessKeyHashes({ witnesses, txHash });
   assert(
-    keyHashes.some((keyHash) => keyHash === getPaymentKeyHash(userAddress)),
-    "Missing user's signature"
+    keyHashes.includes(userPkh) &&
+      (!userSkh || (userSkh && keyHashes.includes(userSkh))),
+    "Missing user's signatures"
   );
 
   const nftMetadata = tx
