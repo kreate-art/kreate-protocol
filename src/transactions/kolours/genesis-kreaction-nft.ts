@@ -73,7 +73,7 @@ export function buildMintGKNftTx(
   const nftMetadatum = {
     name,
     image,
-    // mediaType: "image/png",
+    mediaType: "image/png",
     description,
   };
 
@@ -87,7 +87,7 @@ export function buildMintGKNftTx(
       { [gkNftUnit]: 1n },
       S.toCbor(S.toData({ case: "Mint" }, KolourNftMintingRedeemer))
     )
-    .payToAddress(userAddress, { [gkNftMph]: 1n });
+    .payToAddress(userAddress, { [gkNftUnit]: 1n });
 
   const metadatum = {
     [gkNftMph]: Object.fromEntries(nftMetadata),
@@ -190,7 +190,7 @@ export function verifyGKNftMintingTx(
   const metadatum = {
     name,
     image,
-    // mediaType: "image/png",
+    mediaType: "image/png",
     description,
   };
 
