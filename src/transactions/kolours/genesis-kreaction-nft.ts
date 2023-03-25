@@ -68,8 +68,7 @@ export function buildMintGKNftTx(
   let tx = lucid.newTx().readFrom([gkNftRefScriptUtxo]);
 
   const nftMetadata = new Map();
-  const tokenName = fromText(id);
-  const gkNftUnit = gkNftMph + tokenName;
+  const gkNftUnit = gkNftMph + fromText(id);
   const nftMetadatum = {
     name,
     image,
@@ -77,10 +76,7 @@ export function buildMintGKNftTx(
     description,
   };
 
-  nftMetadata.set(
-    tokenName,
-    referral ? { ...nftMetadatum, referral } : nftMetadatum
-  );
+  nftMetadata.set(id, referral ? { ...nftMetadatum, referral } : nftMetadatum);
 
   tx = tx
     .mintAssets(
@@ -91,7 +87,6 @@ export function buildMintGKNftTx(
 
   const metadatum = {
     [gkNftMph]: Object.fromEntries(nftMetadata),
-    version: 2, // asset name in hex format
   };
 
   return tx
@@ -184,8 +179,7 @@ export function verifyGKNftMintingTx(
   assert(Object.keys(mintedGK).length == 1, "Invalid minted value");
 
   const constructedNftMetadatum = new Map();
-  const tokenName = fromText(id);
-  assert(mintedGK[tokenName], `Missing ${id} NFT `);
+  assert(mintedGK[fromText(id)], `Missing ${id} NFT `);
 
   const metadatum = {
     name,
@@ -195,7 +189,7 @@ export function verifyGKNftMintingTx(
   };
 
   constructedNftMetadatum.set(
-    tokenName,
+    id,
     referral ? { ...metadatum, referral } : metadatum
   );
 

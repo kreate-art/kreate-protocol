@@ -63,17 +63,19 @@ export function buildMintKolourNftTx(
   let totalMintFees = 0n;
   const nftMetadata = new Map();
   for (const [kolourHex, { fee, image }] of Object.entries(kolours)) {
-    const upperKolourHex = kolourHex.toUpperCase();
-    const kolour = fromText(`#${upperKolourHex}`);
-    const kolourNftUnit = kolourNftMph + kolour;
+    const kolourName = `#${kolourHex.toUpperCase()}`;
+    const kolourNftUnit = kolourNftMph + fromText(kolourName);
     const metadatum = {
-      name: `#${upperKolourHex}`,
+      name: kolourName,
       image,
       mediaType: "image/png",
-      description: `The Kolour #${upperKolourHex} in the Kreataverse`,
+      description: `The Kolour ${kolourName} in the Kreataverse`,
     };
 
-    nftMetadata.set(kolour, referral ? { ...metadatum, referral } : metadatum);
+    nftMetadata.set(
+      kolourName,
+      referral ? { ...metadatum, referral } : metadatum
+    );
 
     tx = tx
       .mintAssets(
@@ -87,7 +89,6 @@ export function buildMintKolourNftTx(
 
   const metadata = {
     [kolourNftMph]: Object.fromEntries(nftMetadata),
-    version: 2, // asset name in hex format
   };
 
   return tx
@@ -175,23 +176,22 @@ export function verifyKolourNftMintingTx(
   let totalMintFee = 0n;
   const constructedNftMetadatum = new Map();
   for (const [kolourHex, { fee, image }] of Object.entries(kolours)) {
-    const upperKolourHex = kolourHex.toUpperCase();
-    const kolour = fromText(`#${upperKolourHex}`);
+    const kolourName = `#${kolourHex.toUpperCase()}`;
     assert(
-      mintedKolours[kolour],
-      `Missing #${kolourHex.toLocaleUpperCase()} kolour NFT `
+      mintedKolours[fromText(kolourName)],
+      `Missing ${kolourName} kolour NFT `
     );
     totalMintFee += BigInt(fee);
 
     const metadatum = {
-      name: `#${upperKolourHex}`,
+      name: kolourName,
       image,
       mediaType: "image/png",
-      description: `The Kolour #${upperKolourHex} in the Kreataverse`,
+      description: `The Kolour ${kolourName} in the Kreataverse`,
     };
 
     constructedNftMetadatum.set(
-      kolour,
+      kolourName,
       referral ? { ...metadatum, referral } : metadatum
     );
   }
