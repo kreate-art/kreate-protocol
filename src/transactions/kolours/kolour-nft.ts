@@ -12,7 +12,7 @@ import {
 
 import {
   extractWitnessKeyHashes,
-  getWalletAddressKeyHashes,
+  getUserAddressKeyHashes,
 } from "@/helpers/lucid";
 import { fromJson } from "@/json";
 import * as S from "@/schema";
@@ -38,6 +38,7 @@ export type VerifyKolourNftTxParams = {
   tx: Core.Transaction;
   quotation: KolourQuotation;
   kolourNftMph: Hex;
+  // Act as an optimization
   txId?: Hex;
   txBody?: Core.TransactionBody;
   txExp?: UnixTime;
@@ -54,36 +55,40 @@ export function buildMintKolourNftTx(
     receivedNftAddress,
   }: MintKolourNftTxParams
 ) {
+  const { kolours, userAddress, feeAddress, referral, expiration } = quotation;
+
   assert(
     kolourNftRefScriptUtxo.scriptRef != null,
     "Invalid kolour nft script UTxO: Missing script reference"
   );
-
   const kolourNftMph = lucid.utils.validatorToScriptHash(
     kolourNftRefScriptUtxo.scriptRef
   );
-  const { kolours, userAddress, feeAddress, referral, expiration } = quotation;
-  const { paymentKeyHash: userPkh, stakeKeyHash: userSkh } =
-    getWalletAddressKeyHashes(userAddress);
+
   let tx = lucid.newTx().readFrom([kolourNftRefScriptUtxo]);
-  if (userSkh) tx = tx.addSignerKey(userSkh);
+
+  const { paymentKeyHash: userPkh, stakeKeyHash: userSkh } =
+    getUserAddressKeyHashes(userAddress);
+  if (referral) {
+    assert(userSkh, "Must use a stake key hash with referral");
+    tx = tx.addSignerKey(userSkh);
+  }
+
+  const referralMeta = referral ? { referral } : {};
 
   let totalMintFees = 0n;
   const nftMetadata = new Map();
   for (const [kolourHex, { fee, image }] of Object.entries(kolours)) {
     const kolourName = `#${kolourHex.toUpperCase()}`;
     const kolourNftUnit = kolourNftMph + fromText(kolourName);
-    const metadatum = {
+
+    nftMetadata.set(kolourName, {
       name: kolourName,
       image,
       mediaType: "image/png",
       description: `The Kolour ${kolourName} in the Kreataverse`,
-    };
-
-    nftMetadata.set(
-      kolourName,
-      referral ? { ...metadatum, referral } : metadatum
-    );
+      ...referralMeta,
+    });
 
     tx = tx
       .mintAssets(
@@ -119,21 +124,21 @@ export function verifyKolourNftMintingTx(
   { tx, quotation, kolourNftMph, txId, txBody, txExp }: VerifyKolourNftTxParams
 ) {
   const { kolours, userAddress, feeAddress, referral, expiration } = quotation;
-  const { paymentKeyHash: userPkh, stakeKeyHash: userSkh } =
-    getWalletAddressKeyHashes(userAddress);
-  const expirationTimestamp = expiration * 1_000;
-  const body = txBody ? txBody : tx.body();
-  const txHash = txId ? txId : C.hash_transaction(body).to_hex();
-  const witnesses = tx.witness_set();
-  const txTimeEnd = body.ttl()?.to_str();
+  txBody ??= tx.body();
+  txId ??= C.hash_transaction(txBody).to_hex();
+  if (!txExp) {
+    const txEndSlot = txBody.ttl()?.to_str();
+    if (txEndSlot) txExp = lucid.utils.slotToUnixTime(parseInt(txEndSlot));
+  }
   assert(
-    (txExp && txExp < expirationTimestamp) ||
-      (txTimeEnd &&
-        lucid.utils.slotToUnixTime(parseInt(txTimeEnd)) < expirationTimestamp),
+    txExp && txExp < expiration * 1000,
     "Invalid transaction time range upper bound"
   );
 
-  const keyHashes = extractWitnessKeyHashes({ witnesses, txHash });
+  const witnesses = tx.witness_set();
+  const keyHashes = extractWitnessKeyHashes({ witnesses, txId });
+  const { paymentKeyHash: userPkh, stakeKeyHash: userSkh } =
+    getUserAddressKeyHashes(userAddress);
   assert(
     keyHashes.includes(userPkh) &&
       (!userSkh || (userSkh && keyHashes.includes(userSkh))),
@@ -159,10 +164,10 @@ export function verifyKolourNftMintingTx(
 
   const kolourNftMetadata = (kolourNftMetadataObj as any)[kolourNftMph]; // hex
 
-  const mintedValue = body.mint()?.to_json();
+  const mintedValue = txBody.mint()?.to_json();
   assert(mintedValue, "Transaction does not mint any value");
 
-  const mintedKolours = JSON.parse(mintedValue)[kolourNftMph];
+  const mintedKolours = fromJson<any>(mintedValue)[kolourNftMph];
 
   assert(
     Object.keys(mintedKolours).length == Object.keys(kolours).length,
@@ -199,7 +204,7 @@ export function verifyKolourNftMintingTx(
   );
 
   assert(
-    JSON.parse(body.outputs().to_json()).some(
+    fromJson<any>(txBody.outputs().to_json()).some(
       (o: any) =>
         o.address === feeAddress && BigInt(o.amount.coin) === totalMintFee
     ),
