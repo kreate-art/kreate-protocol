@@ -12,7 +12,7 @@ import {
 
 import {
   extractWitnessKeyHashes,
-  getWalletAddressKeyHashes,
+  getUserAddressKeyHashes,
 } from "@/helpers/lucid";
 import { fromJson } from "@/json";
 import * as S from "@/schema";
@@ -42,6 +42,7 @@ export type VerifyGKNftTxParams = {
   gkNftMph: Hex;
   name: string;
   description: string;
+  // Act as an optimization
   txId?: Hex;
   txBody?: Core.TransactionBody;
   txExp?: UnixTime;
@@ -60,31 +61,36 @@ export function buildMintGKNftTx(
     receivedNftAddress,
   }: MintGKNftTxParams
 ) {
+  const { id, image, fee, userAddress, feeAddress, referral, expiration } =
+    quotation;
+
   assert(
     gkNftRefScriptUtxo.scriptRef != null,
     "Invalid genesis kreation nft script UTxO: Missing script reference"
   );
-
   const gkNftMph = lucid.utils.validatorToScriptHash(
     gkNftRefScriptUtxo.scriptRef
   );
-  const { id, image, fee, userAddress, feeAddress, referral, expiration } =
-    quotation;
-  const { paymentKeyHash: userPkh, stakeKeyHash: userSkh } =
-    getWalletAddressKeyHashes(userAddress);
+
   let tx = lucid.newTx().readFrom([gkNftRefScriptUtxo]);
-  if (userSkh) tx = tx.addSignerKey(userSkh);
+
+  const { paymentKeyHash: userPkh, stakeKeyHash: userSkh } =
+    getUserAddressKeyHashes(userAddress);
+  if (referral) {
+    assert(userSkh, "Must use a stake key hash with referral");
+    tx = tx.addSignerKey(userSkh);
+  }
 
   const nftMetadata = new Map();
   const gkNftUnit = gkNftMph + fromText(id);
-  const nftMetadatum = {
+
+  nftMetadata.set(id, {
     name,
     image,
     mediaType: "image/png",
     description,
-  };
-
-  nftMetadata.set(id, referral ? { ...nftMetadatum, referral } : nftMetadatum);
+    ...(referral ? { referral } : {}),
+  });
 
   tx = tx
     .mintAssets(
@@ -127,21 +133,21 @@ export function verifyGKNftMintingTx(
 ) {
   const { id, image, fee, userAddress, feeAddress, referral, expiration } =
     quotation;
-  const { paymentKeyHash: userPkh, stakeKeyHash: userSkh } =
-    getWalletAddressKeyHashes(userAddress);
-  const expirationTimestamp = expiration * 1_000;
-  const body = txBody ? txBody : tx.body();
-  const txHash = txId ? txId : C.hash_transaction(body).to_hex();
-  const witnesses = tx.witness_set();
-  const txTimeEnd = body.ttl()?.to_str();
+  txBody ??= tx.body();
+  txId ??= C.hash_transaction(txBody).to_hex();
+  if (!txExp) {
+    const txEndSlot = txBody.ttl()?.to_str();
+    if (txEndSlot) txExp = lucid.utils.slotToUnixTime(parseInt(txEndSlot));
+  }
   assert(
-    (txExp && txExp < expirationTimestamp) ||
-      (txTimeEnd &&
-        lucid.utils.slotToUnixTime(parseInt(txTimeEnd)) < expirationTimestamp),
+    txExp && txExp < expiration * 1000,
     "Invalid transaction time range upper bound"
   );
 
-  const keyHashes = extractWitnessKeyHashes({ witnesses, txHash });
+  const witnesses = tx.witness_set();
+  const keyHashes = extractWitnessKeyHashes({ witnesses, txId });
+  const { paymentKeyHash: userPkh, stakeKeyHash: userSkh } =
+    getUserAddressKeyHashes(userAddress);
   assert(
     keyHashes.includes(userPkh) &&
       (!userSkh || (userSkh && keyHashes.includes(userSkh))),
@@ -167,10 +173,10 @@ export function verifyGKNftMintingTx(
 
   const gkNftMetadata = (gkNftMetadataObj as any)[gkNftMph]; // hex
 
-  const mintedValue = body.mint()?.to_json();
+  const mintedValue = txBody.mint()?.to_json();
   assert(mintedValue, "Transaction does not mint any value");
 
-  const mintedGK = JSON.parse(mintedValue)[gkNftMph];
+  const mintedGK = fromJson<any>(mintedValue)[gkNftMph];
 
   assert(Object.keys(mintedGK).length == 1, "Invalid minted value");
 
@@ -196,7 +202,7 @@ export function verifyGKNftMintingTx(
   );
 
   assert(
-    JSON.parse(body.outputs().to_json()).some(
+    fromJson<any>(txBody.outputs().to_json()).some(
       (o: any) => o.address === feeAddress && BigInt(o.amount.coin) === fee
     ),
     "Incorrect fee"

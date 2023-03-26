@@ -25,25 +25,18 @@ export function getPaymentKeyHash(address: Address): Hex {
   return paymentCredential.hash;
 }
 
-export function getWalletAddressKeyHashes(address: Address) {
+export function getUserAddressKeyHashes(address: Address) {
   const { paymentCredential, stakeCredential } = getAddressDetails(address);
   assert(
     paymentCredential && paymentCredential.type === "Key",
     "Cannot extract payment key hash from address"
   );
-
-  let stakeKeyHash = null;
-  if (stakeCredential) {
-    assert(
-      stakeCredential.type === "Key",
-      "Cannot extract stake key hash from address"
-    );
-    stakeKeyHash = stakeCredential.hash;
-  }
-
   return {
     paymentKeyHash: paymentCredential.hash,
-    stakeKeyHash,
+    stakeKeyHash:
+      stakeCredential && stakeCredential.type === "Key"
+        ? stakeCredential.hash
+        : null,
   };
 }
 
@@ -72,24 +65,23 @@ export function addressFromScriptHashes(
       );
 }
 
-//https://github.com/spacebudz/lucid/blob/2d73e7d71d180c3aab7db654f3558279efb5dbb5/src/provider/emulator.ts#L280
+// https://github.com/spacebudz/lucid/blob/2d73e7d71d180c3aab7db654f3558279efb5dbb5/src/provider/emulator.ts#L280
 export function extractWitnessKeyHashes({
+  txId,
   witnesses,
-  txHash,
 }: {
+  txId: Hex;
   witnesses: Core.TransactionWitnessSet;
-  txHash: Hex;
 }) {
+  const vkeys = witnesses.vkeys();
+  if (!vkeys) return [];
   const keyHashes = [];
-  for (let i = 0; i < (witnesses.vkeys()?.len() || 0); i++) {
-    const witness = witnesses.vkeys()?.get(i);
-    if (!witness) continue;
+  for (let i = 0, n = vkeys.len(); i < n; i++) {
+    const witness = vkeys.get(i);
     const publicKey = witness.vkey().public_key();
     const keyHash = publicKey.hash().to_hex();
-
-    if (!publicKey.verify(fromHex(txHash), witness.signature())) {
+    if (!publicKey.verify(fromHex(txId), witness.signature()))
       throw new Error(`Invalid vkey witness. Key hash: ${keyHash}`);
-    }
     keyHashes.push(keyHash);
   }
   return keyHashes;
