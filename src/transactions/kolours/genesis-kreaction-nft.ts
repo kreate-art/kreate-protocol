@@ -150,7 +150,7 @@ export function verifyGKNftMintingTx(
     getUserAddressKeyHashes(userAddress);
   assert(
     keyHashes.includes(userPkh) &&
-      (!userSkh || (userSkh && keyHashes.includes(userSkh))),
+      (!referral || (userSkh && keyHashes.includes(userSkh))),
     "Missing user's signatures"
   );
 
