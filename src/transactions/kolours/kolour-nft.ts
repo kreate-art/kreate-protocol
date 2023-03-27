@@ -131,7 +131,7 @@ export function verifyKolourNftMintingTx(
     if (txEndSlot) txExp = lucid.utils.slotToUnixTime(parseInt(txEndSlot));
   }
   assert(
-    txExp && txExp < expiration * 1000,
+    txExp && txExp <= expiration * 1000,
     "Invalid transaction time range upper bound"
   );
 
