@@ -15,6 +15,8 @@ export type Cid = string;
 export type UnixTime = number;
 export type TimeDifference = number;
 
+export type LovelaceAmount = number | bigint;
+
 // Guards
 export function isHex(value: unknown): value is Hex {
   return typeof value === "string" && /^[0-9A-Fa-f]*$/.test(value);

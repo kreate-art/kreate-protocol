@@ -1,5 +1,6 @@
+import { LovelaceAmount } from "@/types";
 import { Static } from "@sinclair/typebox";
-import { Lovelace, Address } from "lucid-cardano";
+import { Address } from "lucid-cardano";
 
 import { Enum, Void } from "../uplc";
 
@@ -11,7 +12,6 @@ export type KolourNftMintingRedeemer = Static<typeof KolourNftMintingRedeemer>;
 
 export type Kolour = string; // RRGGBB
 export type GenesisKreaction = string;
-export type LovelaceAmount = number | bigint;
 
 export type KolourEntry = {
   fee: LovelaceAmount;
@@ -32,8 +32,8 @@ export type GenesisKreationId = string; // Act as token name also
 export type GenesisKreationQuotation = {
   id: GenesisKreationId;
   image: string; // ipfs://<cid>
-  fee: Lovelace;
-  listedFee: Lovelace;
+  fee: LovelaceAmount;
+  listedFee: LovelaceAmount;
   userAddress: Address;
   feeAddress: Address;
   referral?: string;

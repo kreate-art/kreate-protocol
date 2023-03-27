@@ -107,7 +107,7 @@ export function buildMintGKNftTx(
     .addSignerKey(userPkh)
     .addSignerKey(producerPkh)
     .attachMetadata(721, metadatum)
-    .payToAddress(feeAddress, { lovelace: fee })
+    .payToAddress(feeAddress, { lovelace: BigInt(fee) })
     .validFrom(txTimeStart)
     .validTo(
       Math.min(
