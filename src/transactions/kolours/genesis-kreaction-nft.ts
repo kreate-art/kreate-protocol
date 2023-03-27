@@ -203,7 +203,8 @@ export function verifyGKNftMintingTx(
 
   assert(
     fromJson<any>(txBody.outputs().to_json()).some(
-      (o: any) => o.address === feeAddress && BigInt(o.amount.coin) === fee
+      (o: any) =>
+        o.address === feeAddress && BigInt(o.amount.coin) === BigInt(fee)
     ),
     "Incorrect fee"
   );
