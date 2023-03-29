@@ -55,7 +55,8 @@ export function buildMintKolourNftTx(
     receivedNftAddress,
   }: MintKolourNftTxParams
 ) {
-  const { kolours, userAddress, feeAddress, referral, expiration } = quotation;
+  const { source, referral, kolours, userAddress, feeAddress, expiration } =
+    quotation;
 
   assert(
     kolourNftRefScriptUtxo.scriptRef != null,
@@ -100,6 +101,10 @@ export function buildMintKolourNftTx(
     totalMintFees += BigInt(fee);
   }
 
+  if (totalMintFees === 0n)
+    assert(source === "free" && referral.id === "FREE", "Invalid minted fee");
+  else if (totalMintFees > 0n)
+    tx = tx.payToAddress(feeAddress, { lovelace: totalMintFees });
   const metadata = {
     [kolourNftMph]: Object.fromEntries(nftMetadata),
   };
@@ -108,7 +113,6 @@ export function buildMintKolourNftTx(
     .addSignerKey(userPkh)
     .addSignerKey(producerPkh)
     .attachMetadata(721, metadata)
-    .payToAddress(feeAddress, { lovelace: totalMintFees })
     .validFrom(txTimeStart)
     .validTo(
       Math.min(
@@ -123,7 +127,8 @@ export function verifyKolourNftMintingTx(
   lucid: Lucid,
   { tx, quotation, kolourNftMph, txId, txBody, txExp }: VerifyKolourNftTxParams
 ) {
-  const { kolours, userAddress, feeAddress, referral, expiration } = quotation;
+  const { source, referral, kolours, userAddress, feeAddress, expiration } =
+    quotation;
   txBody ??= tx.body();
   txId ??= C.hash_transaction(txBody).to_hex();
   if (!txExp) {
@@ -200,10 +205,12 @@ export function verifyKolourNftMintingTx(
   );
 
   assert(
-    fromJson<any>(txBody.outputs().to_json()).some(
-      (o: any) =>
-        o.address === feeAddress && BigInt(o.amount.coin) === totalMintFee
-    ),
+    (totalMintFee === 0n && source === "free" && referral.id === "FREE") ||
+      (totalMintFee > 0n &&
+        fromJson<any>(txBody.outputs().to_json()).some(
+          (o: any) =>
+            o.address === feeAddress && BigInt(o.amount.coin) === totalMintFee
+        )),
     "Incorrect fee"
   );
 }
