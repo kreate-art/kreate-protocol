@@ -102,9 +102,9 @@ export function buildMintGKNftTx(
   const metadatum = {
     [gkNftMph]: Object.fromEntries(nftMetadata),
   };
-  if (fee === 0n) assert(referral?.id === "FREE", "Invalid minted fee");
-  else if (fee > 0n)
-    tx = tx.payToAddress(feeAddress, { lovelace: BigInt(fee) });
+
+  assert(fee > 0, "Fee must be positive");
+  tx = tx.payToAddress(feeAddress, { lovelace: BigInt(fee) });
 
   return tx
     .addSignerKey(userPkh)
@@ -133,16 +133,8 @@ export function verifyGKNftMintingTx(
     txExp,
   }: VerifyGKNftTxParams
 ) {
-  const {
-    id,
-    image,
-    fee: feeInLovelaceAmount,
-    userAddress,
-    feeAddress,
-    referral,
-    expiration,
-  } = quotation;
-  const fee = BigInt(feeInLovelaceAmount);
+  const { id, image, fee, userAddress, feeAddress, referral, expiration } =
+    quotation;
   txBody ??= tx.body();
   txId ??= C.hash_transaction(txBody).to_hex();
   if (!txExp) {
@@ -208,11 +200,11 @@ export function verifyGKNftMintingTx(
   );
 
   assert(
-    (fee === 0n && referral?.id === "FREE") ||
-      (fee > 0n &&
-        fromJson<any>(txBody.outputs().to_json()).some(
-          (o: any) => o.address === feeAddress && BigInt(o.amount.coin) === fee
-        )),
+    fee > 0 &&
+      fromJson<any>(txBody.outputs().to_json()).some(
+        (o: any) =>
+          o.address === feeAddress && BigInt(o.amount.coin) === BigInt(fee)
+      ),
     "Incorrect fee"
   );
 }

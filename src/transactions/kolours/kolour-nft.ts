@@ -77,7 +77,7 @@ export function buildMintKolourNftTx(
 
   const referralMeta = referral ? { referral: referral.id } : {};
 
-  let totalMintFees = 0n;
+  let totalMintFee = 0n;
   const nftMetadata = new Map();
   for (const [kolourHex, { fee, image }] of Object.entries(kolours)) {
     const kolourName = `#${kolourHex.toUpperCase()}`;
@@ -98,13 +98,15 @@ export function buildMintKolourNftTx(
       )
       .payToAddress(receivedNftAddress ?? userAddress, { [kolourNftUnit]: 1n });
 
-    totalMintFees += BigInt(fee);
+    totalMintFee += BigInt(fee);
   }
 
-  if (totalMintFees === 0n)
-    assert(source === "free" && referral.id === "FREE", "Invalid minted fee");
-  else if (totalMintFees > 0n)
-    tx = tx.payToAddress(feeAddress, { lovelace: totalMintFees });
+  if (source === "free" && referral?.id === "FREE") {
+    assert(totalMintFee === 0n, "Fee must be zero");
+  } else {
+    assert(totalMintFee > 0, "Fee must be positive");
+    tx = tx.payToAddress(feeAddress, { lovelace: totalMintFee });
+  }
   const metadata = {
     [kolourNftMph]: Object.fromEntries(nftMetadata),
   };
@@ -205,7 +207,7 @@ export function verifyKolourNftMintingTx(
   );
 
   assert(
-    (totalMintFee === 0n && source === "free" && referral.id === "FREE") ||
+    (totalMintFee === 0n && source === "free" && referral?.id === "FREE") ||
       (totalMintFee > 0n &&
         fromJson<any>(txBody.outputs().to_json()).some(
           (o: any) =>
