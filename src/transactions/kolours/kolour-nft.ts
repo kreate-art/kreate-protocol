@@ -101,7 +101,7 @@ export function buildMintKolourNftTx(
     totalMintFee += BigInt(fee);
   }
 
-  if (source === "free") {
+  if (source.type === "free") {
     assert(totalMintFee === 0n, "Fee must be zero");
     assert(!referral, "Referral must be empty");
   } else {
@@ -207,7 +207,7 @@ export function verifyKolourNftMintingTx(
     "Invalid kolour nft metadata"
   );
 
-  if (source === "free") {
+  if (source.type === "free") {
     assert(totalMintFee === 0n, "Fee must be zero");
     assert(!referral, "Referral must be empty");
   } else {

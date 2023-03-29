@@ -56,7 +56,10 @@ describe("kolour transactions", () => {
 
     const params: MintKolourNftTxParams = {
       quotation: {
-        source: "genesis_kreation",
+        source: {
+          type: "genesis_kreation",
+          kreation: "Genesis Kreation #00",
+        },
         referral: generateReferral(),
         kolours: generateKolourListings(1),
         userAddress: producerAddress,
