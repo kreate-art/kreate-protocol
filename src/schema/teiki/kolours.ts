@@ -18,28 +18,23 @@ export type Referral = {
   discount: number;
 };
 
-// Note that it shouldn't match any pools' ticker
-export const FREE_MINT_REFERRAL = {
-  id: "FREE",
-  discount: 10000,
-} as const satisfies Referral;
-
 export type KolourEntry = {
   fee: LovelaceAmount;
   listedFee: LovelaceAmount;
   image: string; // ipfs://<cid>
 };
 
-export type KolourQuotation = KolourQuotationProgramme & {
+export type KolourQuotation = KolourQuotationProgram & {
   kolours: Record<Kolour, KolourEntry>;
   userAddress: Address;
   feeAddress: Address;
   expiration: number; // Unix Timestamp in seconds
 };
 
-export type KolourQuotationProgramme =
-  | { source: "free"; referral: typeof FREE_MINT_REFERRAL }
-  | { source: "genesis-kreation"; referral?: Referral };
+export type KolourQuotationProgram =
+  | { source: "present"; referral?: undefined }
+  | { source: "free"; referral?: undefined }
+  | { source: "genesis_kreation"; referral?: Referral };
 
 export type GenesisKreationId = string; // Act as token name also
 

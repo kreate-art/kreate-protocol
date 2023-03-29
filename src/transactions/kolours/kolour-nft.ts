@@ -101,8 +101,9 @@ export function buildMintKolourNftTx(
     totalMintFee += BigInt(fee);
   }
 
-  if (source === "free" && referral?.id === "FREE") {
+  if (source === "free") {
     assert(totalMintFee === 0n, "Fee must be zero");
+    assert(!referral, "Referral must be empty");
   } else {
     assert(totalMintFee > 0, "Fee must be positive");
     tx = tx.payToAddress(feeAddress, { lovelace: totalMintFee });
@@ -206,15 +207,19 @@ export function verifyKolourNftMintingTx(
     "Invalid kolour nft metadata"
   );
 
-  assert(
-    (totalMintFee === 0n && source === "free" && referral?.id === "FREE") ||
-      (totalMintFee > 0n &&
-        fromJson<any>(txBody.outputs().to_json()).some(
-          (o: any) =>
-            o.address === feeAddress && BigInt(o.amount.coin) === totalMintFee
-        )),
-    "Incorrect fee"
-  );
+  if (source === "free") {
+    assert(totalMintFee === 0n, "Fee must be zero");
+    assert(!referral, "Referral must be empty");
+  } else {
+    assert(totalMintFee > 0, "Fee must be positive");
+    assert(
+      fromJson<any>(txBody.outputs().to_json()).some(
+        (o: any) =>
+          o.address === feeAddress && BigInt(o.amount.coin) === totalMintFee
+      ),
+      "Incorrect fee paid"
+    );
+  }
 }
 
 export function buildBurnKolourNftTx(
