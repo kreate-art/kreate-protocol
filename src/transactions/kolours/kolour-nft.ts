@@ -74,7 +74,7 @@ export function buildMintKolourNftTx(
     tx = tx.addSignerKey(userSkh);
   }
 
-  const referralMeta = referral ? { referral } : {};
+  const referralMeta = referral ? { referral: referral.id } : {};
 
   let totalMintFees = 0n;
   const nftMetadata = new Map();
@@ -184,17 +184,13 @@ export function verifyKolourNftMintingTx(
     );
     totalMintFee += BigInt(fee);
 
-    const metadatum = {
+    constructedNftMetadatum.set(kolourName, {
       name: kolourName,
       image,
       mediaType: "image/png",
       description: `The Kolour ${kolourName} in the Kreataverse`,
-    };
-
-    constructedNftMetadatum.set(
-      kolourName,
-      referral ? { ...metadatum, referral } : metadatum
-    );
+      ...(referral ? { referral: referral.id } : {}),
+    });
   }
 
   const constructedMetadata = Object.fromEntries(constructedNftMetadatum);

@@ -89,7 +89,7 @@ export function buildMintGKNftTx(
     image,
     mediaType: "image/png",
     description,
-    ...(referral ? { referral } : {}),
+    ...(referral ? { referral: referral.id } : {}),
   });
 
   tx = tx
@@ -183,17 +183,13 @@ export function verifyGKNftMintingTx(
   const constructedNftMetadatum = new Map();
   assert(mintedGK[fromText(id)], `Missing ${id} NFT `);
 
-  const metadatum = {
+  constructedNftMetadatum.set(id, {
     name,
     image,
     mediaType: "image/png",
     description,
-  };
-
-  constructedNftMetadatum.set(
-    id,
-    referral ? { ...metadatum, referral } : metadatum
-  );
+    ...(referral ? { referral: referral.id } : {}),
+  });
 
   const constructedMetadata = Object.fromEntries(constructedNftMetadatum);
   assert(

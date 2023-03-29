@@ -14,7 +14,7 @@ import {
 } from "lucid-cardano";
 
 import { addressFromScriptHashes } from "@/helpers/lucid";
-import { Kolour } from "@/schema/teiki/kolours";
+import { Kolour, Referral } from "@/schema/teiki/kolours";
 import { Hex } from "@/types";
 import { assert } from "@/utils";
 
@@ -141,6 +141,9 @@ export function generateCid(): Hex {
   return "Qm" + toHex(loadCrypto().getRandomValues(new Uint8Array(22)));
 }
 
-export function generateReferral(): Hex {
-  return toHex(loadCrypto().getRandomValues(new Uint8Array(32)));
+export function generateReferral(): Referral {
+  return {
+    id: toHex(loadCrypto().getRandomValues(new Uint8Array(32))),
+    discount: 0,
+  };
 }
