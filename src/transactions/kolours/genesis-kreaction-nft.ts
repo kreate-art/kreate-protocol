@@ -30,7 +30,7 @@ export type MintGKNftTxParams = {
   gkNftRefScriptUtxo: UTxO;
   producerPkh: Hex;
   name: string;
-  description: string;
+  description: string | string[];
   txTimeStart: UnixTime;
   txTimeEnd: UnixTime;
   receivedNftAddress?: Address;
@@ -41,7 +41,7 @@ export type VerifyGKNftTxParams = {
   quotation: GenesisKreationQuotation;
   gkNftMph: Hex;
   name: string;
-  description: string;
+  description: string | string[];
   // Act as an optimization
   txId?: Hex;
   txBody?: Core.TransactionBody;
