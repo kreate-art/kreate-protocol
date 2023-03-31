@@ -392,6 +392,8 @@ describe("protocol transactions", () => {
       protocolProposalRefScriptUtxo,
     ]);
 
+    emulator.awaitBlock(20);
+
     const params: ApplyProtocolTxParams = {
       protocolParamsUtxo,
       protocolProposalUtxo,
@@ -401,8 +403,6 @@ describe("protocol transactions", () => {
       ],
       txTime: emulator.now(),
     };
-
-    emulator.awaitSlot(200);
 
     const tx = applyProtocolProposalTx(lucid, params);
 

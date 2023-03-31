@@ -73,5 +73,5 @@ export function applyProtocolProposalTx(
       },
       protocolParamsUtxo.assets
     )
-    .validFrom(txTime);
+    .validFrom(txTime - 60_000);
 }

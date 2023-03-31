@@ -52,6 +52,20 @@ npm run meta-protocol:propose
 npm run meta-protocol:apply
 ```
 
+#### Propose protocol params
+
+1. Update information in `src/cli/protocol/propose.ts` and `src/cli/protocol/apply.ts` then propose:
+
+```
+npm run protocol:propose
+```
+
+2. Wait for the proposal duration before applying:
+
+```
+npm run protocol:apply
+```
+
 #### Emulator Test
 
 ```
