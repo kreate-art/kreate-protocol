@@ -26,6 +26,7 @@ export type KolourEntry = {
 
 export type KolourQuotation = KolourQuotationProgram & {
   kolours: Record<Kolour, KolourEntry>;
+  baseDiscount: number;
   userAddress: Address;
   feeAddress: Address;
   expiration: number; // Unix Timestamp in seconds
@@ -48,6 +49,7 @@ export type GenesisKreationQuotation = {
   image: string; // ipfs://<cid>
   fee: LovelaceAmount;
   listedFee: LovelaceAmount;
+  baseDiscount: number;
   userAddress: Address;
   feeAddress: Address;
   referral?: Referral;
