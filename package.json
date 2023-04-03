@@ -59,7 +59,7 @@
   "dependencies": {
     "@hyperionbt/helios": "^0.13.10",
     "@shinka-network/json-bigint": "^1.0.2",
-    "@sinclair/typebox": "^0.25.24",
+    "@sinclair/typebox": "^0.26.8",
     "deep-equal": "^2.2.0",
     "lucid-cardano": "^0.9.4"
   },

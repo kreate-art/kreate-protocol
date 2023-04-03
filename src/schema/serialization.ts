@@ -1,5 +1,5 @@
 // Heavily influenced by https://github.com/spacebudz/lucid/blob/main/src/plutus/data.ts
-import { Kind } from "@sinclair/typebox";
+import { Kind, TypeGuard } from "@sinclair/typebox";
 import { Constr, Data, fromText, toText } from "lucid-cardano";
 
 import { Hex } from "@/types";
@@ -84,7 +84,7 @@ export function toData<T extends TUplc>(self: Static<T>, schema: T): Data {
       assert(variantName, "no enum variant specified");
       const result = selectVariant(schema, (index, name, properties) => {
         if (name !== variantName) return undefined;
-        if (Kind in properties) {
+        if (TypeGuard.TKind(properties)) {
           switch (properties[Kind]) {
             case "Inline":
               return new Constr(index, [
@@ -189,7 +189,7 @@ export function fromData<T extends TUplc>(data: Data, schema: T): Static<T> {
       const result = selectVariant(schema, (index, name, properties) => {
         if (index !== data.index) return undefined;
         const variant = { [schema.discriminator]: name };
-        if (Kind in properties) {
+        if (TypeGuard.TKind(properties)) {
           switch (properties[Kind]) {
             case "Inline":
               assert(data.fields.length === 1, "inlined enum variant");
