@@ -1,6 +1,5 @@
 import {
   Kind,
-  NumericOptions,
   PropertiesReduce,
   TArray,
   TLiteral,
@@ -9,12 +8,14 @@ import {
   TSchema,
   TVoid,
   Type,
+  TypeRegistry,
   type Static,
 } from "@sinclair/typebox";
-import { Custom } from "@sinclair/typebox/custom";
 import { Data } from "lucid-cardano";
 
 import { isData, isEmpty } from "@/types";
+
+// TODO: Rewrite this to match typebox best practices
 
 // Re-exports
 export { type Static, type TProperties, type TVoid };
@@ -23,11 +24,11 @@ export { type Static, type TProperties, type TVoid };
 type Simplify<T> = T extends object ? { [K in keyof T]: T[K] } : T;
 
 // Custom typebox
-Custom.Set("Int", (_, value) => typeof value === "bigint");
-Custom.Set("Data", (_, value) => isData(value));
+TypeRegistry.Set("Int", (_, value) => typeof value === "bigint");
+TypeRegistry.Set("Data", (_, value) => isData(value));
 // TODO: Stricter check
-Custom.Set("Map", (_, value) => value instanceof Array);
-Custom.Set("Option", () => true);
+TypeRegistry.Set("Map", (_, value) => Array.isArray(value));
+TypeRegistry.Set("Option", () => true);
 
 // TODO: Restrict to TUplc instead of TSchema
 export type TUplc =
@@ -43,14 +44,14 @@ export type TUplc =
   | TEnum;
 
 // Primitives
-export interface TInt extends TSchema, NumericOptions {
+export interface TInt extends TSchema {
   $id: "Int";
   [Kind]: "Int";
   static: bigint;
   type: "bigint";
 }
 export const Int: TInt = {
-  ...Type.Unsafe({}),
+  ...Type.BigInt(),
   $id: "Int",
   [Kind]: "Int",
   type: "bigint",
@@ -67,16 +68,16 @@ export type TString = typeof String;
 export const String = Type.String({ $id: "String", format: "text" });
 
 // Raw Data
-export type RawData = { data: Data };
+export type IRawData = { data: Data };
 export interface TRawData extends TSchema {
   $id: "Data";
   [Kind]: "Data";
-  static: RawData;
+  static: IRawData;
 }
 export const TRawData: TRawData = {
-  ...Type.Unsafe({}),
-  $id: "Data",
+  ...Type.Unsafe(),
   [Kind]: "Data",
+  $id: "Data",
 };
 
 // Basic Structures
@@ -89,7 +90,7 @@ export interface TOption<T extends TSchema = TSchema> extends TSchema {
 }
 export function Option<T extends TSchema>(schema: T): TOption<T> {
   return {
-    ...Type.Unsafe({}),
+    ...Type.Unsafe(),
     $id: `Option[${schema.$id ?? "?"}]`,
     [Kind]: "Option",
     option: schema,
@@ -116,7 +117,7 @@ export function Map<K extends TSchema, V extends TSchema>(
   valueSchema: V
 ): TMap<K, V> {
   return {
-    ...Type.Unsafe({}),
+    ...Type.Unsafe(),
     $id: `Map[${keySchema.$id ?? "?"}]${valueSchema.$id ?? "?"}`,
     [Kind]: "Map",
     key: keySchema,
@@ -148,9 +149,9 @@ export interface TStruct<T extends TStructProps = TStructProps>
   [Kind]: "Object";
   static: T extends TInline
     ? Static<T, this["params"]>
-    : T extends Record<string, never>
-    ? never
-    : PropertiesReduce<T, this["params"]>;
+    : T extends TProperties
+    ? PropertiesReduce<T, this["params"]>
+    : never;
   properties: T;
   type: "struct";
   // Helios structs are encoded using data-lists.
@@ -230,7 +231,7 @@ export function Enum<D extends string, T extends Record<string, TEnumProps>>(
 ): TNever | TEnum<D, T> {
   if (variants) {
     return {
-      ...Type.Unsafe({}),
+      ...Type.Unsafe(),
       [Kind]: "Union",
       discriminator,
       variants,
