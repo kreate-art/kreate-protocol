@@ -147,3 +147,7 @@ export function generateReferral(): Referral {
     discount: 0,
   };
 }
+
+export function generateDiscount(): number {
+  return 5000; // 50% discount,
+}
