@@ -17,6 +17,7 @@
     "strict": true,
     "target": "es2020",
     "outDir": "dist",
+    "composite": false,
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
