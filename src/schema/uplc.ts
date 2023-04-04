@@ -15,6 +15,8 @@ import { Data } from "lucid-cardano";
 
 import { isData, isEmpty } from "@/types";
 
+export * as TypeBox from "@sinclair/typebox";
+
 // TODO: Rewrite this to match typebox best practices
 
 // Re-exports
