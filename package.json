@@ -51,7 +51,7 @@
     "protocol:apply": "node --loader=./loader.js src/cli/protocol/apply",
     "lint": "eslint src tests",
     "lint:fix": "eslint --fix src tests",
-    "prepare": "npm run build",
+    "prepare": "test -d src && npm run build",
     "test": "NODE_NO_WARNINGS=1 NODE_OPTIONS=--experimental-vm-modules jest",
     "typecheck": "tsc --noEmit --strict",
     "typecheck:watch": "tsc --noEmit --strict --watch"
