@@ -5,7 +5,7 @@ import {
   AddressDetails,
   getAddressDetails,
   TxComplete,
-  Core,
+  C,
   fromHex,
 } from "lucid-cardano";
 
@@ -71,7 +71,7 @@ export function extractWitnessKeyHashes({
   witnesses,
 }: {
   txId: Hex;
-  witnesses: Core.TransactionWitnessSet;
+  witnesses: C.TransactionWitnessSet;
 }) {
   const vkeys = witnesses.vkeys();
   if (!vkeys) return [];
