@@ -292,22 +292,23 @@ function addMintingInstruction(
       ] = BigInt(wiltedFlowerMintAmount);
     }
 
-    if (totalTeikiRewards > 0) {
-      assert(teikiMintingInfo, "Missing teiki minting information");
+    // Hotfix: Stop minting deprecated token
+    // if (totalTeikiRewards > 0) {
+    //   assert(teikiMintingInfo, "Missing teiki minting information");
 
-      assert(
-        teikiMintingInfo.teikiMpRefUtxo.scriptRef,
-        "Invalid teiki reference script UTxO: Missing inline datum"
-      );
+    //   assert(
+    //     teikiMintingInfo.teikiMpRefUtxo.scriptRef,
+    //     "Invalid teiki reference script UTxO: Missing inline datum"
+    //   );
 
-      tx = mintTeiki(tx, {
-        teikiMintingInfo,
-        totalTeikiRewards,
-        protocolParams,
-        projectDatum,
-        txTimeStart,
-      });
-    }
+    //   tx = mintTeiki(tx, {
+    //     teikiMintingInfo,
+    //     totalTeikiRewards,
+    //     protocolParams,
+    //     projectDatum,
+    //     txTimeStart,
+    //   });
+    // }
   }
 
   if (Object.keys(minting))
