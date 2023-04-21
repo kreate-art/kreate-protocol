@@ -227,7 +227,11 @@ function addMintingInstruction(
       ProjectDatum
     );
 
-    const unbackedAt = txTimeStart;
+    let unbackedAt = BigInt(txTimeStart);
+    if (projectDatum.status.type === "Closed") {
+      unbackedAt = projectDatum.status.closedAt.timestamp;
+    }
+
     let totalTeikiRewards = 0n;
     let wiltedFlowerMintAmount = 0;
 
