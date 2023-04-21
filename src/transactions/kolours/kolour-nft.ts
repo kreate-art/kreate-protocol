@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import equal from "deep-equal";
-import { Lucid, UTxO, UnixTime, C, fromText, Address } from "lucid-cardano";
+import {
+  Lucid,
+  UTxO,
+  UnixTime,
+  C,
+  Core,
+  fromText,
+  Address,
+} from "lucid-cardano";
 
 import {
   extractWitnessKeyHashes,
@@ -27,12 +35,12 @@ export type MintKolourNftTxParams = {
 };
 
 export type VerifyKolourNftTxParams = {
-  tx: C.Transaction;
+  tx: Core.Transaction;
   quotation: KolourQuotation;
   kolourNftMph: Hex;
   // Act as an optimization
   txId?: Hex;
-  txBody?: C.TransactionBody;
+  txBody?: Core.TransactionBody;
   txExp?: UnixTime;
 };
 
