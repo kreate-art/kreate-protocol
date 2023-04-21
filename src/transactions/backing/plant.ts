@@ -126,16 +126,17 @@ export function plantTx(
   if (backingInfo.amount <= 0n)
     tx = addCollectBackingInstruction(tx, backingInfo);
 
-  tx = addMintingInstruction(tx, {
-    backingInfo,
-    protocolParamsUtxo,
-    projectUtxo: projectInfo.projectUtxo,
-    teikiMintingInfo,
-    txTimeStart,
-    proofOfBackingMintingRedeemer,
-    seedAmount: numProducedBackingUtxos - backingInfo.backingUtxos.length,
-    ignoreUnback: backingInfo.amount > 0,
-  });
+  // Hotfix: do not mint any deprecated tokens
+  // tx = addMintingInstruction(tx, {
+  //   backingInfo,
+  //   protocolParamsUtxo,
+  //   projectUtxo: projectInfo.projectUtxo,
+  //   teikiMintingInfo,
+  //   txTimeStart,
+  //   proofOfBackingMintingRedeemer,
+  //   seedAmount: numProducedBackingUtxos - backingInfo.backingUtxos.length,
+  //   ignoreUnback: backingInfo.amount > 0,
+  // });
 
   // Check whether a new backing UTxO should be produced
   if (remainBackingAmount > 0n) {
