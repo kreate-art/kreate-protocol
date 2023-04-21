@@ -4,7 +4,7 @@
     "allowUnusedLabels": false,
     "declaration": true,
     "forceConsistentCasingInFileNames": true,
-    "lib": ["es2020", "dom"],
+    "lib": ["es2020"],
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "node",
